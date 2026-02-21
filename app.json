@@ -1,30 +1,45 @@
 {
   "expo": {
-    "name": "hali-app",
-    "slug": "hali-app",
+    "name": "Halıcı Gürsoylar",
+    "slug": "hali-vizyon",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0F0F0F"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.halivizyon.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Müşteri odasının fotoğrafını çekmek için kamera gereklidir.",
+        "NSPhotoLibraryUsageDescription": "Oda fotoğrafı seçmek ve sonucu kaydetmek için galeri erişimi gereklidir.",
+        "NSPhotoLibraryAddUsageDescription": "AI sonuç görselini galerinize kaydetmek için izin gereklidir."
+      }
     },
     "android": {
+      "package": "com.halivizyon.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0F0F0F"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-image-picker",
+      "expo-media-library",
+      "expo-asset"
+    ]
   }
 }

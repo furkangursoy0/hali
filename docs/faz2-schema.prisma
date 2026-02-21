@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+model Organization {
+  id         String        @id @default(cuid())
+  name       String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  users      User[]
+  credits    CreditBalance?
+  renderJobs RenderJob[]
+  creditLogs CreditLog[]
+  auditLogs  AuditLog[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  name           String
+  role           UserRole     @default(STAFF)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  renderJobs     RenderJob[]
+  creditLogs     CreditLog[]
+  auditLogs      AuditLog[]   @relation("auditActor")
+}
+
+model CreditBalance {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  balance        Int          @default(0)
+  updatedAt      DateTime     @updatedAt
+}
+
+model CreditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  delta          Int
+  reason         String
+  createdAt      DateTime     @default(now())
+}
+
+model RenderJob {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId          String?
+  user            User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  mode            String
+  status          String
+  roomImageName   String?
+  carpetImageName String?
+  error           String?
+  createdAt       DateTime     @default(now())
+}
+
+model Carpet {
+  id         String   @id @default(cuid())
+  brand      String
+  collection String
+  name       String
+  imageKey   String   @unique
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actorUserId    String?
+  actorUser      User?         @relation("auditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  action         String
+  targetType     String
+  targetId       String?
+  metadata       String?
+  createdAt      DateTime      @default(now())
+}
