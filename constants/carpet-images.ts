@@ -1008,7 +1008,7 @@ const carpetImages: Record<string, any> = {
   empara__NOVA__6850: require('../assets/carpets/empara/NOVA/6850_PULITO.png'),
   empara__NOVA__6851: require('../assets/carpets/empara/NOVA/6851_SOLARE.png'),
   empara__NOVA__6852: require('../assets/carpets/empara/NOVA/6852_CARINO.png'),
-  empara__QILIM__1100: require('../assets/carpets/empara/QILIM/1100_MAVİ.png'),
+  empara__QILIM__1100: require('../assets/carpets/empara/QILIM/1100_MAVI.png'),
   empara__QILIM__1101: require('../assets/carpets/empara/QILIM/1101_EKRU.png'),
   empara__QILIM__HALI_S37_3: require('../assets/carpets/empara/QILIM/HALI_S37_3.png'),
   empara__QILIM__HALI_S37_4: require('../assets/carpets/empara/QILIM/HALI_S37_4.png'),
