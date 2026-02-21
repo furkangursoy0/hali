@@ -167,6 +167,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
     );
 
+    if (!updatedUser && user?.id === userId) {
+      setUser({ ...user, credit: safeCredit });
+      return { ok: true as const };
+    }
+
     if (!updatedUser) {
       return { ok: false as const, message: 'Kullanıcı bulunamadı.' };
     }
