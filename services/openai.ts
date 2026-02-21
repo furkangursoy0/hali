@@ -6,6 +6,7 @@ export interface PlacementResult {
     imageUrl: string;
     success: boolean;
     error?: string;
+    errorCode?: 'RENDER_LIMIT' | 'BILLING' | 'API_KEY' | 'RATE_LIMIT' | 'NETWORK' | 'UNKNOWN';
 }
 
 function mapRenderErrorMessage(raw: string): string {
@@ -98,16 +99,32 @@ export async function placeCarperInRoom(
         throw new Error('No image data in response');
     } catch (error: any) {
         console.error('Render API Error:', error?.response?.data || error.message);
+        const status = Number(error?.response?.status || 0);
+        const backendCode = String(error?.response?.data?.code || '').toUpperCase();
         const rawError =
             error?.response?.data?.error ||
             error?.response?.data?.message ||
             error?.response?.data?.error?.message ||
             error.message ||
             'Bilinmeyen hata';
+        const mappedMessage = mapRenderErrorMessage(typeof rawError === 'string' ? rawError : JSON.stringify(rawError));
+        let errorCode: PlacementResult['errorCode'] = 'UNKNOWN';
+        if (backendCode === 'LIMIT_REACHED' || status === 429) {
+            errorCode = 'RENDER_LIMIT';
+        } else if (mappedMessage.includes('OpenAI kredi limiti dolu')) {
+            errorCode = 'BILLING';
+        } else if (mappedMessage.includes('Geçersiz API anahtarı')) {
+            errorCode = 'API_KEY';
+        } else if (mappedMessage.includes('Çok fazla istek')) {
+            errorCode = 'RATE_LIMIT';
+        } else if ((error?.message || '').toLowerCase().includes('network')) {
+            errorCode = 'NETWORK';
+        }
         return {
             imageUrl: '',
             success: false,
-            error: mapRenderErrorMessage(typeof rawError === 'string' ? rawError : JSON.stringify(rawError)),
+            error: mappedMessage,
+            errorCode,
         };
     }
 }

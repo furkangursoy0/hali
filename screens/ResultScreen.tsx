@@ -52,11 +52,6 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
 
-    const isLimitErrorMessage = (message: string) => {
-        const normalized = (message || '').toLowerCase();
-        return normalized.includes('limit') || normalized.includes('quota') || normalized.includes('kredi');
-    };
-
     useEffect(() => {
         // Cycle loading messages
         const interval = setInterval(() => {
@@ -91,12 +86,12 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
             } else {
                 const nextErrorMessage = result.error || 'Bilinmeyen hata';
                 setErrorMessage(nextErrorMessage);
-                setStatus(isLimitErrorMessage(nextErrorMessage) ? 'limit' : 'error');
+                setStatus(result.errorCode === 'RENDER_LIMIT' ? 'limit' : 'error');
             }
         } catch (err: any) {
             const nextErrorMessage = err.message || 'Bir hata oluştu';
             setErrorMessage(nextErrorMessage);
-            setStatus(isLimitErrorMessage(nextErrorMessage) ? 'limit' : 'error');
+            setStatus('error');
         }
     };
 

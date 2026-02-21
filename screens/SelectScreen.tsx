@@ -23,6 +23,8 @@ import { useUsageLimit } from '../hooks/useUsageLimit';
 
 const isWeb = Platform.OS === 'web';
 const CARPET_IMAGE_RATIO = 1.35;
+const WEB_PAGE_SIZE = 60;
+const MOBILE_PAGE_SIZE = 40;
 
 function normalizeText(value: string) {
     return value
@@ -83,6 +85,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [openDropdown, setOpenDropdown] = useState<'brand' | 'collection' | null>(null);
     const [isSearchFocused, setIsSearchFocused] = useState(false);
     const [showLimitModal, setShowLimitModal] = useState(false);
+    const [visibleCount, setVisibleCount] = useState(isWeb ? WEB_PAGE_SIZE : MOBILE_PAGE_SIZE);
     const { remaining, limit, loading: limitLoading, error: limitError, consumeOne, isLimitReached } = useUsageLimit();
 
     useEffect(() => {
@@ -143,6 +146,22 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             .sort((a, b) => b.score - a.score)
             .map(entry => entry.carpet);
     }, [selectedBrand, selectedCollection, searchQuery]);
+
+    useEffect(() => {
+        setVisibleCount(isWeb ? WEB_PAGE_SIZE : MOBILE_PAGE_SIZE);
+    }, [selectedBrand, selectedCollection, searchQuery]);
+
+    const visibleCarpets = useMemo(
+        () => filteredCarpets.slice(0, visibleCount),
+        [filteredCarpets, visibleCount]
+    );
+
+    const hasMoreCarpets = visibleCarpets.length < filteredCarpets.length;
+    const loadMoreCarpets = () => {
+        if (!hasMoreCarpets) return;
+        const step = isWeb ? WEB_PAGE_SIZE : MOBILE_PAGE_SIZE;
+        setVisibleCount((prev) => Math.min(prev + step, filteredCarpets.length));
+    };
 
     const handlePlace = async (mode: 'preview' | 'normal') => {
         if (!selectedCarpet) {
@@ -345,8 +364,8 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     if (isWeb) {
         const { cols, cardSize } = layout;
         const rows: Carpet[][] = [];
-        for (let i = 0; i < filteredCarpets.length; i += cols) {
-            rows.push(filteredCarpets.slice(i, i + cols));
+        for (let i = 0; i < visibleCarpets.length; i += cols) {
+            rows.push(visibleCarpets.slice(i, i + cols));
         }
 
         return (
@@ -398,6 +417,11 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                             <Text style={styles.emptySubtext}>Farklı filtre veya arama terimi deneyin</Text>
                         </View>
                     )}
+                    {hasMoreCarpets && (
+                        <Pressable style={({ hovered }: any) => [styles.loadMoreBtn, hovered && styles.loadMoreBtnHover]} onPress={loadMoreCarpets}>
+                            <Text style={styles.loadMoreBtnText}>Daha fazla halı yükle</Text>
+                        </Pressable>
+                    )}
                 </ScrollView>
 
                 {/* Bottom: always visible action bar */}
@@ -442,19 +466,32 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             <FilterBar />
             <ResultsText />
             <FlatList
-                data={filteredCarpets}
+                data={visibleCarpets}
                 renderItem={({ item }) => renderCarpetCard(item)}
                 keyExtractor={item => `${item.brand}_${item.image}`}
                 numColumns={2}
                 columnWrapperStyle={styles.mobileRow}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
+                initialNumToRender={8}
+                maxToRenderPerBatch={8}
+                windowSize={7}
+                removeClippedSubviews
+                onEndReachedThreshold={0.4}
+                onEndReached={loadMoreCarpets}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         <Text style={styles.emptyIcon}>🔎</Text>
                         <Text style={styles.emptyText}>Halı bulunamadı</Text>
                         <Text style={styles.emptySubtext}>Farklı filtre deneyin</Text>
                     </View>
+                }
+                ListFooterComponent={
+                    hasMoreCarpets ? (
+                        <Pressable style={styles.mobileLoadMoreBtn} onPress={loadMoreCarpets}>
+                            <Text style={styles.mobileLoadMoreText}>Daha fazla halı yükle</Text>
+                        </Pressable>
+                    ) : null
                 }
             />
             <View style={styles.mobileBottomBar}>
@@ -609,6 +646,41 @@ const styles = StyleSheet.create({
 
     listContent: { paddingHorizontal: SPACING.md, paddingBottom: 130 },
     mobileRow: { justifyContent: 'space-between', marginBottom: SPACING.sm },
+    loadMoreBtn: {
+        marginTop: SPACING.sm,
+        marginBottom: SPACING.sm,
+        alignSelf: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.surface,
+        borderRadius: RADIUS.lg,
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.sm,
+    },
+    loadMoreBtnHover: {
+        borderColor: '#4A4A4A',
+    },
+    loadMoreBtnText: {
+        color: COLORS.textSecondary,
+        fontSize: 13,
+        fontWeight: '700',
+    },
+    mobileLoadMoreBtn: {
+        marginTop: SPACING.sm,
+        marginBottom: SPACING.md,
+        alignSelf: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.surface,
+        borderRadius: RADIUS.lg,
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.sm,
+    },
+    mobileLoadMoreText: {
+        color: COLORS.textSecondary,
+        fontSize: 13,
+        fontWeight: '700',
+    },
 
     carpetCard: {
         backgroundColor: COLORS.surface,
