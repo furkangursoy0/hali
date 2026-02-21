@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import { DEMO_LOGIN } from '../constants/auth';
+import axios from 'axios';
+import { API_BASE_URL } from '../constants/env';
 
 export type UserRole = 'ADMIN' | 'STAFF';
 
@@ -34,7 +35,7 @@ interface AuthContextValue {
   isLoggedIn: boolean;
   isAdmin: boolean;
   users: ManagedUser[];
-  signIn: (email: string, password: string) => { ok: true } | { ok: false; message: string };
+  signIn: (email: string, password: string) => Promise<{ ok: true } | { ok: false; message: string }>;
   signOut: () => void;
   createUser: (input: CreateUserInput) => { ok: true } | { ok: false; message: string };
   updateUserPassword: (userId: string, newPassword: string) => { ok: true } | { ok: false; message: string };
@@ -44,16 +45,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
-const initialAdmin: ManagedUser = {
-  id: 'usr_admin_1',
-  fullName: DEMO_LOGIN.fullName,
-  email: DEMO_LOGIN.email,
-  password: DEMO_LOGIN.password,
-  role: DEMO_LOGIN.role,
-  credit: DEMO_LOGIN.credit,
-  createdAt: new Date().toISOString(),
-};
 
 function sanitizeUser(user: ManagedUser): AuthUser {
   return {
@@ -66,24 +57,49 @@ function sanitizeUser(user: ManagedUser): AuthUser {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [users, setUsers] = useState<ManagedUser[]>([initialAdmin]);
+  const [users, setUsers] = useState<ManagedUser[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
-  const signIn = (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     const normalizedEmail = email.trim().toLowerCase();
-    const matched = users.find(
-      (u) => u.email.trim().toLowerCase() === normalizedEmail && u.password === password
-    );
 
-    if (!matched) {
-      return { ok: false as const, message: 'E-posta veya şifre hatalı.' };
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+        email: normalizedEmail,
+        password,
+      });
+
+      const token = String(response.data?.token || '');
+      const apiUser = response.data?.user;
+      if (!token || !apiUser?.id) {
+        return { ok: false as const, message: 'Sunucu yaniti gecersiz.' };
+      }
+
+      setAuthToken(token);
+      axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+      setUser({
+        id: String(apiUser.id),
+        fullName: String(apiUser.fullName || ''),
+        email: String(apiUser.email || normalizedEmail),
+        role: apiUser.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
+        credit: Number(apiUser.credit || 0),
+      });
+      return { ok: true as const };
+    } catch (error: any) {
+      const apiMessage = error?.response?.data?.error;
+      if (apiMessage) {
+        return { ok: false as const, message: String(apiMessage) };
+      }
+      return { ok: false as const, message: 'Backend baglantisi kurulamadi.' };
     }
-
-    setUser(sanitizeUser(matched));
-    return { ok: true as const };
   };
 
-  const signOut = () => setUser(null);
+  const signOut = () => {
+    setUser(null);
+    setAuthToken(null);
+    delete axios.defaults.headers.common.Authorization;
+  };
 
   const createUser = (input: CreateUserInput) => {
     const fullName = input.fullName.trim();
@@ -163,10 +179,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteUser = (userId: string) => {
-    if (userId === initialAdmin.id) {
-      return { ok: false as const, message: 'Varsayılan admin silinemez.' };
-    }
-
     const exists = users.some((u) => u.id === userId);
     if (!exists) {
       return { ok: false as const, message: 'Kullanıcı bulunamadı.' };

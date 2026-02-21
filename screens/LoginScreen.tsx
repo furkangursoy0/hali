@@ -10,7 +10,6 @@ import {
   Platform,
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
-import { DEMO_LOGIN } from '../constants/auth';
 import { useAuth } from '../contexts/AuthContext';
 
 const isWeb = Platform.OS === 'web';
@@ -25,7 +24,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [focused, setFocused] = useState<'email' | 'password' | null>(null);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const e = email.trim();
     const p = password.trim();
 
@@ -37,9 +36,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       Alert.alert('Geçersiz E-posta', 'Lütfen geçerli bir e-posta girin.');
       return;
     }
-    const result = signIn(e, p);
+    const result = await signIn(e, p);
     if (!result.ok) {
-      Alert.alert('Giriş başarısız', `${result.message}\nDemo admin: ${DEMO_LOGIN.email} / ${DEMO_LOGIN.password}`);
+      Alert.alert('Giriş başarısız', result.message);
       return;
     }
 
@@ -93,16 +92,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           <Pressable style={({ hovered }: any) => [styles.loginBtn, hovered && styles.loginBtnHover]} onPress={handleLogin}>
             <Text style={styles.loginBtnText}>Giriş Yap</Text>
           </Pressable>
-          <Pressable
-            style={({ hovered }: any) => [styles.demoBtn, hovered && styles.demoBtnHover]}
-            onPress={() => {
-              setEmail(DEMO_LOGIN.email);
-              setPassword(DEMO_LOGIN.password);
-            }}
-          >
-            <Text style={styles.demoBtnText}>Demo bilgileri doldur</Text>
-          </Pressable>
-          <Text style={styles.demoHint}>Demo: {DEMO_LOGIN.email} / {DEMO_LOGIN.password}</Text>
         </View>
       </View>
     </View>
@@ -203,28 +192,5 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: '700',
     fontSize: 16,
-  },
-  demoBtn: {
-    marginTop: SPACING.xs,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surfaceElevated,
-    paddingVertical: SPACING.sm + 2,
-    alignItems: 'center',
-  },
-  demoBtnHover: {
-    borderColor: '#3A3A3A',
-  },
-  demoBtnText: {
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  demoHint: {
-    color: COLORS.textMuted,
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: SPACING.xs,
   },
 });
