@@ -37,11 +37,12 @@ interface AuthContextValue {
   users: ManagedUser[];
   signIn: (email: string, password: string) => Promise<{ ok: true } | { ok: false; message: string }>;
   signOut: () => void;
-  createUser: (input: CreateUserInput) => { ok: true } | { ok: false; message: string };
-  updateUserPassword: (userId: string, newPassword: string) => { ok: true } | { ok: false; message: string };
-  updateUserCredit: (userId: string, credit: number) => { ok: true } | { ok: false; message: string };
-  consumeCurrentUserCredit: (amount?: number) => { ok: true; remaining: number } | { ok: false; message: string };
-  deleteUser: (userId: string) => { ok: true } | { ok: false; message: string };
+  createUser: (input: CreateUserInput) => Promise<{ ok: true } | { ok: false; message: string }>;
+  updateUserPassword: (userId: string, newPassword: string) => Promise<{ ok: true } | { ok: false; message: string }>;
+  updateUserCredit: (userId: string, credit: number) => Promise<{ ok: true } | { ok: false; message: string }>;
+  deleteUser: (userId: string) => Promise<{ ok: true } | { ok: false; message: string }>;
+  refreshCurrentUser: () => Promise<void>;
+  syncCurrentUserCredit: (credit: number) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -56,10 +57,66 @@ function sanitizeUser(user: ManagedUser): AuthUser {
   };
 }
 
+function toManagedUser(input: any): ManagedUser {
+  return {
+    id: String(input?.id || ''),
+    fullName: String(input?.fullName || ''),
+    email: String(input?.email || ''),
+    password: '',
+    role: input?.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
+    credit: Number(input?.credit || 0),
+    createdAt: String(input?.createdAt || new Date().toISOString()),
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  const loadAdminUsers = async () => {
+    try {
+      if (!axios.defaults.headers.common.Authorization) return;
+      const response = await axios.get(`${API_BASE_URL}/admin/users`);
+      const list = Array.isArray(response.data) ? response.data : [];
+      setUsers(list.map(toManagedUser));
+    } catch (error: any) {
+      if (error?.response?.status === 403) {
+        setUsers([]);
+      }
+    }
+  };
+
+  const refreshCurrentUser = async () => {
+    try {
+      if (!axios.defaults.headers.common.Authorization) return;
+      const response = await axios.get(`${API_BASE_URL}/auth/me`);
+      const apiUser = response.data;
+      setUser({
+        id: String(apiUser?.id || ''),
+        fullName: String(apiUser?.fullName || ''),
+        email: String(apiUser?.email || ''),
+        role: apiUser?.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
+        credit: Number(apiUser?.credit || 0),
+      });
+    } catch {
+      // session invalid or backend unavailable; keep current state.
+    }
+  };
+
+  const syncCurrentUserCredit = (credit: number) => {
+    const safeCredit = Math.max(0, Math.floor(Number(credit || 0)));
+    let currentUserId: string | null = null;
+    setUser((prev) => {
+      if (!prev) return prev;
+      currentUserId = prev.id;
+      if (prev.credit === safeCredit) return prev;
+      return { ...prev, credit: safeCredit };
+    });
+    setUsers((prev) => {
+      if (!currentUserId) return prev;
+      return prev.map((item) => (item.id === currentUserId ? { ...item, credit: safeCredit } : item));
+    });
+  };
 
   const signIn = async (email: string, password: string) => {
     const normalizedEmail = email.trim().toLowerCase();
@@ -76,15 +133,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { ok: false as const, message: 'Sunucu yaniti gecersiz.' };
       }
 
-      setAuthToken(token);
       axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-      setUser({
+      const nextUser = {
         id: String(apiUser.id),
         fullName: String(apiUser.fullName || ''),
         email: String(apiUser.email || normalizedEmail),
         role: apiUser.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
         credit: Number(apiUser.credit || 0),
-      });
+      } as AuthUser;
+      setUser(nextUser);
+      if (nextUser.role === 'ADMIN') {
+        await loadAdminUsers();
+      } else {
+        setUsers([]);
+      }
       return { ok: true as const };
     } catch (error: any) {
       const apiMessage = error?.response?.data?.error;
@@ -97,11 +159,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = () => {
     setUser(null);
-    setAuthToken(null);
+    setUsers([]);
     delete axios.defaults.headers.common.Authorization;
   };
 
-  const createUser = (input: CreateUserInput) => {
+  const createUser = async (input: CreateUserInput) => {
     const fullName = input.fullName.trim();
     const email = input.email.trim().toLowerCase();
     const password = input.password;
@@ -115,105 +177,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (password.length < 6) {
       return { ok: false as const, message: 'Şifre en az 6 karakter olmalı.' };
     }
-    if (users.some((u) => u.email.trim().toLowerCase() === email)) {
-      return { ok: false as const, message: 'Bu e-posta zaten kayıtlı.' };
+    try {
+      const response = await axios.post(`${API_BASE_URL}/admin/users`, {
+        fullName,
+        email,
+        password,
+        role: input.role,
+        credit: Math.max(0, Math.floor(input.credit || 0)),
+      });
+      const created = toManagedUser(response.data);
+      setUsers((prev) => [created, ...prev]);
+      return { ok: true as const };
+    } catch (error: any) {
+      const message = error?.response?.data?.error || 'Kullanıcı oluşturulamadı.';
+      return { ok: false as const, message: String(message) };
     }
-
-    const nextUser: ManagedUser = {
-      id: `usr_${Date.now()}`,
-      fullName,
-      email,
-      password,
-      role: input.role,
-      credit: Math.max(0, Math.floor(input.credit || 0)),
-      createdAt: new Date().toISOString(),
-    };
-
-    setUsers((prev) => [nextUser, ...prev]);
-    return { ok: true as const };
   };
 
-  const updateUserPassword = (userId: string, newPassword: string) => {
+  const updateUserPassword = async (userId: string, newPassword: string) => {
     if (!newPassword || newPassword.length < 6) {
       return { ok: false as const, message: 'Yeni şifre en az 6 karakter olmalı.' };
     }
 
-    let updated = false;
-    setUsers((prev) =>
-      prev.map((item) => {
-        if (item.id !== userId) return item;
-        updated = true;
-        return { ...item, password: newPassword };
-      })
-    );
-
-    if (!updated) {
-      return { ok: false as const, message: 'Kullanıcı bulunamadı.' };
-    }
-
-    return { ok: true as const };
-  };
-
-  const updateUserCredit = (userId: string, credit: number) => {
-    const safeCredit = Math.max(0, Math.floor(credit));
-    let updatedUser: ManagedUser | null = null;
-
-    setUsers((prev) =>
-      prev.map((item) => {
-        if (item.id !== userId) return item;
-        const next = { ...item, credit: safeCredit };
-        updatedUser = next;
-        return next;
-      })
-    );
-
-    if (!updatedUser && user?.id === userId) {
-      setUser({ ...user, credit: safeCredit });
+    try {
+      await axios.patch(`${API_BASE_URL}/admin/users/${userId}/password`, { password: newPassword });
       return { ok: true as const };
+    } catch (error: any) {
+      const message = error?.response?.data?.error || 'Şifre güncellenemedi.';
+      return { ok: false as const, message: String(message) };
     }
-
-    if (!updatedUser) {
-      return { ok: false as const, message: 'Kullanıcı bulunamadı.' };
-    }
-
-    if (user?.id === userId) {
-      setUser(sanitizeUser(updatedUser));
-    }
-
-    return { ok: true as const };
   };
 
-  const deleteUser = (userId: string) => {
-    const exists = users.some((u) => u.id === userId);
-    if (!exists) {
-      return { ok: false as const, message: 'Kullanıcı bulunamadı.' };
+  const updateUserCredit = async (userId: string, credit: number) => {
+    const safeCredit = Math.max(0, Math.floor(credit));
+
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/admin/users/${userId}/credit`, {
+        credit: safeCredit,
+      });
+      const updatedCredit = Number(response?.data?.credit ?? safeCredit);
+      setUsers((prev) =>
+        prev.map((item) => (item.id === userId ? { ...item, credit: updatedCredit } : item))
+      );
+      if (user?.id === userId) {
+        syncCurrentUserCredit(updatedCredit);
+      }
+      return { ok: true as const };
+    } catch (error: any) {
+      const message = error?.response?.data?.error || 'Kredi güncellenemedi.';
+      return { ok: false as const, message: String(message) };
     }
-
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-
-    if (user?.id === userId) {
-      setUser(null);
-    }
-
-    return { ok: true as const };
   };
 
-  const consumeCurrentUserCredit = (amount: number = 1) => {
-    if (!user) {
-      return { ok: false as const, message: 'Kullanıcı oturumu yok.' };
+  const deleteUser = async (userId: string) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/admin/users/${userId}`);
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      if (user?.id === userId) {
+        signOut();
+      }
+      return { ok: true as const };
+    } catch (error: any) {
+      const message = error?.response?.data?.error || 'Kullanıcı silinemedi.';
+      return { ok: false as const, message: String(message) };
     }
-    const safeAmount = Math.max(1, Math.floor(amount));
-    if (user.credit < safeAmount) {
-      return { ok: false as const, message: 'Yetersiz kredi.' };
-    }
-
-    const nextCredit = user.credit - safeAmount;
-    const updateResult = updateUserCredit(user.id, nextCredit);
-    if (!updateResult.ok) {
-      return { ok: false as const, message: updateResult.message };
-    }
-
-    return { ok: true as const, remaining: nextCredit };
   };
 
   const value = useMemo(
@@ -227,8 +254,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       createUser,
       updateUserPassword,
       updateUserCredit,
-      consumeCurrentUserCredit,
       deleteUser,
+      refreshCurrentUser,
+      syncCurrentUserCredit,
     }),
     [user, users]
   );

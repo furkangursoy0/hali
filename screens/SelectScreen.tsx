@@ -20,6 +20,7 @@ import UsageLimitBadge from '../components/UsageLimitBadge';
 import LimitReachedModal from '../components/LimitReachedModal';
 import { useUsageLimit } from '../hooks/useUsageLimit';
 import { getCarpetThumbnailUrl } from '../services/carpet-image';
+import { useAuth } from '../contexts/AuthContext';
 
 const isWeb = Platform.OS === 'web';
 const CARPET_IMAGE_RATIO = 1.35;
@@ -79,6 +80,7 @@ const ALL = 'Tümü';
 
 export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const { roomImageUri } = route.params;
+    const { isLoggedIn } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedBrand, setSelectedBrand] = useState<string>(ALL);
     const [selectedCollection, setSelectedCollection] = useState<string>(ALL);
@@ -176,6 +178,13 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     };
 
     const handlePlace = async (mode: 'preview' | 'normal') => {
+        if (!isLoggedIn) {
+            Alert.alert('Giriş Gerekli', 'Render alabilmek için önce giriş yapmalısınız.', [
+                { text: 'İptal', style: 'cancel' },
+                { text: 'Giriş Yap', onPress: () => navigation.navigate('Login') },
+            ]);
+            return;
+        }
         if (!selectedCarpet) {
             Alert.alert('Halı Seçin', 'Lütfen önce bir halı seçin.');
             return;

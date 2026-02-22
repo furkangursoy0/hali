@@ -24,9 +24,9 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     return [...users].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [users]);
 
-  const handleCreateUser = () => {
+  const handleCreateUser = async () => {
     const parsedCredit = Number(credit);
-    const result = createUser({
+    const result = await createUser({
       fullName,
       email,
       password,
@@ -47,9 +47,9 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     Alert.alert('Başarılı', 'Kullanıcı eklendi.');
   };
 
-  const handlePasswordUpdate = (userId: string) => {
+  const handlePasswordUpdate = async (userId: string) => {
     const nextPassword = (passwordDrafts[userId] || '').trim();
-    const result = updateUserPassword(userId, nextPassword);
+    const result = await updateUserPassword(userId, nextPassword);
     if (!result.ok) {
       Alert.alert('Hata', result.message);
       return;
@@ -59,9 +59,9 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     Alert.alert('Başarılı', 'Şifre güncellendi.');
   };
 
-  const handleCreditUpdate = (userId: string) => {
+  const handleCreditUpdate = async (userId: string) => {
     const nextCredit = Number(creditDrafts[userId] || '0');
-    const result = updateUserCredit(userId, Number.isFinite(nextCredit) ? nextCredit : 0);
+    const result = await updateUserCredit(userId, Number.isFinite(nextCredit) ? nextCredit : 0);
     if (!result.ok) {
       Alert.alert('Hata', result.message);
       return;
@@ -70,8 +70,8 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     Alert.alert('Başarılı', 'Kredi güncellendi.');
   };
 
-  const handleDelete = (userId: string) => {
-    const result = deleteUser(userId);
+  const handleDelete = async (userId: string) => {
+    const result = await deleteUser(userId);
     if (!result.ok) {
       Alert.alert('Hata', result.message);
       return;
@@ -164,7 +164,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
                 <View style={styles.roleChip}><Text style={styles.roleChipText}>{item.role}</Text></View>
               </View>
 
-              <Text style={styles.userMeta}>Aktif Şifre: {item.password}</Text>
+              <Text style={styles.userMeta}>Şifre: Güvenlik nedeniyle gösterilmez</Text>
               <Text style={styles.userMeta}>Kredi: {item.credit}</Text>
 
               <TextInput

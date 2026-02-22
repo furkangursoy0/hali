@@ -73,7 +73,7 @@ Main frontend variables:
 EXPO_PUBLIC_APP_ENV=development
 EXPO_PUBLIC_API_BASE_URL=http://YOUR_BACKEND_HOST:8787
 EXPO_PUBLIC_DAILY_RENDER_LIMIT=20
-EXPO_PUBLIC_USE_BACKEND_LIMIT=false
+EXPO_PUBLIC_USE_BACKEND_LIMIT=true
 EXPO_PUBLIC_STORAGE_MODE=mock
 EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=
 EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=
@@ -84,10 +84,13 @@ EXPO_PUBLIC_CARPET_THUMB_CDN_BASE=
 Notes:
 
 - `EXPO_PUBLIC_API_BASE_URL` points to backend proxy.
-- `EXPO_PUBLIC_DAILY_RENDER_LIMIT` currently drives frontend mock limit (backend-ready hook exists).
-- `EXPO_PUBLIC_USE_BACKEND_LIMIT=true` yaparsan adapter backend endpointlerine gecer:
+- `EXPO_PUBLIC_DAILY_RENDER_LIMIT` sadece login olmayan fallback akista kullanilir.
+- `EXPO_PUBLIC_USE_BACKEND_LIMIT=true` olmali. Adapter backend endpointlerine gecer:
   - `GET /api/usage`
   - `POST /api/usage/consume`
+- `/api/render` endpointi artik login gerektirir (auth zorunlu).
+- Contact form backend'e kaydedilir:
+  - `POST /contact`
 - Contract dokumani: `docs/faz5-limit-api-contract.md`
 - Bulut gorsel modu:
   - `EXPO_PUBLIC_STORAGE_MODE=mock` (backendsiz local)

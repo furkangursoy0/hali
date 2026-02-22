@@ -6,7 +6,7 @@ export interface PlacementResult {
     imageUrl: string;
     success: boolean;
     error?: string;
-    errorCode?: 'RENDER_LIMIT' | 'BILLING' | 'API_KEY' | 'RATE_LIMIT' | 'NETWORK' | 'UNKNOWN';
+    errorCode?: 'AUTH' | 'RENDER_LIMIT' | 'BILLING' | 'API_KEY' | 'RATE_LIMIT' | 'NETWORK' | 'UNKNOWN';
 }
 
 function mapRenderErrorMessage(raw: string): string {
@@ -19,6 +19,12 @@ function mapRenderErrorMessage(raw: string): string {
     }
     if (msg.includes('rate limit')) {
         return 'Çok fazla istek gönderildi. Biraz bekleyip tekrar deneyin.';
+    }
+    if (msg.includes('timeout') || msg.includes('time out') || msg.includes('aborted')) {
+        return 'Sunucu yanıt süresi aşıldı. Lütfen tekrar deneyin.';
+    }
+    if (msg.includes('network') || msg.includes('failed to fetch') || msg.includes('ecconnreset')) {
+        return 'Ağ bağlantısı sorunu oluştu. İnterneti kontrol edip tekrar deneyin.';
     }
     return raw || 'Bilinmeyen hata';
 }
@@ -112,19 +118,28 @@ export async function placeCarperInRoom(
         let errorCode: PlacementResult['errorCode'] = 'UNKNOWN';
         if (backendCode === 'LIMIT_REACHED' || status === 429) {
             errorCode = 'RENDER_LIMIT';
+        } else if (status === 401) {
+            errorCode = 'AUTH';
         } else if (mappedMessage.includes('OpenAI kredi limiti dolu')) {
             errorCode = 'BILLING';
         } else if (mappedMessage.includes('Geçersiz API anahtarı')) {
             errorCode = 'API_KEY';
         } else if (mappedMessage.includes('Çok fazla istek')) {
             errorCode = 'RATE_LIMIT';
-        } else if ((error?.message || '').toLowerCase().includes('network')) {
+        } else if (error?.code === 'ECONNABORTED') {
+            errorCode = 'NETWORK';
+        } else if (
+            (error?.message || '').toLowerCase().includes('network') ||
+            (error?.message || '').toLowerCase().includes('fetch') ||
+            mappedMessage.includes('Ağ bağlantısı sorunu') ||
+            mappedMessage.includes('yanıt süresi aşıldı')
+        ) {
             errorCode = 'NETWORK';
         }
         return {
             imageUrl: '',
             success: false,
-            error: mappedMessage,
+            error: status === 401 ? 'Bu işlem için giriş yapmanız gerekiyor.' : mappedMessage,
             errorCode,
         };
     }

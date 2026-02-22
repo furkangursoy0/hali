@@ -113,11 +113,6 @@ async function requireAuth(req, res, next) {
   next();
 }
 
-async function optionalAuth(req, _res, next) {
-  req.user = await resolveUserFromRequest(req);
-  next();
-}
-
 function requireAdmin(req, res, next) {
   if (!req.user || req.user.role !== 'ADMIN') {
     return res.status(403).json({ error: 'Forbidden' });
@@ -224,6 +219,41 @@ app.get('/auth/me', requireAuth, async (req, res) => {
     role: req.user.role,
     credit: req.user.credit,
   });
+});
+
+app.post('/contact', async (req, res) => {
+  try {
+    const name = String(req.body?.name || '').trim();
+    const surname = String(req.body?.surname || '').trim();
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const phone = String(req.body?.phone || '').trim();
+
+    if (!name || !surname || !email || !phone) {
+      return res.status(400).json({ error: 'name, surname, email and phone are required.' });
+    }
+    if (!email.includes('@')) {
+      return res.status(400).json({ error: 'Invalid email.' });
+    }
+
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 10) {
+      return res.status(400).json({ error: 'Invalid phone.' });
+    }
+
+    const lead = await prisma.contactLead.create({
+      data: {
+        name,
+        surname,
+        email,
+        phone,
+      },
+    });
+
+    return res.status(201).json({ ok: true, id: lead.id });
+  } catch (error) {
+    console.error('/contact error:', error);
+    return res.status(500).json({ error: 'Failed to save contact request.' });
+  }
 });
 
 app.get('/api/usage', requireAuth, async (req, res) => {
@@ -454,7 +484,7 @@ app.get('/admin/renders', requireAuth, requireAdmin, async (req, res) => {
 
 app.post(
   '/api/render',
-  optionalAuth,
+  requireAuth,
   upload.fields([
     { name: 'roomImage', maxCount: 1 },
     { name: 'carpetImage', maxCount: 1 },
@@ -475,16 +505,14 @@ app.post(
         return res.status(400).json({ error: 'roomImage and carpetImage are required.' });
       }
 
-      if (req.user) {
-        const job = await prisma.renderJob.create({
-          data: {
-            userId: req.user.id,
-            mode,
-            status: 'processing',
-          },
-        });
-        renderJobId = job.id;
-      }
+      const job = await prisma.renderJob.create({
+        data: {
+          userId: req.user.id,
+          mode,
+          status: 'processing',
+        },
+      });
+      renderJobId = job.id;
 
       const formData = new FormData();
       formData.append('model', 'gpt-image-1');
@@ -509,41 +537,39 @@ app.post(
         timeout: 120000,
       });
 
-      if (req.user) {
-        const consume = await prisma.user.updateMany({
-          where: {
-            id: req.user.id,
-            credit: { gte: 1 },
-          },
-          data: {
-            credit: { decrement: 1 },
-          },
-        });
+      const consume = await prisma.user.updateMany({
+        where: {
+          id: req.user.id,
+          credit: { gte: 1 },
+        },
+        data: {
+          credit: { decrement: 1 },
+        },
+      });
 
-        if (consume.count === 0) {
-          if (renderJobId) {
-            await prisma.renderJob.update({
-              where: { id: renderJobId },
-              data: { status: 'failed', error: 'LIMIT_REACHED' },
-            });
-          }
-          return res.status(429).json({ code: 'LIMIT_REACHED', error: 'Daily limit reached.' });
-        }
-
-        await prisma.$transaction([
-          prisma.creditLog.create({
-            data: {
-              userId: req.user.id,
-              delta: -1,
-              reason: 'render',
-            },
-          }),
-          prisma.renderJob.update({
+      if (consume.count === 0) {
+        if (renderJobId) {
+          await prisma.renderJob.update({
             where: { id: renderJobId },
-            data: { status: 'success' },
-          }),
-        ]);
+            data: { status: 'failed', error: 'LIMIT_REACHED' },
+          });
+        }
+        return res.status(429).json({ code: 'LIMIT_REACHED', error: 'Daily limit reached.' });
       }
+
+      await prisma.$transaction([
+        prisma.creditLog.create({
+          data: {
+            userId: req.user.id,
+            delta: -1,
+            reason: 'render',
+          },
+        }),
+        prisma.renderJob.update({
+          where: { id: renderJobId },
+          data: { status: 'success' },
+        }),
+      ]);
 
       const imageData = response?.data?.data?.[0];
       if (!imageData) {

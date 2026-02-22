@@ -32,6 +32,17 @@ model User {
   creditLogs   CreditLog[]
 }
 
+model ContactLead {
+  id        String   @id @default(cuid())
+  name      String
+  surname   String
+  email     String
+  phone     String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model RenderJob {
   id        String       @id @default(cuid())
   userId    String?

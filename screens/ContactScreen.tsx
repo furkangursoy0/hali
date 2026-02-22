@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, StatusBar, ScrollView, Alert } from 'react-native';
 import { COLORS, RADIUS, SPACING } from '../constants/theme';
+import axios from 'axios';
+import { API_BASE_URL } from '../constants/env';
 
 interface ContactScreenProps {
   navigation: any;
@@ -12,6 +14,7 @@ export default function ContactScreen({ navigation }: ContactScreenProps) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const validate = () => {
     if (!name.trim() || !surname.trim() || !email.trim() || !phone.trim()) {
@@ -30,9 +33,23 @@ export default function ContactScreen({ navigation }: ContactScreenProps) {
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
-    setSubmitted(true);
+    try {
+      setSubmitting(true);
+      await axios.post(`${API_BASE_URL}/contact`, {
+        name: name.trim(),
+        surname: surname.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+      });
+      setSubmitted(true);
+    } catch (error: any) {
+      const message = error?.response?.data?.error || 'Form gönderimi başarısız oldu.';
+      Alert.alert('Hata', String(message));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -67,8 +84,12 @@ export default function ContactScreen({ navigation }: ContactScreenProps) {
               onChangeText={setPhone}
               keyboardType="phone-pad"
             />
-            <Pressable style={({ hovered }: any) => [styles.submitBtn, hovered && styles.submitBtnHover]} onPress={handleSubmit}>
-              <Text style={styles.submitBtnText}>Formu Gönder</Text>
+            <Pressable
+              style={({ hovered }: any) => [styles.submitBtn, hovered && styles.submitBtnHover, submitting && styles.submitBtnDisabled]}
+              onPress={handleSubmit}
+              disabled={submitting}
+            >
+              <Text style={styles.submitBtnText}>{submitting ? 'Gönderiliyor...' : 'Formu Gönder'}</Text>
             </Pressable>
           </View>
         ) : (
@@ -142,6 +163,9 @@ const styles = StyleSheet.create({
   },
   submitBtnHover: {
     backgroundColor: COLORS.primaryLight,
+  },
+  submitBtnDisabled: {
+    opacity: 0.7,
   },
   submitBtnText: {
     color: COLORS.white,

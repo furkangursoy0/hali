@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
-import { placeCarperInRoom, PlacementMode } from '../services/openai';
+import { placeCarperInRoom, PlacementMode, PlacementResult } from '../services/openai';
 import { getStorageClient } from '../services/storage';
 import { getCarpetFullUrl, getCarpetThumbnailUrl } from '../services/carpet-image';
 
@@ -49,6 +49,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
     const [cloudStatus, setCloudStatus] = useState<CloudStatus>('idle');
     const [cloudErrorMessage, setCloudErrorMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState<string>('');
+    const [errorCode, setErrorCode] = useState<PlacementResult['errorCode']>('UNKNOWN');
     const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
 
     useEffect(() => {
@@ -69,11 +70,14 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
             setCloudStatus('idle');
             setCloudImageUrl('');
             setCloudErrorMessage('');
+            setErrorCode('UNKNOWN');
             if (!carpet?.imagePath) {
                 throw new Error('Seçilen halı görseli bulunamadı.');
             }
             const carpetUri = getCarpetFullUrl(carpet.imagePath);
-            const result = await placeCarperInRoom(roomImageUri, carpetUri, carpet.name, placementMode);
+            const result = await runRenderWithTimeout(
+                placeCarperInRoom(roomImageUri, carpetUri, carpet.name, placementMode)
+            );
 
             if (result.success && result.imageUrl) {
                 setResultImageUri(result.imageUrl);
@@ -82,11 +86,13 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
             } else {
                 const nextErrorMessage = result.error || 'Bilinmeyen hata';
                 setErrorMessage(nextErrorMessage);
+                setErrorCode(result.errorCode || 'UNKNOWN');
                 setStatus(result.errorCode === 'RENDER_LIMIT' ? 'limit' : 'error');
             }
         } catch (err: any) {
             const nextErrorMessage = err.message || 'Bir hata oluştu';
             setErrorMessage(nextErrorMessage);
+            setErrorCode('NETWORK');
             setStatus('error');
         }
     };
@@ -246,7 +252,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                 <View style={styles.errorContainer}>
                     <View style={styles.errorCard}>
                         <Text style={styles.errorIcon}>⚠️</Text>
-                        <Text style={styles.errorTitle}>Bir Hata Oluştu</Text>
+                        <Text style={styles.errorTitle}>{mapErrorTitle(errorCode)}</Text>
                         <Text style={styles.errorMessage}>{errorMessage}</Text>
                         <Pressable style={({ hovered }: any) => [styles.retryBtnLarge, hovered && styles.retryBtnLargeHover]} onPress={processImage}>
                             <Text style={styles.retryBtnLargeText}>🔄 Tekrar Dene</Text>
@@ -610,3 +616,39 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
 });
+    const mapErrorTitle = (code: PlacementResult['errorCode']) => {
+        switch (code) {
+            case 'AUTH':
+                return 'Giriş Gerekli';
+            case 'BILLING':
+                return 'OpenAI Billing Hatası';
+            case 'API_KEY':
+                return 'API Anahtarı Hatası';
+            case 'NETWORK':
+                return 'Bağlantı Hatası';
+            case 'RATE_LIMIT':
+                return 'İstek Limiti Aşıldı';
+            default:
+                return 'Bir Hata Oluştu';
+        }
+    };
+
+    const runRenderWithTimeout = async (
+        promise: Promise<PlacementResult>,
+        timeoutMs = 95000
+    ): Promise<PlacementResult> => {
+        let timer: any;
+        const timeoutPromise = new Promise<PlacementResult>((resolve) => {
+            timer = setTimeout(() => {
+                resolve({
+                    imageUrl: '',
+                    success: false,
+                    errorCode: 'NETWORK',
+                    error: 'İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.',
+                });
+            }, timeoutMs);
+        });
+        const result = await Promise.race([promise, timeoutPromise]);
+        clearTimeout(timer);
+        return result;
+    };
