@@ -15,11 +15,10 @@ import {
     Platform,
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
-import { Asset } from 'expo-asset';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { placeCarperInRoom, PlacementMode } from '../services/openai';
-import carpetImages from '../constants/carpet-images';
 import { getStorageClient } from '../services/storage';
+import { getCarpetFullUrl, getCarpetThumbnailUrl } from '../services/carpet-image';
 
 const { width, height } = Dimensions.get('window');
 
@@ -64,19 +63,16 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
         processImage();
     }, []);
 
-    const getCarpetLocalUri = async (imageKey: string): Promise<string> => {
-        const asset = Asset.fromModule(carpetImages[imageKey]);
-        await asset.downloadAsync();
-        return asset.localUri || asset.uri;
-    };
-
     const processImage = async () => {
         try {
             setStatus('loading');
             setCloudStatus('idle');
             setCloudImageUrl('');
             setCloudErrorMessage('');
-            const carpetUri = await getCarpetLocalUri(carpet.image);
+            if (!carpet?.imagePath) {
+                throw new Error('Seçilen halı görseli bulunamadı.');
+            }
+            const carpetUri = getCarpetFullUrl(carpet.imagePath);
             const result = await placeCarperInRoom(roomImageUri, carpetUri, carpet.name, placementMode);
 
             if (result.success && result.imageUrl) {
@@ -140,6 +136,10 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
         }
     };
 
+    const carpetThumbUri = carpet?.imagePath
+        ? getCarpetThumbnailUrl(carpet.imagePath, carpet.thumbPath, 320, 68)
+        : '';
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
@@ -165,7 +165,11 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                         <View style={styles.carpetPreviewRow}>
                             <Image source={{ uri: roomImageUri }} style={styles.previewThumb} resizeMode="cover" />
                             <Text style={styles.plusSign}>+</Text>
-                            <Image source={carpetImages[carpet.image]} style={styles.previewThumb} resizeMode="cover" />
+                            {carpetThumbUri ? (
+                                <Image source={{ uri: carpetThumbUri }} style={styles.previewThumb} resizeMode="cover" />
+                            ) : (
+                                <View style={[styles.previewThumb, styles.previewThumbFallback]} />
+                            )}
                             <Text style={styles.arrowSign}>→</Text>
                             <View style={styles.resultThumbPlaceholder}>
                                 <ActivityIndicator size="small" color={COLORS.primary} />
@@ -192,7 +196,11 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
 
                     {/* Carpet Info */}
                     <View style={styles.carpetInfoCard}>
-                        <Image source={carpetImages[carpet.image]} style={styles.carpetThumb} resizeMode="cover" />
+                        {carpetThumbUri ? (
+                            <Image source={{ uri: carpetThumbUri }} style={styles.carpetThumb} resizeMode="cover" />
+                        ) : (
+                            <View style={[styles.carpetThumb, styles.previewThumbFallback]} />
+                        )}
                         <View style={styles.carpetDetails}>
                             <View style={styles.carpetCodeBadge}>
                                 <Text style={styles.carpetCode}>{carpet.id}</Text>
@@ -354,6 +362,9 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: RADIUS.md,
+    },
+    previewThumbFallback: {
+        backgroundColor: COLORS.surfaceElevated,
     },
     plusSign: {
         color: COLORS.textSecondary,

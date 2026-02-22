@@ -16,10 +16,10 @@ import {
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import carpetsData from '../data/carpets.json';
-import carpetImages from '../constants/carpet-images';
 import UsageLimitBadge from '../components/UsageLimitBadge';
 import LimitReachedModal from '../components/LimitReachedModal';
 import { useUsageLimit } from '../hooks/useUsageLimit';
+import { getCarpetThumbnailUrl } from '../services/carpet-image';
 
 const isWeb = Platform.OS === 'web';
 const CARPET_IMAGE_RATIO = 1.35;
@@ -66,6 +66,8 @@ interface Carpet {
     size?: string;
     material?: string;
     image: string;
+    imagePath: string;
+    thumbPath?: string;
 }
 
 interface SelectScreenProps {
@@ -163,6 +165,16 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         setVisibleCount((prev) => Math.min(prev + step, filteredCarpets.length));
     };
 
+    const handleWebGridScroll = (event: any) => {
+        const nativeEvent = event?.nativeEvent;
+        if (!nativeEvent) return;
+        const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+        const distanceToBottom = contentSize.height - (layoutMeasurement.height + contentOffset.y);
+        if (distanceToBottom < 700) {
+            loadMoreCarpets();
+        }
+    };
+
     const handlePlace = async (mode: 'preview' | 'normal') => {
         if (!selectedCarpet) {
             Alert.alert('Halı Seçin', 'Lütfen önce bir halı seçin.');
@@ -183,7 +195,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const renderCarpetCard = (item: Carpet) => {
         const { cardSize } = layout;
         const isSelected = selectedCarpet?.id === item.id && selectedCarpet?.image === item.image;
-        const imgSource = carpetImages[item.image];
+        const thumbUri = item.imagePath ? getCarpetThumbnailUrl(item.imagePath, item.thumbPath) : '';
         return (
             <Pressable
                 key={`${item.brand}_${item.image}`}
@@ -196,8 +208,8 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 onPress={() => setSelectedCarpet(item)}
             >
                 <View style={[styles.imageFrame, { height: cardSize * CARPET_IMAGE_RATIO }]}>
-                    {imgSource ? (
-                        <Image source={imgSource} style={styles.carpetImage} resizeMode="contain" />
+                    {thumbUri ? (
+                        <Image source={{ uri: thumbUri }} style={styles.carpetImage} resizeMode="contain" />
                     ) : (
                         <View style={[styles.carpetImage, styles.noImage]}>
                             <Text style={styles.noImageText}>🖼️</Text>
@@ -338,11 +350,13 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 </View>
             );
         }
-        const imgSource = carpetImages[selectedCarpet.image];
+        const selectedThumbUri = selectedCarpet.imagePath
+            ? getCarpetThumbnailUrl(selectedCarpet.imagePath, selectedCarpet.thumbPath, 240, 70)
+            : '';
         return (
             <View style={styles.bottomBar}>
-                {imgSource && (
-                    <Image source={imgSource} style={styles.selectionThumb} resizeMode="cover" />
+                {selectedThumbUri && (
+                    <Image source={{ uri: selectedThumbUri }} style={styles.selectionThumb} resizeMode="cover" />
                 )}
                 <View style={styles.selectionInfo}>
                     <Text style={styles.selectionBrand}>{selectedCarpet.brand} · {selectedCarpet.collection}</Text>
@@ -404,6 +418,8 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     style={webStyles.gridScroll}
                     contentContainerStyle={[webStyles.gridContent, { paddingHorizontal: SPACING.md }]}
                     showsVerticalScrollIndicator={false}
+                    onScroll={handleWebGridScroll}
+                    scrollEventThrottle={100}
                 >
                     {rows.map((row, i) => (
                         <View key={i} style={webStyles.row}>

@@ -77,6 +77,8 @@ EXPO_PUBLIC_USE_BACKEND_LIMIT=false
 EXPO_PUBLIC_STORAGE_MODE=mock
 EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=
 EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=
+EXPO_PUBLIC_CARPET_CDN_BASE=https://cdn.jsdelivr.net/gh/furkangursoy0/hali@main/assets
+EXPO_PUBLIC_CARPET_THUMB_CDN_BASE=
 ```
 
 Notes:
@@ -94,6 +96,28 @@ Notes:
   - `EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME`
   - `EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET`
 - Storage adapter: `services/storage.ts`
+
+## Carpet Image Pipeline (thumb + full)
+
+- Liste ekrani `thumb` gorsel kullanir.
+- AI render istegi `full` gorsel kullanir (kalite korunur).
+
+Thumb dosyalarini uretmek icin:
+
+```bash
+npm run carpets:thumbs
+```
+
+Katalogu thumbPath alanlariyla tekrar uretmek icin:
+
+```bash
+npm run carpets:catalog
+```
+
+Not:
+
+- `EXPO_PUBLIC_CARPET_THUMB_CDN_BASE` bos ise sistem wsrv fallback ile thumb olusturur.
+- Gercek iki-dal (ayri thumb bucket/CDN) icin bu env'i doldur.
 
 ## Release Docs
 

@@ -87,6 +87,7 @@ function scanCarpets() {
                 material: '',
                 image: key,
                 imagePath: `carpets/${file}`,
+                thumbPath: `carpets-thumbs/${path.basename(file, path.extname(file))}.webp`,
             });
             imageKeys.push({ key, relativePath: `../assets/carpets/${file}` });
         });
@@ -122,6 +123,7 @@ function scanCarpets() {
                     material: '',
                     image: key,
                     imagePath: `carpets/${brand}/${file}`,
+                    thumbPath: `carpets-thumbs/${brand}/${path.basename(file, path.extname(file))}.webp`,
                 });
                 imageKeys.push({ key, relativePath: `../assets/carpets/${brand}/${file}` });
             });
@@ -144,6 +146,7 @@ function scanCarpets() {
                         material: '',
                         image: key,
                         imagePath: `carpets/${brand}/${collection}/${file}`,
+                        thumbPath: `carpets-thumbs/${brand}/${collection}/${path.basename(file, path.extname(file))}.webp`,
                     });
                     imageKeys.push({ key, relativePath: `../assets/carpets/${brand}/${collection}/${file}` });
                 });

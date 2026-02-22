@@ -24,8 +24,9 @@ function mapRenderErrorMessage(raw: string): string {
 }
 
 async function uriToBlob(uri: string, mimeType: string): Promise<Blob> {
-    if (Platform.OS === 'web') {
-        // Web: fetch directly works
+    const isRemote = /^https?:\/\//i.test(uri) || uri.startsWith('data:');
+    if (Platform.OS === 'web' || isRemote) {
+        // Web or remote URL: fetch directly works.
         const response = await fetch(uri);
         return response.blob();
     } else {
