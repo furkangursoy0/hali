@@ -64,12 +64,48 @@ Photorealistic result.`,
 };
 
 function getPasswordPolicyError(password) {
-  if (!password || password.length < 8) return 'Şifre en az 8 karakter olmalı.';
-  if (!/[A-Z]/.test(password)) return 'Şifre en az 1 büyük harf içermeli.';
-  if (!/[a-z]/.test(password)) return 'Şifre en az 1 küçük harf içermeli.';
-  if (!/[0-9]/.test(password)) return 'Şifre en az 1 rakam içermeli.';
-  if (!/[^A-Za-z0-9]/.test(password)) return 'Şifre en az 1 özel karakter içermeli.';
+  if (!password || password.length < 1) return 'Şifre boş olamaz.';
   return null;
+}
+
+function sanitizeUsername(input) {
+  return String(input || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[^a-z0-9._-]/g, '');
+}
+
+function deriveUsernameFromEmail(email) {
+  const local = String(email || '').split('@')[0] || '';
+  return sanitizeUsername(local);
+}
+
+function normalizeIdentity({ email, username }) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const normalizedUsername = sanitizeUsername(username);
+
+  if (normalizedEmail.includes('@')) {
+    return {
+      email: normalizedEmail,
+      username: deriveUsernameFromEmail(normalizedEmail),
+      from: 'email',
+    };
+  }
+
+  if (normalizedUsername) {
+    return {
+      email: `${normalizedUsername}@haliai.local`,
+      username: normalizedUsername,
+      from: 'username',
+    };
+  }
+
+  return {
+    email: '',
+    username: '',
+    from: 'none',
+  };
 }
 
 function signToken(user) {
@@ -139,12 +175,6 @@ async function ensureBootstrapAdmin() {
     return;
   }
 
-  const passwordError = getPasswordPolicyError(adminPassword);
-  if (passwordError) {
-    console.warn(`Bootstrap admin password invalid: ${passwordError}`);
-    return;
-  }
-
   const exists = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (exists) return;
 
@@ -177,21 +207,29 @@ app.post('/auth/login', async (req, res) => {
       return res.status(500).json({ error: 'JWT secret is not configured.' });
     }
 
-    const email = String(req.body?.email || '').trim().toLowerCase();
+    const identifier = String(req.body?.username || req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'email and password are required.' });
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'username/email and password are required.' });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const identity = normalizeIdentity({ email: identifier, username: identifier });
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identity.email },
+          ...(identifier.includes('@') ? [] : [{ email: identifier }]),
+        ],
+      },
+    });
     if (!user) {
-      return res.status(401).json({ error: 'E-posta veya şifre hatalı.' });
+      return res.status(401).json({ error: 'Kullanıcı adı/e-posta veya şifre hatalı.' });
     }
 
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) {
-      return res.status(401).json({ error: 'E-posta veya şifre hatalı.' });
+      return res.status(401).json({ error: 'Kullanıcı adı/e-posta veya şifre hatalı.' });
     }
 
     const token = signToken(user);
@@ -201,6 +239,7 @@ app.post('/auth/login', async (req, res) => {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
+        username: deriveUsernameFromEmail(user.email),
         role: user.role,
         credit: user.credit,
       },
@@ -216,6 +255,7 @@ app.get('/auth/me', requireAuth, async (req, res) => {
     id: req.user.id,
     fullName: req.user.fullName,
     email: req.user.email,
+    username: deriveUsernameFromEmail(req.user.email),
     role: req.user.role,
     credit: req.user.credit,
   });
@@ -321,6 +361,7 @@ app.get('/admin/users', requireAuth, requireAdmin, async (_req, res) => {
         id: u.id,
         fullName: u.fullName,
         email: u.email,
+        username: deriveUsernameFromEmail(u.email),
         role: u.role,
         credit: u.credit,
         createdAt: u.createdAt,
@@ -335,16 +376,15 @@ app.get('/admin/users', requireAuth, requireAdmin, async (_req, res) => {
 app.post('/admin/users', requireAuth, requireAdmin, async (req, res) => {
   try {
     const fullName = String(req.body?.fullName || '').trim();
-    const email = String(req.body?.email || '').trim().toLowerCase();
+    const rawEmail = String(req.body?.email || '').trim().toLowerCase();
+    const rawUsername = String(req.body?.username || '').trim();
+    const identity = normalizeIdentity({ email: rawEmail, username: rawUsername });
     const password = String(req.body?.password || '');
     const role = req.body?.role === 'ADMIN' ? 'ADMIN' : 'STAFF';
     const credit = Math.max(0, Math.floor(Number(req.body?.credit || 0)));
 
-    if (!fullName || !email || !password) {
-      return res.status(400).json({ error: 'fullName, email, password are required.' });
-    }
-    if (!email.includes('@')) {
-      return res.status(400).json({ error: 'Invalid email.' });
+    if (!fullName || !identity.email || !password) {
+      return res.status(400).json({ error: 'fullName, username/email, password are required.' });
     }
 
     const passwordError = getPasswordPolicyError(password);
@@ -355,20 +395,21 @@ app.post('/admin/users', requireAuth, requireAdmin, async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 12);
 
     const created = await prisma.user.create({
-      data: { fullName, email, passwordHash, role, credit },
+      data: { fullName, email: identity.email, passwordHash, role, credit },
     });
 
     return res.status(201).json({
       id: created.id,
       fullName: created.fullName,
       email: created.email,
+      username: deriveUsernameFromEmail(created.email),
       role: created.role,
       credit: created.credit,
       createdAt: created.createdAt,
     });
   } catch (error) {
     if (error?.code === 'P2002') {
-      return res.status(400).json({ error: 'Email already exists.' });
+      return res.status(400).json({ error: 'Username/email already exists.' });
     }
     console.error('/admin/users POST error:', error);
     return res.status(500).json({ error: 'Failed to create user.' });

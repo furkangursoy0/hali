@@ -12,21 +12,21 @@ export interface PlacementResult {
 function mapRenderErrorMessage(raw: string): string {
     const msg = (raw || '').toLowerCase();
     if (msg.includes('billing hard limit') || msg.includes('insufficient_quota')) {
-        return 'OpenAI kredi limiti dolu. Lütfen billing/kredi durumunu kontrol edin.';
+        return 'Servis kotasi dolu görünüyor. Lütfen daha sonra tekrar deneyin.';
     }
     if (msg.includes('invalid api key') || msg.includes('incorrect api key')) {
-        return 'Geçersiz API anahtarı. Backend .env dosyasını kontrol edin.';
+        return 'Servis yapılandırma hatası oluştu. Lütfen destek ekibiyle iletişime geçin.';
     }
     if (msg.includes('rate limit')) {
-        return 'Çok fazla istek gönderildi. Biraz bekleyip tekrar deneyin.';
+        return 'Kısa sürede çok fazla istek alındı. Lütfen 1-2 dakika sonra tekrar deneyin.';
     }
     if (msg.includes('timeout') || msg.includes('time out') || msg.includes('aborted')) {
-        return 'Sunucu yanıt süresi aşıldı. Lütfen tekrar deneyin.';
+        return 'İşlem beklenenden uzun sürdü. Lütfen tekrar deneyin.';
     }
     if (msg.includes('network') || msg.includes('failed to fetch') || msg.includes('ecconnreset')) {
         return 'Ağ bağlantısı sorunu oluştu. İnterneti kontrol edip tekrar deneyin.';
     }
-    return raw || 'Bilinmeyen hata';
+    return raw || 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
 }
 
 async function uriToBlob(uri: string, mimeType: string): Promise<Blob> {
@@ -120,11 +120,11 @@ export async function placeCarperInRoom(
             errorCode = 'RENDER_LIMIT';
         } else if (status === 401) {
             errorCode = 'AUTH';
-        } else if (mappedMessage.includes('OpenAI kredi limiti dolu')) {
+        } else if (mappedMessage.includes('Servis kotasi dolu')) {
             errorCode = 'BILLING';
-        } else if (mappedMessage.includes('Geçersiz API anahtarı')) {
+        } else if (mappedMessage.includes('Servis yapılandırma hatası')) {
             errorCode = 'API_KEY';
-        } else if (mappedMessage.includes('Çok fazla istek')) {
+        } else if (mappedMessage.includes('çok fazla istek') || mappedMessage.includes('Kısa sürede çok fazla istek')) {
             errorCode = 'RATE_LIMIT';
         } else if (error?.code === 'ECONNABORTED') {
             errorCode = 'NETWORK';

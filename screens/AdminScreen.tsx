@@ -13,7 +13,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
   const { user, isAdmin, users, createUser, updateUserPassword, updateUserCredit, deleteUser } = useAuth();
 
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [credit, setCredit] = useState('20');
   const [role, setRole] = useState<UserRole>('STAFF');
@@ -28,7 +28,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     const parsedCredit = Number(credit);
     const result = await createUser({
       fullName,
-      email,
+      username,
       password,
       role,
       credit: Number.isFinite(parsedCredit) ? parsedCredit : 0,
@@ -40,7 +40,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     }
 
     setFullName('');
-    setEmail('');
+    setUsername('');
     setPassword('');
     setCredit('20');
     setRole('STAFF');
@@ -108,18 +108,17 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
 
         <Text style={styles.title}>Admin Panel</Text>
         <Text style={styles.subtitle}>Kullanıcı oluştur, şifre belirle, kredi yönet.</Text>
-        <Text style={styles.adminMeta}>Giriş: {user?.fullName} ({user?.email})</Text>
+        <Text style={styles.adminMeta}>Giriş: {user?.fullName} ({user?.username || user?.email})</Text>
 
         <View style={styles.formCard}>
           <Text style={styles.sectionTitle}>Yeni Kullanıcı</Text>
           <TextInput style={styles.input} placeholder="Ad Soyad" placeholderTextColor={COLORS.textMuted} value={fullName} onChangeText={setFullName} />
           <TextInput
             style={styles.input}
-            placeholder="E-posta"
+            placeholder="Kullanıcı adı"
             placeholderTextColor={COLORS.textMuted}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
+            value={username}
+            onChangeText={setUsername}
             autoCapitalize="none"
           />
           <TextInput
@@ -159,7 +158,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
               <View style={styles.userTopRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.userName}>{item.fullName}</Text>
-                  <Text style={styles.userEmail}>{item.email}</Text>
+                  <Text style={styles.userEmail}>{item.username || item.email}</Text>
                 </View>
                 <View style={styles.roleChip}><Text style={styles.roleChipText}>{item.role}</Text></View>
               </View>

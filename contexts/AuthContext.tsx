@@ -8,6 +8,7 @@ export interface ManagedUser {
   id: string;
   fullName: string;
   email: string;
+  username: string;
   password: string;
   role: UserRole;
   credit: number;
@@ -18,13 +19,14 @@ export interface AuthUser {
   id: string;
   fullName: string;
   email: string;
+  username: string;
   role: UserRole;
   credit: number;
 }
 
 interface CreateUserInput {
   fullName: string;
-  email: string;
+  username: string;
   password: string;
   role: UserRole;
   credit: number;
@@ -52,6 +54,7 @@ function sanitizeUser(user: ManagedUser): AuthUser {
     id: user.id,
     fullName: user.fullName,
     email: user.email,
+    username: user.username || String(user.email || '').split('@')[0] || '',
     role: user.role,
     credit: user.credit,
   };
@@ -62,6 +65,7 @@ function toManagedUser(input: any): ManagedUser {
     id: String(input?.id || ''),
     fullName: String(input?.fullName || ''),
     email: String(input?.email || ''),
+    username: String(input?.username || String(input?.email || '').split('@')[0] || ''),
     password: '',
     role: input?.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
     credit: Number(input?.credit || 0),
@@ -95,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: String(apiUser?.id || ''),
         fullName: String(apiUser?.fullName || ''),
         email: String(apiUser?.email || ''),
+        username: String(apiUser?.username || String(apiUser?.email || '').split('@')[0] || ''),
         role: apiUser?.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
         credit: Number(apiUser?.credit || 0),
       });
@@ -119,11 +124,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const normalizedEmail = email.trim().toLowerCase();
+    const identifier = email.trim().toLowerCase();
 
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-        email: normalizedEmail,
+        email: identifier,
+        username: identifier,
         password,
       });
 
@@ -137,7 +143,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const nextUser = {
         id: String(apiUser.id),
         fullName: String(apiUser.fullName || ''),
-        email: String(apiUser.email || normalizedEmail),
+        email: String(apiUser.email || ''),
+        username: String(apiUser.username || String(apiUser.email || identifier).split('@')[0] || ''),
         role: apiUser.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
         credit: Number(apiUser.credit || 0),
       } as AuthUser;
@@ -165,22 +172,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const createUser = async (input: CreateUserInput) => {
     const fullName = input.fullName.trim();
-    const email = input.email.trim().toLowerCase();
+    const username = input.username.trim().toLowerCase();
     const password = input.password;
 
-    if (!fullName || !email || !password) {
-      return { ok: false as const, message: 'Ad soyad, e-posta ve şifre zorunlu.' };
-    }
-    if (!email.includes('@')) {
-      return { ok: false as const, message: 'Geçerli bir e-posta girin.' };
-    }
-    if (password.length < 6) {
-      return { ok: false as const, message: 'Şifre en az 6 karakter olmalı.' };
+    if (!fullName || !username || !password) {
+      return { ok: false as const, message: 'Ad soyad, kullanıcı adı ve şifre zorunlu.' };
     }
     try {
       const response = await axios.post(`${API_BASE_URL}/admin/users`, {
         fullName,
-        email,
+        username,
         password,
         role: input.role,
         credit: Math.max(0, Math.floor(input.credit || 0)),
@@ -195,8 +196,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUserPassword = async (userId: string, newPassword: string) => {
-    if (!newPassword || newPassword.length < 6) {
-      return { ok: false as const, message: 'Yeni şifre en az 6 karakter olmalı.' };
+    if (!newPassword) {
+      return { ok: false as const, message: 'Yeni şifre boş olamaz.' };
     }
 
     try {

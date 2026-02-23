@@ -13,6 +13,7 @@ import {
     ScrollView,
     Share,
     Platform,
+    Modal,
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
@@ -21,8 +22,7 @@ import { getStorageClient } from '../services/storage';
 import { getCarpetFullUrl, getCarpetThumbnailUrl } from '../services/carpet-image';
 
 const { width, height } = Dimensions.get('window');
-
-
+const isWeb = Platform.OS === 'web';
 
 interface ResultScreenProps {
     navigation: any;
@@ -40,6 +40,45 @@ const LOADING_MESSAGES = [
     '🔍 Son rötuşlar yapılıyor...',
 ];
 
+const RENDER_TIMEOUT_MS = 70000;
+
+function mapErrorTitle(code: PlacementResult['errorCode']) {
+    switch (code) {
+        case 'AUTH':
+            return 'Oturum Gerekli';
+        case 'BILLING':
+            return 'Servis Kotası Doldu';
+        case 'API_KEY':
+            return 'Servis Ayarı Hatası';
+        case 'NETWORK':
+            return 'Bağlantı Hatası';
+        case 'RATE_LIMIT':
+            return 'Yoğunluk Nedeniyle Bekleme';
+        default:
+            return 'Bir Hata Oluştu';
+    }
+}
+
+async function runRenderWithTimeout(
+    promise: Promise<PlacementResult>,
+    timeoutMs = RENDER_TIMEOUT_MS
+): Promise<PlacementResult> {
+    let timer: any;
+    const timeoutPromise = new Promise<PlacementResult>((resolve) => {
+        timer = setTimeout(() => {
+            resolve({
+                imageUrl: '',
+                success: false,
+                errorCode: 'NETWORK',
+                error: 'İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.',
+            });
+        }, timeoutMs);
+    });
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timer);
+    return result;
+}
+
 export default function ResultScreen({ navigation, route }: ResultScreenProps) {
     const { roomImageUri, carpet, mode } = route.params;
     const placementMode: PlacementMode = mode || 'normal';
@@ -51,6 +90,8 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [errorCode, setErrorCode] = useState<PlacementResult['errorCode']>('UNKNOWN');
     const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+    const [imageAspectRatio, setImageAspectRatio] = useState(1.45);
+    const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
 
     useEffect(() => {
         // Cycle loading messages
@@ -63,6 +104,21 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
     useEffect(() => {
         processImage();
     }, []);
+
+    useEffect(() => {
+        if (!resultImageUri) return;
+        Image.getSize(
+            resultImageUri,
+            (w, h) => {
+                if (w > 0 && h > 0) {
+                    setImageAspectRatio(w / h);
+                }
+            },
+            () => {
+                setImageAspectRatio(1.45);
+            }
+        );
+    }, [resultImageUri]);
 
     const processImage = async () => {
         try {
@@ -181,23 +237,44 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                                 <ActivityIndicator size="small" color={COLORS.primary} />
                             </View>
                         </View>
-                        <Text style={styles.loadingSubtext}>Bu işlem 30-60 saniye sürebilir</Text>
+                        <Text style={styles.loadingSubtext}>Bu işlem genelde 20-70 saniye sürer</Text>
                     </View>
                 </View>
             )}
 
             {status === 'success' && (
-                <ScrollView style={styles.successContainer} showsVerticalScrollIndicator={false}>
+                <ScrollView
+                    style={styles.successContainer}
+                    contentContainerStyle={[styles.successContent, isWeb && styles.successContentWeb]}
+                    showsVerticalScrollIndicator={false}
+                >
                     {/* Result Image */}
                     <View style={styles.resultImageContainer}>
-                        <Image
-                            source={{ uri: resultImageUri }}
-                            style={styles.resultImage}
-                            resizeMode="cover"
-                        />
+                        <Pressable
+                            onPress={() => setIsFullscreenOpen(true)}
+                            style={({ hovered }: any) => [styles.resultImagePressable, hovered && styles.resultImagePressableHover]}
+                        >
+                            <Image
+                                source={{ uri: resultImageUri }}
+                                style={[
+                                    styles.resultImage,
+                                    {
+                                        aspectRatio: imageAspectRatio,
+                                        maxHeight: isWeb ? Math.min(height * 0.62, 640) : width * 1.2,
+                                    },
+                                ]}
+                                resizeMode="contain"
+                            />
+                        </Pressable>
                         <View style={styles.resultBadge}>
                             <Text style={styles.resultBadgeText}>🤖 ChatGPT</Text>
                         </View>
+                        <Pressable
+                            style={({ hovered }: any) => [styles.fullscreenBtn, hovered && styles.fullscreenBtnHover]}
+                            onPress={() => setIsFullscreenOpen(true)}
+                        >
+                            <Text style={styles.fullscreenBtnText}>Tam ekran</Text>
+                        </Pressable>
                     </View>
 
                     {/* Carpet Info */}
@@ -286,6 +363,20 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                     </View>
                 </View>
             )}
+
+            <Modal
+                visible={isFullscreenOpen}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setIsFullscreenOpen(false)}
+            >
+                <View style={styles.fullscreenOverlay}>
+                    <Pressable style={styles.fullscreenCloseBtn} onPress={() => setIsFullscreenOpen(false)}>
+                        <Text style={styles.fullscreenCloseBtnText}>Kapat</Text>
+                    </Pressable>
+                    <Image source={{ uri: resultImageUri }} style={styles.fullscreenImage} resizeMode="contain" />
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -402,15 +493,33 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: SPACING.md,
     },
+    successContent: {
+        paddingBottom: SPACING.xxl,
+    },
+    successContentWeb: {
+        width: '100%',
+        maxWidth: 1120,
+        alignSelf: 'center',
+        paddingBottom: SPACING.xxl * 2,
+    },
     resultImageContainer: {
         borderRadius: RADIUS.xl,
         overflow: 'hidden',
         marginBottom: SPACING.md,
         position: 'relative',
+        backgroundColor: COLORS.surface,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    resultImagePressable: {
+        width: '100%',
+        backgroundColor: COLORS.surface,
+    },
+    resultImagePressableHover: {
+        backgroundColor: '#1f1f1f',
     },
     resultImage: {
         width: '100%',
-        height: width * 0.85,
     },
     resultBadge: {
         position: 'absolute',
@@ -427,6 +536,25 @@ const styles = StyleSheet.create({
     resultBadgeText: {
         color: COLORS.white,
         fontSize: 13,
+        fontWeight: '700',
+    },
+    fullscreenBtn: {
+        position: 'absolute',
+        left: 12,
+        top: 12,
+        backgroundColor: 'rgba(0,0,0,0.58)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: RADIUS.md,
+    },
+    fullscreenBtnHover: {
+        backgroundColor: 'rgba(0,0,0,0.72)',
+    },
+    fullscreenBtnText: {
+        color: COLORS.text,
+        fontSize: 12,
         fontWeight: '700',
     },
     carpetInfoCard: {
@@ -615,40 +743,32 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '600',
     },
+    fullscreenOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.96)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: SPACING.md,
+    },
+    fullscreenImage: {
+        width: '100%',
+        height: '100%',
+    },
+    fullscreenCloseBtn: {
+        position: 'absolute',
+        right: SPACING.md,
+        top: SPACING.xxl,
+        zIndex: 10,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.3)',
+        borderRadius: RADIUS.md,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.xs,
+    },
+    fullscreenCloseBtnText: {
+        color: COLORS.white,
+        fontSize: 14,
+        fontWeight: '700',
+    },
 });
-    const mapErrorTitle = (code: PlacementResult['errorCode']) => {
-        switch (code) {
-            case 'AUTH':
-                return 'Giriş Gerekli';
-            case 'BILLING':
-                return 'OpenAI Billing Hatası';
-            case 'API_KEY':
-                return 'API Anahtarı Hatası';
-            case 'NETWORK':
-                return 'Bağlantı Hatası';
-            case 'RATE_LIMIT':
-                return 'İstek Limiti Aşıldı';
-            default:
-                return 'Bir Hata Oluştu';
-        }
-    };
-
-    const runRenderWithTimeout = async (
-        promise: Promise<PlacementResult>,
-        timeoutMs = 95000
-    ): Promise<PlacementResult> => {
-        let timer: any;
-        const timeoutPromise = new Promise<PlacementResult>((resolve) => {
-            timer = setTimeout(() => {
-                resolve({
-                    imageUrl: '',
-                    success: false,
-                    errorCode: 'NETWORK',
-                    error: 'İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.',
-                });
-            }, timeoutMs);
-        });
-        const result = await Promise.race([promise, timeoutPromise]);
-        clearTimeout(timer);
-        return result;
-    };

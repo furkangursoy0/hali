@@ -90,6 +90,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [isSearchFocused, setIsSearchFocused] = useState(false);
     const [showLimitModal, setShowLimitModal] = useState(false);
     const [visibleCount, setVisibleCount] = useState(isWeb ? WEB_PAGE_SIZE : MOBILE_PAGE_SIZE);
+    const [isPlacing, setIsPlacing] = useState(false);
     const { remaining, limit, loading: limitLoading, error: limitError, consumeOne, isLimitReached } = useUsageLimit();
 
     useEffect(() => {
@@ -178,11 +179,9 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     };
 
     const handlePlace = async (mode: 'preview' | 'normal') => {
+        if (isPlacing) return;
         if (!isLoggedIn) {
-            Alert.alert('Giriş Gerekli', 'Render alabilmek için önce giriş yapmalısınız.', [
-                { text: 'İptal', style: 'cancel' },
-                { text: 'Giriş Yap', onPress: () => navigation.navigate('Login') },
-            ]);
+            navigation.navigate('Login');
             return;
         }
         if (!selectedCarpet) {
@@ -193,12 +192,19 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             setShowLimitModal(true);
             return;
         }
-        const consumeResult = await consumeOne();
-        if (!consumeResult.allowed) {
-            setShowLimitModal(true);
-            return;
+        try {
+            setIsPlacing(true);
+            const consumeResult = await consumeOne();
+            if (!consumeResult.allowed) {
+                setShowLimitModal(true);
+                return;
+            }
+            navigation.navigate('Result', { roomImageUri, carpet: selectedCarpet, mode });
+        } catch (error: any) {
+            Alert.alert('İşlem Başarısız', error?.message || 'Render başlatılamadı. Lütfen tekrar deneyin.');
+        } finally {
+            setIsPlacing(false);
         }
-        navigation.navigate('Result', { roomImageUri, carpet: selectedCarpet, mode });
     };
 
     const renderCarpetCard = (item: Carpet) => {
@@ -355,7 +361,9 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             return (
                 <View style={styles.bottomBar}>
                     <Text style={styles.hintText}>Bir hali secin, ardindan AI ile yerlestirin</Text>
-                    <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} />
+                    {isLoggedIn ? (
+                        <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} />
+                    ) : null}
                 </View>
             );
         }
@@ -372,11 +380,19 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     <Text style={styles.selectionName} numberOfLines={1}>{selectedCarpet.name}</Text>
                     {!!limitError && <Text style={styles.limitErrorText}>Limit durumu gecici olarak alinamadi</Text>}
                 </View>
-                <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} />
+                {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
                 <View style={styles.btnGroup}>
-                    <Pressable style={({ hovered }: any) => [styles.placeBtn, hovered && styles.placeBtnHover]} onPress={() => handlePlace('normal')}>
+                    <Pressable
+                        style={({ hovered }: any) => [
+                            styles.placeBtn,
+                            isPlacing && styles.placeBtnDisabled,
+                            hovered && !isPlacing && styles.placeBtnHover,
+                        ]}
+                        onPress={() => handlePlace('normal')}
+                        disabled={isPlacing}
+                    >
                         <Text style={styles.placeBtnIcon}>✨</Text>
-                        <Text style={styles.placeBtnText}>AI ile Yerleştir</Text>
+                        <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'AI ile Yerleştir'}</Text>
                     </Pressable>
                 </View>
             </View>
@@ -812,6 +828,9 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.4, shadowRadius: 6, elevation: 5,
     },
     placeBtnHover: { backgroundColor: COLORS.primaryLight },
+    placeBtnDisabled: {
+        opacity: 0.65,
+    },
     placeBtnIcon: { fontSize: 15 },
     placeBtnText: { color: COLORS.white, fontSize: 13, fontWeight: '700' },
 });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DAILY_RENDER_LIMIT } from '../constants/env';
 import {
   backendUsageLimitClient,
@@ -24,7 +24,11 @@ export function useUsageLimit() {
   const [snapshot, setSnapshot] = useState<UsageSnapshot>(initialSnapshot);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userLimit, setUserLimit] = useState<number>(DAILY_RENDER_LIMIT);
+  const syncCreditRef = useRef(syncCurrentUserCredit);
+
+  useEffect(() => {
+    syncCreditRef.current = syncCurrentUserCredit;
+  }, [syncCurrentUserCredit]);
 
   const refresh = useCallback(async () => {
     if (isLoggedIn && user) {
@@ -32,8 +36,17 @@ export function useUsageLimit() {
         setLoading(true);
         setError(null);
         const next = await backendUsageLimitClient.getUsage();
-        setSnapshot(next);
-        syncCurrentUserCredit(next.remaining);
+        setSnapshot((prev) => {
+          if (
+            prev.limit === next.limit &&
+            prev.used === next.used &&
+            prev.remaining === next.remaining
+          ) {
+            return prev;
+          }
+          return next;
+        });
+        syncCreditRef.current(next.remaining);
       } catch (err: any) {
         setError(err?.message || 'Limit bilgisi alinamadi');
       } finally {
@@ -52,20 +65,20 @@ export function useUsageLimit() {
     } finally {
       setLoading(false);
     }
-  }, [isLoggedIn, user, syncCurrentUserCredit]);
+  }, [isLoggedIn, user?.id]);
 
   const consumeOne = useCallback(async () => {
     if (isLoggedIn && user) {
       try {
         const next = await backendUsageLimitClient.consumeRender();
         setSnapshot(next);
-        syncCurrentUserCredit(next.remaining);
+        syncCreditRef.current(next.remaining);
         return { allowed: true, snapshot: next };
       } catch (err: any) {
         if (err?.code === LIMIT_REACHED_CODE || err?.response?.status === 429) {
           const latest = await backendUsageLimitClient.getUsage();
           setSnapshot(latest);
-          syncCurrentUserCredit(latest.remaining);
+          syncCreditRef.current(latest.remaining);
           return { allowed: false, snapshot: latest };
         }
         throw err;
@@ -84,15 +97,7 @@ export function useUsageLimit() {
       }
       throw err;
     }
-  }, [isLoggedIn, user, syncCurrentUserCredit]);
-
-  useEffect(() => {
-    if (isLoggedIn && user) {
-      setUserLimit((prev) => (user.credit > prev ? user.credit : prev));
-    } else {
-      setUserLimit(DAILY_RENDER_LIMIT);
-    }
-  }, [isLoggedIn, user?.id, user?.credit]);
+  }, [isLoggedIn, user?.id]);
 
   useEffect(() => {
     refresh();

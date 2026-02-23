@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Alert,
   StatusBar,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,32 +21,36 @@ interface LoginScreenProps {
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { signIn } = useAuth();
+  const passwordInputRef = useRef<TextInput>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [focused, setFocused] = useState<'email' | 'password' | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleLogin = async () => {
+    if (submitting) return;
     const e = email.trim();
     const p = password.trim();
 
     if (!e || !p) {
-      Alert.alert('Eksik Bilgi', 'Lütfen e-posta ve şifre girin.');
+      Alert.alert('Eksik Bilgi', 'Lütfen kullanıcı adı/e-posta ve şifre girin.');
       return;
     }
-    if (!e.includes('@')) {
-      Alert.alert('Geçersiz E-posta', 'Lütfen geçerli bir e-posta girin.');
-      return;
-    }
-    const result = await signIn(e, p);
-    if (!result.ok) {
-      Alert.alert('Giriş başarısız', result.message);
-      return;
-    }
+    try {
+      setSubmitting(true);
+      const result = await signIn(e, p);
+      if (!result.ok) {
+        Alert.alert('Giriş başarısız', result.message);
+        return;
+      }
 
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Home' }],
-    });
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -64,20 +69,22 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           <View style={[styles.inputWrap, focused === 'email' && styles.inputWrapFocused]}>
             <TextInput
               style={[styles.input, isWeb && styles.inputWeb]}
-              placeholder="E-posta"
+              placeholder="Kullanıcı adı veya e-posta"
               placeholderTextColor={COLORS.textMuted}
-              keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
               value={email}
               onChangeText={setEmail}
               onFocus={() => setFocused('email')}
               onBlur={() => setFocused(null)}
+              returnKeyType="next"
+              onSubmitEditing={() => passwordInputRef.current?.focus()}
             />
           </View>
 
           <View style={[styles.inputWrap, focused === 'password' && styles.inputWrapFocused]}>
             <TextInput
+              ref={passwordInputRef}
               style={[styles.input, isWeb && styles.inputWeb]}
               placeholder="Şifre"
               placeholderTextColor={COLORS.textMuted}
@@ -86,11 +93,28 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
               onChangeText={setPassword}
               onFocus={() => setFocused('password')}
               onBlur={() => setFocused(null)}
+              returnKeyType="go"
+              onSubmitEditing={handleLogin}
             />
           </View>
 
-          <Pressable style={({ hovered }: any) => [styles.loginBtn, hovered && styles.loginBtnHover]} onPress={handleLogin}>
-            <Text style={styles.loginBtnText}>Giriş Yap</Text>
+          <Pressable
+            style={({ hovered }: any) => [
+              styles.loginBtn,
+              hovered && styles.loginBtnHover,
+              submitting && styles.loginBtnDisabled,
+            ]}
+            onPress={handleLogin}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <View style={styles.loginBtnLoading}>
+                <ActivityIndicator size="small" color={COLORS.white} />
+                <Text style={styles.loginBtnText}>Giriş yapılıyor...</Text>
+              </View>
+            ) : (
+              <Text style={styles.loginBtnText}>Giriş Yap</Text>
+            )}
           </Pressable>
         </View>
       </View>
@@ -187,6 +211,14 @@ const styles = StyleSheet.create({
   },
   loginBtnHover: {
     backgroundColor: COLORS.primaryLight,
+  },
+  loginBtnDisabled: {
+    opacity: 0.8,
+  },
+  loginBtnLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   loginBtnText: {
     color: COLORS.white,
