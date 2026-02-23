@@ -201,6 +201,10 @@ app.get('/health', async (_req, res) => {
   }
 });
 
+app.get('/', (_req, res) => {
+  res.json({ ok: true, service: 'hali-backend' });
+});
+
 app.post('/auth/login', async (req, res) => {
   try {
     if (!JWT_SECRET) {
