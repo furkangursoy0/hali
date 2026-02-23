@@ -192,7 +192,11 @@ async function ensureBootstrapAdmin() {
   console.log(`Bootstrap admin created: ${adminEmail}`);
 }
 
-app.get('/health', async (_req, res) => {
+app.get('/health', (_req, res) => {
+  res.json({ ok: true, service: 'hali-backend' });
+});
+
+app.get('/health/db', async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({ ok: true, db: true });
