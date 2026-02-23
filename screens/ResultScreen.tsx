@@ -211,7 +211,10 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                 <Pressable onPress={() => navigation.goBack()} style={({ hovered }: any) => [styles.backBtn, hovered && styles.backBtnHover]}>
                     <Text style={styles.backBtnText}>← Geri</Text>
                 </Pressable>
-                <Text style={styles.title}>🤖 ChatGPT Sonucu</Text>
+                <View style={styles.brandTitleWrap}>
+                    <Text style={styles.title}>Halı </Text>
+                    <Text style={[styles.title, styles.titleAccent]}>AI</Text>
+                </View>
                 <View style={{ width: 60 }} />
             </View>
 
@@ -247,6 +250,9 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                     style={styles.successContainer}
                     contentContainerStyle={[styles.successContent, isWeb && styles.successContentWeb]}
                     showsVerticalScrollIndicator={false}
+                    alwaysBounceHorizontal={false}
+                    bounces={false}
+                    overScrollMode="never"
                 >
                     {/* Result Image */}
                     <View style={styles.resultImageContainer}>
@@ -267,7 +273,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                             />
                         </Pressable>
                         <View style={styles.resultBadge}>
-                            <Text style={styles.resultBadgeText}>🤖 ChatGPT</Text>
+                            <Text style={styles.resultBadgeText}>HALI AI</Text>
                         </View>
                         <Pressable
                             style={({ hovered }: any) => [styles.fullscreenBtn, hovered && styles.fullscreenBtnHover]}
@@ -385,14 +391,23 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
+        width: '100%',
+        overflow: 'hidden',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: SPACING.md,
-        paddingTop: SPACING.xxl,
+        paddingTop: isWeb ? SPACING.lg : SPACING.xxl,
         paddingBottom: SPACING.md,
+        width: '100%',
+    },
+    brandTitleWrap: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 1,
     },
     backBtn: {
         paddingVertical: SPACING.xs,
@@ -411,12 +426,16 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         color: COLORS.text,
     },
+    titleAccent: {
+        color: COLORS.primary,
+    },
     // Loading
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: SPACING.md,
+        width: '100%',
     },
     loadingCard: {
         backgroundColor: COLORS.surface,
@@ -492,6 +511,7 @@ const styles = StyleSheet.create({
     successContainer: {
         flex: 1,
         paddingHorizontal: SPACING.md,
+        width: '100%',
     },
     successContent: {
         paddingBottom: SPACING.xxl,

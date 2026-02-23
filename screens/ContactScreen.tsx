@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, StatusBar, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, StatusBar, ScrollView, Alert, Platform } from 'react-native';
 import { COLORS, RADIUS, SPACING } from '../constants/theme';
 import axios from 'axios';
 import { API_BASE_URL } from '../constants/env';
@@ -7,6 +7,8 @@ import { API_BASE_URL } from '../constants/env';
 interface ContactScreenProps {
   navigation: any;
 }
+
+const isWeb = Platform.OS === 'web';
 
 export default function ContactScreen({ navigation }: ContactScreenProps) {
   const [name, setName] = useState('');
@@ -113,7 +115,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.xxl + SPACING.sm,
+    paddingTop: isWeb ? SPACING.lg : SPACING.xxl + SPACING.sm,
     paddingBottom: SPACING.xxl,
   },
   backBtn: {

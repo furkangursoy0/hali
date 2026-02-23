@@ -198,61 +198,58 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 >
                     <Text style={styles.accountPrimaryBtnText}>Giriş Yap</Text>
                 </Pressable>
-                <Pressable
-                    style={({ hovered }: any) => [styles.accountSecondaryBtn, hovered && styles.accountSecondaryBtnHover]}
-                    onPress={() => navigation.navigate('Contact')}
-                >
-                    <Text style={styles.accountSecondaryBtnText}>İletişime Geç</Text>
-                </Pressable>
             </View>
         );
     };
 
-    const renderMainContent = (includeInlineNext: boolean) => (
-        <View style={styles.content}>
-            <View style={styles.header}>
-                <View style={styles.headerTopRow}>
-                    <Text style={styles.kicker}>AI Halı Simülasyonu</Text>
-                    <AccountPanel />
-                </View>
-                <View style={styles.brandRow}>
-                    <Text style={styles.logo}>HALI</Text>
-                    <View style={styles.logoAiBadge}>
-                        <Text style={styles.logoAi}>AI</Text>
-                    </View>
-                </View>
-                <Text style={styles.subtitle}>Halınızı müşterinizin odasında anında gösterin</Text>
+    const renderHeader = () => (
+        <View style={styles.header}>
+            <View style={styles.headerTopRow}>
+                <AccountPanel />
             </View>
+            <View style={styles.brandRow}>
+                <Text style={styles.logo}>HALI</Text>
+                <View style={styles.logoAiBadge}>
+                    <Text style={styles.logoAi}>AI</Text>
+                </View>
+            </View>
+            <Text style={styles.subtitle}>Halınızı müşterinizin odasında anında gösterin</Text>
+        </View>
+    );
 
-                    <View style={styles.quickGrid}>
-                        <View style={styles.quickCard}>
-                            <View style={styles.quickCardRow}>
-                                <View style={styles.quickIconWrap}><FeatureIcon type="target" /></View>
-                                <View style={styles.quickContent}>
-                                    <Text style={styles.quickTitle}>Gerçekçi</Text>
-                                    <Text style={styles.quickText}>Perspektif uyumlu</Text>
-                                </View>
+    const renderBody = (includeInlineNext: boolean) => (
+        <>
+            {isWeb && (
+                <View style={styles.quickGrid}>
+                    <View style={styles.quickCard}>
+                        <View style={styles.quickCardRow}>
+                            <View style={styles.quickIconWrap}><FeatureIcon type="target" /></View>
+                            <View style={styles.quickContent}>
+                                <Text style={styles.quickTitle}>Gerçekçi</Text>
+                                <Text style={styles.quickText}>Perspektif uyumlu</Text>
                             </View>
                         </View>
-                <View style={styles.quickCard}>
-                    <View style={styles.quickCardRow}>
-                        <View style={styles.quickIconWrap}><FeatureIcon type="speed" /></View>
-                        <View style={styles.quickContent}>
-                            <Text style={styles.quickTitle}>Hızlı</Text>
-                            <Text style={styles.quickText}>30-60 saniyede hazır</Text>
+                    </View>
+                    <View style={styles.quickCard}>
+                        <View style={styles.quickCardRow}>
+                            <View style={styles.quickIconWrap}><FeatureIcon type="speed" /></View>
+                            <View style={styles.quickContent}>
+                                <Text style={styles.quickTitle}>Hızlı</Text>
+                                <Text style={styles.quickText}>30-60 saniyede hazır</Text>
+                            </View>
+                        </View>
+                    </View>
+                    <View style={styles.quickCard}>
+                        <View style={styles.quickCardRow}>
+                            <View style={styles.quickIconWrap}><FeatureIcon type="check" /></View>
+                            <View style={styles.quickContent}>
+                                <Text style={styles.quickTitle}>Kolay</Text>
+                                <Text style={styles.quickText}>3 adımda müşteriye sunum</Text>
+                            </View>
                         </View>
                     </View>
                 </View>
-                <View style={styles.quickCard}>
-                    <View style={styles.quickCardRow}>
-                        <View style={styles.quickIconWrap}><FeatureIcon type="check" /></View>
-                        <View style={styles.quickContent}>
-                            <Text style={styles.quickTitle}>Kolay</Text>
-                            <Text style={styles.quickText}>3 adımda müşteriye sunum</Text>
-                        </View>
-                    </View>
-                </View>
-            </View>
+            )}
 
             <View style={styles.photoSection}>
                     <Pressable
@@ -350,7 +347,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                     <Text style={styles.nextBtnText}>İlerle  →</Text>
                 </Pressable>
             )}
-        </View>
+        </>
     );
 
     if (isWeb) {
@@ -366,7 +363,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                     >
-                        {renderMainContent(true)}
+                        <View style={styles.content}>
+                            {renderHeader()}
+                            {renderBody(true)}
+                        </View>
                     </ScrollView>
                 </View>
             </View>
@@ -383,8 +383,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 contentContainerStyle={[styles.scrollContent, styles.scrollContentMobile]}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
+                stickyHeaderIndices={[0]}
             >
-                {renderMainContent(true)}
+                <View style={styles.mobileStickyHeader}>
+                    {renderHeader()}
+                </View>
+                <View style={styles.content}>
+                    {renderBody(true)}
+                </View>
             </ScrollView>
         </View>
     );
@@ -431,7 +437,7 @@ const styles = StyleSheet.create({
         paddingBottom: SPACING.xxl,
     },
     scrollContentMobile: {
-        paddingTop: SPACING.xxl + SPACING.lg,
+        paddingTop: SPACING.lg,
         paddingBottom: SPACING.xxl + SPACING.sm,
     },
     scrollContentWeb: {
@@ -443,25 +449,17 @@ const styles = StyleSheet.create({
         maxWidth: 940,
         alignSelf: 'center',
     },
-    kicker: {
-        color: COLORS.primary,
-        fontSize: 11,
-        fontWeight: '700',
-        letterSpacing: 0.9,
-        textTransform: 'uppercase',
-        textAlign: 'center',
-        marginBottom: 0,
-        flexShrink: 1,
-    },
     header: {
         alignItems: 'center',
         marginBottom: SPACING.md,
+        width: '100%',
+        backgroundColor: COLORS.background,
     },
     headerTopRow: {
         width: '100%',
-        minHeight: isWeb ? 86 : 96,
-        justifyContent: 'center',
-        alignItems: 'center',
+        minHeight: isWeb ? 70 : 54,
+        justifyContent: 'flex-end',
+        alignItems: isWeb ? 'center' : 'flex-end',
         marginBottom: SPACING.sm,
     },
     logo: {
@@ -497,19 +495,16 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     accountCard: {
-        position: 'absolute',
-        top: 0,
-        right: 0,
         backgroundColor: COLORS.surface,
         borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: COLORS.border,
         paddingHorizontal: SPACING.sm,
         paddingVertical: 6,
-        minWidth: isWeb ? 220 : 184,
+        minWidth: isWeb ? 220 : 122,
         maxWidth: 250,
         alignItems: 'stretch',
-        minHeight: 76,
+        minHeight: isWeb ? 76 : 44,
     },
     accountTopRow: {
         flexDirection: 'row',
@@ -642,9 +637,6 @@ const styles = StyleSheet.create({
         borderRadius: 1,
     },
     guestCard: {
-        position: 'absolute',
-        top: 0,
-        right: 0,
         flexDirection: 'row',
         gap: 6,
     },
@@ -662,21 +654,11 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '700',
     },
-    accountSecondaryBtn: {
-        borderRadius: RADIUS.sm,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        backgroundColor: COLORS.surface,
-        paddingHorizontal: 10,
-        paddingVertical: 7,
-    },
-    accountSecondaryBtnHover: {
-        borderColor: '#3A3A3A',
-    },
-    accountSecondaryBtnText: {
-        color: COLORS.textSecondary,
-        fontSize: 12,
-        fontWeight: '700',
+    mobileStickyHeader: {
+        backgroundColor: COLORS.background,
+        zIndex: 20,
+        paddingTop: 0,
+        paddingBottom: SPACING.xs,
     },
     quickGrid: {
         flexDirection: 'row',

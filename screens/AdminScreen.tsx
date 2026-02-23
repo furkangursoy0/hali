@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.xxl + SPACING.sm,
+    paddingTop: isWeb ? SPACING.lg : SPACING.xxl + SPACING.sm,
     paddingBottom: SPACING.xxl,
   },
   contentWeb: {

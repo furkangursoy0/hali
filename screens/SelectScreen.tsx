@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: SPACING.md,
-        paddingTop: SPACING.xxl,
+        paddingTop: isWeb ? SPACING.lg : SPACING.xxl,
         paddingBottom: SPACING.sm,
     },
     backBtn: { paddingVertical: SPACING.xs, paddingRight: SPACING.sm },

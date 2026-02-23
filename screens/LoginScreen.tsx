@@ -141,9 +141,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingVertical: SPACING.xl,
+    paddingTop: isWeb ? SPACING.lg : SPACING.xxl,
+    paddingBottom: SPACING.xl,
   },
   glowTop: {
     position: 'absolute',
