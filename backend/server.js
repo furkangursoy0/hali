@@ -17,6 +17,12 @@ const prisma = new PrismaClient();
 const PORT = Number(process.env.PORT || 8787);
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const JWT_SECRET = process.env.JWT_SECRET;
+const OPENAI_IMAGE_SIZE = String(process.env.OPENAI_IMAGE_SIZE || '1024x1024').trim();
+const OPENAI_IMAGE_QUALITY_PREVIEW = String(process.env.OPENAI_IMAGE_QUALITY_PREVIEW || 'low').trim().toLowerCase();
+const OPENAI_IMAGE_QUALITY_NORMAL = String(process.env.OPENAI_IMAGE_QUALITY_NORMAL || 'medium').trim().toLowerCase();
+const DB_CONNECT_RETRIES = Math.max(1, Number(process.env.DB_CONNECT_RETRIES || 20));
+const DB_CONNECT_RETRY_MS = Math.max(500, Number(process.env.DB_CONNECT_RETRY_MS || 3000));
+let dbConnected = false;
 
 if (!OPENAI_API_KEY) {
   console.warn('OPENAI_API_KEY is missing. /api/render will fail until it is set.');
@@ -27,6 +33,19 @@ if (!JWT_SECRET) {
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
+
+function resolveImageQuality(mode) {
+  const selected = mode === 'preview' ? OPENAI_IMAGE_QUALITY_PREVIEW : OPENAI_IMAGE_QUALITY_NORMAL;
+  return ['low', 'medium', 'high'].includes(selected) ? selected : (mode === 'preview' ? 'low' : 'medium');
+}
+
+function resolveImageSize() {
+  if (OPENAI_IMAGE_SIZE === 'auto') return 'auto';
+  if (OPENAI_IMAGE_SIZE === '1024x1024') return '1024x1024';
+  if (OPENAI_IMAGE_SIZE === '1536x1024') return '1536x1024';
+  if (OPENAI_IMAGE_SIZE === '1024x1536') return '1024x1536';
+  return '1024x1024';
+}
 
 const rateStore = new Map();
 app.use((req, res, next) => {
@@ -156,11 +175,29 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-function normalizeUsagePayload(credit) {
+function getDayStartUtc() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+async function normalizeUsagePayload(userId, credit) {
+  const dailyRenderAgg = await prisma.creditLog.aggregate({
+    _sum: { delta: true },
+    where: {
+      userId,
+      reason: 'render',
+      createdAt: { gte: getDayStartUtc() },
+    },
+  });
+
+  const renderDelta = Number(dailyRenderAgg?._sum?.delta || 0);
+  const used = renderDelta < 0 ? Math.abs(renderDelta) : 0;
+  const safeCredit = Math.max(0, Number(credit || 0));
+
   return {
-    limit: credit,
-    used: 0,
-    remaining: credit,
+    limit: safeCredit + used,
+    used,
+    remaining: safeCredit,
     resetAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   };
 }
@@ -193,7 +230,7 @@ async function ensureBootstrapAdmin() {
 }
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'hali-backend' });
+  res.json({ ok: true, service: 'hali-backend', dbConnected });
 });
 
 app.get('/health/db', async (_req, res) => {
@@ -305,7 +342,13 @@ app.post('/contact', async (req, res) => {
 });
 
 app.get('/api/usage', requireAuth, async (req, res) => {
-  return res.json(normalizeUsagePayload(req.user.credit));
+  try {
+    const payload = await normalizeUsagePayload(req.user.id, req.user.credit);
+    return res.json(payload);
+  } catch (error) {
+    console.error('/api/usage error:', error);
+    return res.status(500).json({ error: 'Failed to fetch usage.' });
+  }
 });
 
 app.post('/api/usage/consume', requireAuth, async (req, res) => {
@@ -335,7 +378,8 @@ app.post('/api/usage/consume', requireAuth, async (req, res) => {
       },
     });
 
-    return res.json(normalizeUsagePayload(updatedUser.credit));
+    const payload = await normalizeUsagePayload(req.user.id, updatedUser.credit);
+    return res.json(payload);
   } catch (error) {
     console.error('/api/usage/consume error:', error);
     return res.status(500).json({ error: 'Failed to consume usage.' });
@@ -575,8 +619,8 @@ app.post(
       });
       formData.append('prompt', PROMPTS[mode]);
       formData.append('n', '1');
-      formData.append('size', '1024x1024');
-      formData.append('quality', mode === 'preview' ? 'low' : 'high');
+      formData.append('size', resolveImageSize());
+      formData.append('quality', resolveImageQuality(mode));
 
       const response = await axios.post('https://api.openai.com/v1/images/edits', formData, {
         headers: {
@@ -656,17 +700,53 @@ app.post(
 );
 
 async function start() {
-  try {
-    await prisma.$connect();
-    await ensureBootstrapAdmin();
+  const tryConnectDb = async () => {
+    for (let attempt = 1; attempt <= DB_CONNECT_RETRIES; attempt += 1) {
+      try {
+        await prisma.$connect();
+        dbConnected = true;
+        console.log(`[db] Connected on attempt ${attempt}/${DB_CONNECT_RETRIES}`);
+        await ensureBootstrapAdmin();
+        return true;
+      } catch (error) {
+        dbConnected = false;
+        const message = error?.message || String(error);
+        console.warn(`[db] Connect failed (${attempt}/${DB_CONNECT_RETRIES}): ${message}`);
+        if (attempt < DB_CONNECT_RETRIES) {
+          await new Promise((resolve) => setTimeout(resolve, DB_CONNECT_RETRY_MS));
+        }
+      }
+    }
+    return false;
+  };
 
-    app.listen(PORT, () => {
-      console.log(`Backend listening on http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error('Backend startup failed:', error);
-    process.exit(1);
-  }
+  const connectedAtBoot = await tryConnectDb();
+
+  app.listen(PORT, () => {
+    console.log(`Backend listening on http://localhost:${PORT}`);
+    if (!connectedAtBoot) {
+      console.warn('[db] Service started in degraded mode. Retrying DB connect in background.');
+      const interval = setInterval(async () => {
+        if (dbConnected) {
+          clearInterval(interval);
+          return;
+        }
+        const connected = await tryConnectDb();
+        if (connected) {
+          clearInterval(interval);
+          console.log('[db] Recovered.');
+        }
+      }, DB_CONNECT_RETRY_MS);
+    }
+  });
 }
+
+process.on('SIGTERM', async () => {
+  try {
+    await prisma.$disconnect();
+  } finally {
+    process.exit(0);
+  }
+});
 
 start();
