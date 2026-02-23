@@ -190,16 +190,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             );
         }
 
-        return (
-            <View style={styles.guestCard}>
-                <Pressable
-                    style={({ hovered }: any) => [styles.accountPrimaryBtn, hovered && styles.accountPrimaryBtnHover]}
-                    onPress={() => navigation.navigate('Login')}
-                >
-                    <Text style={styles.accountPrimaryBtnText}>Giriş Yap</Text>
-                </Pressable>
-            </View>
-        );
+        return null;
     };
 
     const renderHeader = () => (
@@ -214,6 +205,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 </View>
             </View>
             <Text style={styles.subtitle}>Halınızı müşterinizin odasında anında gösterin</Text>
+            {!isLoggedIn && (
+                <Pressable
+                    style={({ hovered }: any) => [styles.accountPrimaryBtnInline, hovered && styles.accountPrimaryBtnHover]}
+                    onPress={() => navigation.navigate('Login')}
+                >
+                    <Text style={styles.accountPrimaryBtnText}>Giriş Yap</Text>
+                </Pressable>
+            )}
         </View>
     );
 
@@ -318,20 +317,24 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 </View>
             </View>
 
-                    <View style={[styles.flowRow, isWeb && styles.flowRowWeb]}>
+                    <View style={[styles.flowRow, isWeb ? styles.flowRowWeb : styles.flowRowMobile]}>
                         <View style={styles.flowItem}>
                             <View style={styles.stepBadge}><Text style={styles.stepNum}>1</Text></View>
-                            <Text style={styles.stepText}>Oda Fotoğrafı Yükle</Text>
+                            <Text style={[styles.stepText, !isWeb && styles.stepTextMobile]}>Oda Fotoğrafı</Text>
                         </View>
-                        <View style={styles.stepArrowWrap}><Text style={styles.stepArrowText}>→</Text></View>
+                        <View style={[styles.stepArrowWrap, !isWeb && styles.stepArrowWrapMobile]}>
+                            <Text style={[styles.stepArrowText, !isWeb && styles.stepArrowTextMobile]}>→</Text>
+                        </View>
                         <View style={styles.flowItem}>
                             <View style={styles.stepBadge}><Text style={styles.stepNum}>2</Text></View>
-                            <Text style={styles.stepText}>Halı Seçimi</Text>
+                            <Text style={[styles.stepText, !isWeb && styles.stepTextMobile]}>Halı Seçimi</Text>
                         </View>
-                        <View style={styles.stepArrowWrap}><Text style={styles.stepArrowText}>→</Text></View>
+                        <View style={[styles.stepArrowWrap, !isWeb && styles.stepArrowWrapMobile]}>
+                            <Text style={[styles.stepArrowText, !isWeb && styles.stepArrowTextMobile]}>→</Text>
+                        </View>
                         <View style={styles.flowItem}>
                             <View style={styles.stepBadge}><Text style={styles.stepNum}>3</Text></View>
-                            <Text style={styles.stepText}>AI Yerleştirme</Text>
+                            <Text style={[styles.stepText, !isWeb && styles.stepTextMobile]}>AI Yerleştirme</Text>
                         </View>
                     </View>
 
@@ -453,7 +456,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: SPACING.md,
         width: '100%',
-        backgroundColor: COLORS.background,
+        backgroundColor: 'transparent',
     },
     headerTopRow: {
         width: '100%',
@@ -493,6 +496,13 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         marginTop: 4,
         textAlign: 'center',
+    },
+    accountPrimaryBtnInline: {
+        marginTop: SPACING.sm,
+        backgroundColor: COLORS.primary,
+        borderRadius: RADIUS.sm,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
     },
     accountCard: {
         backgroundColor: COLORS.surface,
@@ -655,7 +665,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     mobileStickyHeader: {
-        backgroundColor: COLORS.background,
+        backgroundColor: 'transparent',
         zIndex: 20,
         paddingTop: 0,
         paddingBottom: SPACING.xs,
@@ -998,6 +1008,10 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.md,
         flexWrap: 'nowrap',
     },
+    flowRowMobile: {
+        justifyContent: 'space-between',
+        gap: 4,
+    },
     flowRowWeb: {
         flexWrap: 'wrap',
     },
@@ -1026,13 +1040,23 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 16,
     },
+    stepTextMobile: {
+        fontSize: 11,
+        lineHeight: 14,
+    },
     stepArrowWrap: {
         width: isWeb ? 40 : 22,
         alignItems: 'center',
     },
+    stepArrowWrapMobile: {
+        width: 14,
+    },
     stepArrowText: {
         color: COLORS.textMuted,
         fontSize: 16,
+    },
+    stepArrowTextMobile: {
+        fontSize: 14,
     },
     nextBtn: {
         backgroundColor: COLORS.primary,
