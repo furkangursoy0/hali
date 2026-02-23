@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TextInput,
   Pressable,
+  ScrollView,
   Alert,
   StatusBar,
   Platform,
@@ -57,67 +58,77 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
       <View style={styles.glowTop} />
-      <View style={styles.content}>
-        <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtnText}>← Geri</Text>
-        </Pressable>
-        <Text style={styles.kicker}>HALI AI</Text>
-        <Text style={styles.title}>Giriş Yap</Text>
-        <Text style={styles.subtitle}>Hızlı yerleştirme için hesabına giriş yap</Text>
-
-        <View style={styles.form}>
-          <View style={[styles.inputWrap, focused === 'email' && styles.inputWrapFocused]}>
-            <TextInput
-              style={[styles.input, isWeb && styles.inputWeb]}
-              placeholder="Kullanıcı adı veya e-posta"
-              placeholderTextColor={COLORS.textMuted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={email}
-              onChangeText={setEmail}
-              onFocus={() => setFocused('email')}
-              onBlur={() => setFocused(null)}
-              returnKeyType="next"
-              onSubmitEditing={() => passwordInputRef.current?.focus()}
-            />
-          </View>
-
-          <View style={[styles.inputWrap, focused === 'password' && styles.inputWrapFocused]}>
-            <TextInput
-              ref={passwordInputRef}
-              style={[styles.input, isWeb && styles.inputWeb]}
-              placeholder="Şifre"
-              placeholderTextColor={COLORS.textMuted}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              onFocus={() => setFocused('password')}
-              onBlur={() => setFocused(null)}
-              returnKeyType="go"
-              onSubmitEditing={handleLogin}
-            />
-          </View>
-
-          <Pressable
-            style={({ hovered }: any) => [
-              styles.loginBtn,
-              hovered && styles.loginBtnHover,
-              submitting && styles.loginBtnDisabled,
-            ]}
-            onPress={handleLogin}
-            disabled={submitting}
-          >
-            {submitting ? (
-              <View style={styles.loginBtnLoading}>
-                <ActivityIndicator size="small" color={COLORS.white} />
-                <Text style={styles.loginBtnText}>Giriş yapılıyor...</Text>
-              </View>
-            ) : (
-              <Text style={styles.loginBtnText}>Giriş Yap</Text>
-            )}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Text style={styles.backBtnText}>← Geri</Text>
           </Pressable>
+          <Text style={styles.kicker}>HALI AI</Text>
+          <Text style={styles.title}>Giriş Yap</Text>
+          <Text style={styles.subtitle}>Hızlı yerleştirme için hesabına giriş yap</Text>
+
+          <View style={styles.form}>
+            <View style={[styles.inputWrap, focused === 'email' && styles.inputWrapFocused]}>
+              <TextInput
+                style={[styles.input, isWeb && styles.inputWeb]}
+                placeholder="Kullanıcı adı veya e-posta"
+                placeholderTextColor={COLORS.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={email}
+                onChangeText={setEmail}
+                onFocus={() => setFocused('email')}
+                onBlur={() => setFocused(null)}
+                returnKeyType="next"
+                onSubmitEditing={() => passwordInputRef.current?.focus()}
+              />
+            </View>
+
+            <View style={[styles.inputWrap, focused === 'password' && styles.inputWrapFocused]}>
+              <TextInput
+                ref={passwordInputRef}
+                style={[styles.input, isWeb && styles.inputWeb]}
+                placeholder="Şifre"
+                placeholderTextColor={COLORS.textMuted}
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+                onFocus={() => setFocused('password')}
+                onBlur={() => setFocused(null)}
+                returnKeyType="go"
+                onSubmitEditing={handleLogin}
+              />
+            </View>
+
+            <Pressable
+              style={({ hovered }: any) => [
+                styles.loginBtn,
+                hovered && styles.loginBtnHover,
+                submitting && styles.loginBtnDisabled,
+              ]}
+              onPress={handleLogin}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <View style={styles.loginBtnContent}>
+                  <ActivityIndicator size="small" color={COLORS.white} />
+                  <Text style={styles.loginBtnText}>Giriş yapılıyor...</Text>
+                </View>
+              ) : (
+                <View style={styles.loginBtnContent}>
+                  <Text style={styles.loginBtnText} numberOfLines={1}>
+                    Giriş Yap
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -126,9 +137,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+    paddingHorizontal: SPACING.md,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xl,
   },
   glowTop: {
     position: 'absolute',
@@ -208,6 +223,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   loginBtnHover: {
     backgroundColor: COLORS.primaryLight,
@@ -215,8 +231,10 @@ const styles = StyleSheet.create({
   loginBtnDisabled: {
     opacity: 0.8,
   },
-  loginBtnLoading: {
+  loginBtnContent: {
+    width: '100%',
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
   },

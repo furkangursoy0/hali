@@ -555,7 +555,7 @@ const webStyles = {
     root: {
         display: 'flex' as any,
         flexDirection: 'column' as any,
-        height: '100vh',
+        height: '100dvh',
         backgroundColor: COLORS.background,
         overflow: 'hidden' as any,
     } as any,
@@ -802,6 +802,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.surfaceElevated,
         paddingHorizontal: SPACING.md,
         paddingVertical: SPACING.md,
+        ...(isWeb ? ({ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' } as any) : {}),
         borderTopWidth: 1,
         borderTopColor: COLORS.border,
         gap: SPACING.md,
