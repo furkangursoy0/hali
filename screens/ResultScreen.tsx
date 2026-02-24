@@ -153,7 +153,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
 
                 if (nav?.canShare?.({ files: [file] }) && nav?.share) {
                     await nav.share({
-                        title: `${carpet.name} - HALI AI`,
+                        title: `${carpet.name} - HALI`,
                         text: `${carpet.name} sonucu`,
                         files: [file],
                     });
@@ -164,7 +164,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
             }
 
             await Share.share({
-                title: `${carpet.name} - HALI AI`,
+                title: `${carpet.name} - HALI`,
                 message: `${carpet.name} sonucu hazır.`,
                 url: resultImageUri,
             });
@@ -248,7 +248,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                             />
                         </Pressable>
                         <View style={styles.resultBadge}>
-                            <Text style={styles.resultBadgeText}>HALI AI</Text>
+                            <Text style={styles.resultBadgeText}>HALI</Text>
                         </View>
                         <Pressable
                             style={({ hovered }: any) => [styles.fullscreenBtn, hovered && styles.fullscreenBtnHover]}

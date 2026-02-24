@@ -67,7 +67,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Text style={styles.backBtnText}>← Geri</Text>
           </Pressable>
-          <Text style={styles.kicker}>HALI AI</Text>
+          <Text style={styles.kicker}>HALI</Text>
           <Text style={styles.title}>Giriş Yap</Text>
           <Text style={styles.subtitle}>Hızlı yerleştirme için hesabına giriş yap</Text>
 
@@ -149,8 +149,8 @@ const styles = StyleSheet.create({
   glowTop: {
     position: 'absolute',
     top: -120,
-    right: -80,
-    width: 280,
+    right: 0,
+    width: 200,
     height: 280,
     borderRadius: 160,
     backgroundColor: 'rgba(200, 134, 10, 0.10)',

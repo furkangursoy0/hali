@@ -31,7 +31,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     const isCompactLayout = !isWeb || viewportWidth < 900;
     const step1Label = isCompactLayout ? 'Fotoğraf' : 'Oda Fotoğrafı';
     const step2Label = isCompactLayout ? 'Halı' : 'Halı Seçimi';
-    const step3Label = isCompactLayout ? 'AI' : 'AI Yerleştirme';
+    const step3Label = isCompactLayout ? 'Yerleştir' : 'Halı Yerleştirme';
 
     const requestCameraPermission = async () => {
         if (isWeb) return true;
@@ -451,8 +451,8 @@ const styles = StyleSheet.create({
     bgGlowBottom: {
         position: 'absolute',
         bottom: -150,
-        right: -100,
-        width: 340,
+        right: 0,
+        width: 240,
         height: 340,
         borderRadius: 190,
         backgroundColor: 'rgba(200, 134, 10, 0.06)',

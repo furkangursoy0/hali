@@ -401,7 +401,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             if (isCompactWeb) {
                 return (
                     <View style={[styles.bottomBar, styles.bottomBarCompact]}>
-                        <Text style={styles.hintText}>Bir halı seçin, ardından AI ile yerleştirin</Text>
+                        <Text style={styles.hintText}>Bir halı seçin, ardından halıyı yerleştirin</Text>
                         <View style={styles.compactActionsRow}>
                             {isLoggedIn ? (
                                 <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} />
@@ -412,7 +412,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             }
             return (
                 <View style={styles.bottomBar}>
-                    <Text style={styles.hintText}>Bir hali secin, ardindan AI ile yerlestirin</Text>
+                    <Text style={styles.hintText}>Bir halı seçin, ardından halıyı yerleştirin</Text>
                     {isLoggedIn ? (
                         <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} />
                     ) : null}
@@ -449,7 +449,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                         disabled={isPlacing}
                     >
                         <Text style={styles.placeBtnIcon}>✨</Text>
-                        <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'AI ile Yerleştir'}</Text>
+                        <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Yerleştir'}</Text>
                     </Pressable>
                 </View>
             );
@@ -483,7 +483,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                                 disabled={isPlacing}
                             >
                                 <Text style={styles.placeBtnIcon}>✨</Text>
-                                <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'AI ile Yerleştir'}</Text>
+                                <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Yerleştir'}</Text>
                             </Pressable>
                         </View>
                     </View>
@@ -498,7 +498,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 <View style={styles.selectionInfo}>
                     <Text style={styles.selectionBrand} numberOfLines={1}>{selectedCarpet.brand} · {selectedCarpet.collection}</Text>
                     <Text style={styles.selectionName} numberOfLines={1}>{selectedCarpet.name}</Text>
-                    {!!limitError && <Text style={styles.limitErrorText}>Limit durumu gecici olarak alinamadi</Text>}
+                    {!!limitError && <Text style={styles.limitErrorText}>Limit durumu geçici olarak alınamadı</Text>}
                 </View>
                 {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
                 <View style={styles.btnGroup}>
@@ -512,7 +512,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                         disabled={isPlacing}
                     >
                         <Text style={styles.placeBtnIcon}>✨</Text>
-                        <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'AI ile Yerleştir'}</Text>
+                        <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Yerleştir'}</Text>
                     </Pressable>
                 </View>
             </View>

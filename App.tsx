@@ -62,9 +62,9 @@ export default function App() {
     body.style.height = '100%';
     body.style.width = '100%';
     body.style.overflow = 'hidden';
-    body.style.position = 'fixed';
     body.style.backgroundColor = '#0F0F0F';
     (body.style as any).overscrollBehavior = 'none';
+    (body.style as any).touchAction = 'pan-y';
 
     if (root) {
       root.style.height = '100%';
