@@ -29,6 +29,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     const [loading, setLoading] = useState(false);
     const showQuickCards = isWeb && viewportWidth >= 900;
     const isCompactLayout = !isWeb || viewportWidth < 900;
+    const step1Label = isCompactLayout ? 'Fotoğraf' : 'Oda Fotoğrafı';
+    const step2Label = isCompactLayout ? 'Halı' : 'Halı Seçimi';
+    const step3Label = isCompactLayout ? 'AI' : 'AI Yerleştirme';
 
     const requestCameraPermission = async () => {
         if (isWeb) return true;
@@ -322,23 +325,33 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             </View>
 
                     <View style={[styles.flowRow, isCompactLayout ? styles.flowRowMobile : styles.flowRowWeb]}>
-                        <View style={styles.flowItem}>
-                            <View style={styles.stepBadge}><Text style={styles.stepNum}>1</Text></View>
-                            <Text style={[styles.stepText, isCompactLayout && styles.stepTextMobile]}>Oda Fotoğrafı</Text>
+                        <View style={[styles.flowItem, isCompactLayout && styles.flowItemCompact]}>
+                            <View style={[styles.stepBadge, isCompactLayout && styles.stepBadgeCompact]}>
+                                <Text style={[styles.stepNum, isCompactLayout && styles.stepNumCompact]}>1</Text>
+                            </View>
+                            <Text style={[styles.stepText, isCompactLayout && styles.stepTextMobile]}>{step1Label}</Text>
                         </View>
-                        <View style={[styles.stepArrowWrap, isCompactLayout && styles.stepArrowWrapMobile]}>
-                            <Text style={[styles.stepArrowText, isCompactLayout && styles.stepArrowTextMobile]}>→</Text>
+                        {!isCompactLayout && (
+                            <View style={styles.stepArrowWrap}>
+                                <Text style={styles.stepArrowText}>→</Text>
+                            </View>
+                        )}
+                        <View style={[styles.flowItem, isCompactLayout && styles.flowItemCompact]}>
+                            <View style={[styles.stepBadge, isCompactLayout && styles.stepBadgeCompact]}>
+                                <Text style={[styles.stepNum, isCompactLayout && styles.stepNumCompact]}>2</Text>
+                            </View>
+                            <Text style={[styles.stepText, isCompactLayout && styles.stepTextMobile]}>{step2Label}</Text>
                         </View>
-                        <View style={styles.flowItem}>
-                            <View style={styles.stepBadge}><Text style={styles.stepNum}>2</Text></View>
-                            <Text style={[styles.stepText, isCompactLayout && styles.stepTextMobile]}>Halı Seçimi</Text>
-                        </View>
-                        <View style={[styles.stepArrowWrap, isCompactLayout && styles.stepArrowWrapMobile]}>
-                            <Text style={[styles.stepArrowText, isCompactLayout && styles.stepArrowTextMobile]}>→</Text>
-                        </View>
-                        <View style={styles.flowItem}>
-                            <View style={styles.stepBadge}><Text style={styles.stepNum}>3</Text></View>
-                            <Text style={[styles.stepText, isCompactLayout && styles.stepTextMobile]}>AI Yerleştirme</Text>
+                        {!isCompactLayout && (
+                            <View style={styles.stepArrowWrap}>
+                                <Text style={styles.stepArrowText}>→</Text>
+                            </View>
+                        )}
+                        <View style={[styles.flowItem, isCompactLayout && styles.flowItemCompact]}>
+                            <View style={[styles.stepBadge, isCompactLayout && styles.stepBadgeCompact]}>
+                                <Text style={[styles.stepNum, isCompactLayout && styles.stepNumCompact]}>3</Text>
+                            </View>
+                            <Text style={[styles.stepText, isCompactLayout && styles.stepTextMobile]}>{step3Label}</Text>
                         </View>
                     </View>
 
@@ -1014,7 +1027,7 @@ const styles = StyleSheet.create({
     },
     flowRowMobile: {
         justifyContent: 'space-between',
-        gap: 4,
+        gap: 0,
     },
     flowRowWeb: {
         flexWrap: 'wrap',
@@ -1025,6 +1038,13 @@ const styles = StyleSheet.create({
         gap: 6,
         flex: isWeb ? 0 : 1,
     },
+    flowItemCompact: {
+        minWidth: 0,
+        flex: 1,
+        gap: 4,
+        flexBasis: '33.33%',
+        maxWidth: '33.33%',
+    },
     stepBadge: {
         width: 28,
         height: 28,
@@ -1033,10 +1053,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    stepBadgeCompact: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+    },
     stepNum: {
         color: COLORS.white,
         fontSize: 13,
         fontWeight: '700',
+    },
+    stepNumCompact: {
+        fontSize: 11,
     },
     stepText: {
         color: COLORS.textSecondary,
@@ -1047,13 +1075,15 @@ const styles = StyleSheet.create({
     stepTextMobile: {
         fontSize: 11,
         lineHeight: 14,
+        paddingHorizontal: 2,
     },
     stepArrowWrap: {
         width: isWeb ? 40 : 22,
         alignItems: 'center',
     },
     stepArrowWrapMobile: {
-        width: 14,
+        width: 0,
+        display: 'none',
     },
     stepArrowText: {
         color: COLORS.textMuted,
