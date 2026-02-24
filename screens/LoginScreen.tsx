@@ -67,7 +67,12 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Text style={styles.backBtnText}>← Geri</Text>
           </Pressable>
-          <Text style={styles.kicker}>HALI</Text>
+          <View style={styles.kickerRow}>
+            <Text style={styles.kicker}>HALI</Text>
+            <View style={styles.kickerBadge}>
+              <Text style={styles.kickerBadgeText}>Yerleştir</Text>
+            </View>
+          </View>
           <Text style={styles.title}>Giriş Yap</Text>
           <Text style={styles.subtitle}>Hızlı yerleştirme için hesabına giriş yap</Text>
 
@@ -168,14 +173,34 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  kickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: SPACING.xs,
+  },
   kicker: {
     color: COLORS.primary,
     fontSize: 12,
     letterSpacing: 1.1,
     fontWeight: '700',
     textTransform: 'uppercase',
-    textAlign: 'center',
-    marginBottom: SPACING.xs,
+  },
+  kickerBadge: {
+    marginLeft: 6,
+    backgroundColor: 'rgba(200, 134, 10, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(200, 134, 10, 0.45)',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  kickerBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: COLORS.primaryLight,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   title: {
     color: COLORS.text,
