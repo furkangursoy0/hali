@@ -359,7 +359,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 <View pointerEvents="none" style={styles.bgGlowBottom} />
                 <View style={styles.webLayout}>
                     <ScrollView
-                        style={[styles.webScroll, isWeb && ({ overflowY: 'auto', maxHeight: '100vh' } as any)]}
+                        style={[styles.webScroll, isWeb && ({ overflowY: 'auto' } as any)]}
                         contentContainerStyle={[styles.scrollContent, styles.scrollContentWeb]}
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     },
     scrollContentWeb: {
         paddingHorizontal: SPACING.xl,
-        paddingBottom: SPACING.xl,
+        paddingBottom: 120,
     },
     content: {
         width: '100%',
@@ -1113,11 +1113,17 @@ const styles = StyleSheet.create({
         borderTopColor: COLORS.border,
     },
     webBottomBar: {
+        position: 'fixed' as any,
+        bottom: 0,
+        left: 0,
+        right: 0,
         backgroundColor: COLORS.background,
         borderTopWidth: 1,
         borderTopColor: COLORS.border,
         paddingHorizontal: SPACING.xl,
-        paddingVertical: SPACING.md,
+        paddingTop: SPACING.md,
+        paddingBottom: SPACING.xl,
+        zIndex: 100,
     },
     webBottomInner: {
         width: '100%',
