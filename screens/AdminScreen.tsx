@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { COLORS, RADIUS, SPACING } from '../constants/theme';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 
@@ -10,6 +10,8 @@ interface AdminScreenProps {
 const isWeb = Platform.OS === 'web';
 
 export default function AdminScreen({ navigation }: AdminScreenProps) {
+  const { width } = useWindowDimensions();
+  const isCompactWeb = isWeb && width < 760;
   const { user, isAdmin, users, createUser, updateUserPassword, updateUserCredit, deleteUser } = useAuth();
 
   const [fullName, setFullName] = useState('');
@@ -19,6 +21,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
   const [role, setRole] = useState<UserRole>('STAFF');
   const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({});
   const [creditDrafts, setCreditDrafts] = useState<Record<string, string>>({});
+  const [feedbackMessage, setFeedbackMessage] = useState<string>('');
 
   const sortedUsers = useMemo(() => {
     return [...users].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -35,6 +38,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     });
 
     if (!result.ok) {
+      setFeedbackMessage(`Hata: ${result.message}`);
       Alert.alert('Hata', result.message);
       return;
     }
@@ -44,6 +48,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     setPassword('');
     setCredit('20');
     setRole('STAFF');
+    setFeedbackMessage('Kullanıcı başarıyla eklendi.');
     Alert.alert('Başarılı', 'Kullanıcı eklendi.');
   };
 
@@ -51,11 +56,13 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     const nextPassword = (passwordDrafts[userId] || '').trim();
     const result = await updateUserPassword(userId, nextPassword);
     if (!result.ok) {
+      setFeedbackMessage(`Hata: ${result.message}`);
       Alert.alert('Hata', result.message);
       return;
     }
 
     setPasswordDrafts((prev) => ({ ...prev, [userId]: '' }));
+    setFeedbackMessage('Şifre güncellendi.');
     Alert.alert('Başarılı', 'Şifre güncellendi.');
   };
 
@@ -63,19 +70,23 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     const nextCredit = Number(creditDrafts[userId] || '0');
     const result = await updateUserCredit(userId, Number.isFinite(nextCredit) ? nextCredit : 0);
     if (!result.ok) {
+      setFeedbackMessage(`Hata: ${result.message}`);
       Alert.alert('Hata', result.message);
       return;
     }
 
+    setFeedbackMessage('Kredi güncellendi.');
     Alert.alert('Başarılı', 'Kredi güncellendi.');
   };
 
   const handleDelete = async (userId: string) => {
     const result = await deleteUser(userId);
     if (!result.ok) {
+      setFeedbackMessage(`Hata: ${result.message}`);
       Alert.alert('Hata', result.message);
       return;
     }
+    setFeedbackMessage('Kullanıcı silindi.');
     Alert.alert('Silindi', 'Kullanıcı kaldırıldı.');
   };
 
@@ -97,8 +108,8 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
       <ScrollView
-        style={[styles.scroll, isWeb && ({ overflowY: 'auto', maxHeight: '100vh' } as any)]}
-        contentContainerStyle={[styles.content, isWeb && styles.contentWeb]}
+        style={[styles.scroll, isWeb && ({ overflowY: 'auto', maxHeight: '100dvh', WebkitOverflowScrolling: 'touch' } as any)]}
+        contentContainerStyle={[styles.content, isWeb && styles.contentWeb, isCompactWeb && styles.contentCompactWeb]}
         showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
       >
@@ -109,12 +120,17 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
         <Text style={styles.title}>Admin Panel</Text>
         <Text style={styles.subtitle}>Kullanıcı oluştur, şifre belirle, kredi yönet.</Text>
         <Text style={styles.adminMeta}>Giriş: {user?.fullName} ({user?.username || user?.email})</Text>
+        {!!feedbackMessage && (
+          <View style={styles.feedbackBox}>
+            <Text style={styles.feedbackText}>{feedbackMessage}</Text>
+          </View>
+        )}
 
         <View style={styles.formCard}>
           <Text style={styles.sectionTitle}>Yeni Kullanıcı</Text>
-          <TextInput style={styles.input} placeholder="Ad Soyad" placeholderTextColor={COLORS.textMuted} value={fullName} onChangeText={setFullName} />
+          <TextInput style={[styles.input, isWeb && styles.inputWeb]} placeholder="Ad Soyad" placeholderTextColor={COLORS.textMuted} value={fullName} onChangeText={setFullName} />
           <TextInput
-            style={styles.input}
+            style={[styles.input, isWeb && styles.inputWeb]}
             placeholder="Kullanıcı adı"
             placeholderTextColor={COLORS.textMuted}
             value={username}
@@ -122,14 +138,14 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
             autoCapitalize="none"
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, isWeb && styles.inputWeb]}
             placeholder="Şifre"
             placeholderTextColor={COLORS.textMuted}
             value={password}
             onChangeText={setPassword}
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, isWeb && styles.inputWeb]}
             placeholder="Başlangıç kredi"
             placeholderTextColor={COLORS.textMuted}
             value={credit}
@@ -137,7 +153,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
             keyboardType="number-pad"
           />
 
-          <View style={styles.roleRow}>
+          <View style={[styles.roleRow, isCompactWeb && styles.compactStack]}>
             <Pressable style={[styles.roleBtn, role === 'STAFF' && styles.roleBtnActive]} onPress={() => setRole('STAFF')}>
               <Text style={[styles.roleBtnText, role === 'STAFF' && styles.roleBtnTextActive]}>STAFF</Text>
             </Pressable>
@@ -167,16 +183,16 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
               <Text style={styles.userMeta}>Kredi: {item.credit}</Text>
 
               <TextInput
-                style={styles.input}
+                style={[styles.input, isWeb && styles.inputWeb]}
                 placeholder="Yeni şifre"
                 placeholderTextColor={COLORS.textMuted}
                 value={passwordDrafts[item.id] || ''}
                 onChangeText={(val) => setPasswordDrafts((prev) => ({ ...prev, [item.id]: val }))}
               />
 
-              <View style={styles.inlineRow}>
+              <View style={[styles.inlineRow, isCompactWeb && styles.compactStack]}>
                 <TextInput
-                  style={[styles.input, styles.creditInput]}
+                  style={[styles.input, styles.creditInput, isWeb && styles.inputWeb]}
                   placeholder="Kredi"
                   placeholderTextColor={COLORS.textMuted}
                   value={creditDrafts[item.id] ?? String(item.credit)}
@@ -188,7 +204,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
                 </Pressable>
               </View>
 
-              <View style={styles.inlineRow}>
+              <View style={[styles.inlineRow, isCompactWeb && styles.compactStack]}>
                 <Pressable style={styles.inlineBtn} onPress={() => handlePasswordUpdate(item.id)}>
                   <Text style={styles.inlineBtnText}>Şifre Güncelle</Text>
                 </Pressable>
@@ -224,6 +240,10 @@ const styles = StyleSheet.create({
     maxWidth: 980,
     alignSelf: 'center',
     width: '100%',
+  },
+  contentCompactWeb: {
+    maxWidth: 520,
+    paddingBottom: SPACING.xxl + 40,
   },
   backBtn: {
     alignSelf: 'flex-start',
@@ -267,6 +287,20 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     gap: SPACING.sm,
   },
+  feedbackBox: {
+    borderWidth: 1,
+    borderColor: 'rgba(200, 134, 10, 0.45)',
+    borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(200, 134, 10, 0.12)',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  feedbackText: {
+    color: COLORS.primaryLight,
+    fontSize: 13,
+    fontWeight: '600',
+  },
   sectionTitle: {
     color: COLORS.text,
     fontSize: 17,
@@ -283,9 +317,17 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm + 2,
     fontSize: 14,
   },
+  inputWeb: {
+    fontSize: 16,
+    outlineStyle: 'none',
+    outlineWidth: 0,
+  } as any,
   roleRow: {
     flexDirection: 'row',
     gap: SPACING.sm,
+  },
+  compactStack: {
+    flexDirection: 'column',
   },
   roleBtn: {
     flex: 1,
