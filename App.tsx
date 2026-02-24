@@ -55,17 +55,21 @@ export default function App() {
     const body = document.body;
     const root = document.getElementById('root');
 
+    html.style.height = '100%';
+    html.style.overflow = 'hidden';
     html.style.backgroundColor = '#0F0F0F';
+
+    body.style.height = '100%';
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
     body.style.backgroundColor = '#0F0F0F';
-    html.style.overflowX = 'hidden';
-    body.style.overflowX = 'hidden';
-    body.style.overscrollBehaviorX = 'none';
-    body.style.overscrollBehaviorY = 'none';
+    (body.style as any).overscrollBehavior = 'none';
 
     if (root) {
+      root.style.height = '100%';
+      root.style.overflow = 'hidden';
       root.style.backgroundColor = '#0F0F0F';
-      root.style.minHeight = '100dvh';
-      root.style.overflowX = 'hidden';
     }
   }, []);
 
