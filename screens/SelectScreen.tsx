@@ -95,6 +95,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [showLimitModal, setShowLimitModal] = useState(false);
     const [visibleCount, setVisibleCount] = useState(isWeb ? WEB_PAGE_SIZE : MOBILE_PAGE_SIZE);
     const [isPlacing, setIsPlacing] = useState(false);
+    const [mobileWebBottomOffset, setMobileWebBottomOffset] = useState(0);
     const { remaining, limit, loading: limitLoading, error: limitError, consumeOne, isLimitReached } = useUsageLimit();
     const isCompactWeb = isWeb && viewportWidth < 820;
     const isMobileWeb = isWeb && viewportWidth < 900;
@@ -106,6 +107,35 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         window.addEventListener('resize', handler);
         return () => window.removeEventListener('resize', handler);
     }, []);
+
+    useEffect(() => {
+        if (!isMobileWeb || !isWeb) return;
+        const vv = (window as any).visualViewport;
+        const syncBottomOffset = () => {
+            if (!vv) {
+                setMobileWebBottomOffset(0);
+                return;
+            }
+            const hiddenBottom = Math.max(
+                0,
+                Math.round(window.innerHeight - (vv.height + vv.offsetTop))
+            );
+            setMobileWebBottomOffset(hiddenBottom);
+        };
+
+        syncBottomOffset();
+        window.addEventListener('resize', syncBottomOffset);
+        window.addEventListener('orientationchange', syncBottomOffset);
+        vv?.addEventListener?.('resize', syncBottomOffset);
+        vv?.addEventListener?.('scroll', syncBottomOffset);
+
+        return () => {
+            window.removeEventListener('resize', syncBottomOffset);
+            window.removeEventListener('orientationchange', syncBottomOffset);
+            vv?.removeEventListener?.('resize', syncBottomOffset);
+            vv?.removeEventListener?.('scroll', syncBottomOffset);
+        };
+    }, [isMobileWeb]);
 
     const allCarpets = carpetsData as Carpet[];
 
@@ -602,7 +632,11 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 keyExtractor={item => `${item.brand}_${item.image}`}
                 numColumns={2}
                 columnWrapperStyle={styles.mobileRow}
-                contentContainerStyle={[styles.listContent, isMobileWeb && styles.listContentMobileWeb]}
+                contentContainerStyle={[
+                    styles.listContent,
+                    isMobileWeb && styles.listContentMobileWeb,
+                    isMobileWeb && { paddingBottom: MOBILE_WEB_BOTTOM_BAR_HEIGHT + mobileWebBottomOffset + 44 },
+                ]}
                 showsVerticalScrollIndicator={false}
                 initialNumToRender={8}
                 maxToRenderPerBatch={8}
@@ -625,7 +659,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     ) : null
                 }
             />
-            <View style={styles.mobileBottomBar}>
+            <View style={[styles.mobileBottomBar, isMobileWeb && { bottom: mobileWebBottomOffset }]}>
                 <View style={[styles.mobileBottomInner, isMobileWeb && styles.mobileBottomInnerWeb]}>
                     <BottomBar />
                 </View>
