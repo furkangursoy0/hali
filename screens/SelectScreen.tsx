@@ -28,7 +28,7 @@ const isWeb = Platform.OS === 'web';
 const CARPET_IMAGE_RATIO = 1.35;
 const WEB_PAGE_SIZE = 60;
 const MOBILE_PAGE_SIZE = 40;
-const MOBILE_WEB_BOTTOM_BAR_HEIGHT = 90;
+const MOBILE_WEB_BOTTOM_BAR_HEIGHT = 118;
 
 function normalizeText(value: string) {
     return value
@@ -98,6 +98,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const { remaining, limit, loading: limitLoading, error: limitError, consumeOne, isLimitReached } = useUsageLimit();
     const isCompactWeb = isWeb && viewportWidth < 820;
     const isMobileWeb = isWeb && viewportWidth < 900;
+    const isUltraCompactWeb = isWeb && viewportWidth < 520;
 
     useEffect(() => {
         if (!isWeb) return;
@@ -391,6 +392,38 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         const selectedThumbUri = selectedCarpet.imagePath
             ? getCarpetThumbnailUrl(selectedCarpet.imagePath, selectedCarpet.thumbPath, 240, 70)
             : '';
+        if (isUltraCompactWeb) {
+            return (
+                <View style={[styles.bottomBar, styles.bottomBarCompact, styles.bottomBarUltraCompact]}>
+                    <View style={styles.compactTopRow}>
+                        {selectedThumbUri ? (
+                            <Image source={{ uri: selectedThumbUri }} style={[styles.selectionThumb, styles.selectionThumbCompact]} resizeMode="cover" />
+                        ) : null}
+                        <View style={[styles.selectionInfo, styles.selectionInfoCompact]}>
+                            <Text style={styles.selectionBrand} numberOfLines={1}>
+                                {selectedCarpet.brand} · {selectedCarpet.collection}
+                            </Text>
+                            <Text style={styles.selectionNameCompactWeb} numberOfLines={1}>
+                                {selectedCarpet.name}
+                            </Text>
+                        </View>
+                    </View>
+                    <Pressable
+                        style={({ hovered }: any) => [
+                            styles.placeBtn,
+                            styles.placeBtnUltraCompact,
+                            isPlacing && styles.placeBtnDisabled,
+                            hovered && !isPlacing && styles.placeBtnHover,
+                        ]}
+                        onPress={() => handlePlace('normal')}
+                        disabled={isPlacing}
+                    >
+                        <Text style={styles.placeBtnIcon}>✨</Text>
+                        <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'AI ile Yerleştir'}</Text>
+                    </Pressable>
+                </View>
+            );
+        }
         if (isCompactWeb) {
             return (
                 <View style={[styles.bottomBar, styles.bottomBarCompact]}>
@@ -745,7 +778,7 @@ const styles = StyleSheet.create({
     },
 
     listContent: { paddingHorizontal: SPACING.md, paddingBottom: 130 },
-    listContentMobileWeb: { paddingBottom: MOBILE_WEB_BOTTOM_BAR_HEIGHT + 28 },
+    listContentMobileWeb: { paddingBottom: MOBILE_WEB_BOTTOM_BAR_HEIGHT + 44 },
     mobileRow: { justifyContent: 'space-between', marginBottom: SPACING.sm },
     loadMoreBtn: {
         marginTop: SPACING.sm,
@@ -886,6 +919,11 @@ const styles = StyleSheet.create({
         gap: SPACING.xs,
         paddingVertical: SPACING.sm,
     },
+    bottomBarUltraCompact: {
+        paddingTop: 8,
+        paddingBottom: 8,
+        gap: 8,
+    },
     compactTopRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -904,6 +942,12 @@ const styles = StyleSheet.create({
     selectionInfoCompact: { flex: 1, minWidth: 0 },
     selectionBrand: { color: COLORS.primary, fontSize: 11, fontWeight: '700' },
     selectionName: { color: COLORS.text, fontSize: 15, fontWeight: '600', flexShrink: 1 },
+    selectionNameCompactWeb: {
+        color: COLORS.text,
+        fontSize: 13,
+        fontWeight: '700',
+        flexShrink: 1,
+    },
     limitErrorText: { color: '#CC7B7B', fontSize: 11, marginTop: 2 },
     btnGroup: { flexDirection: 'column', gap: 6 },
     btnGroupCompact: { marginLeft: 'auto' },
@@ -922,6 +966,11 @@ const styles = StyleSheet.create({
     placeBtnCompact: {
         minHeight: 40,
         paddingHorizontal: SPACING.sm + 2,
+    },
+    placeBtnUltraCompact: {
+        width: '100%',
+        justifyContent: 'center',
+        minHeight: 44,
     },
     placeBtnHover: { backgroundColor: COLORS.primaryLight },
     placeBtnDisabled: {
