@@ -15,6 +15,7 @@ import {
     Platform,
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
+import { USE_BACKEND_LIMIT } from '../constants/env';
 import carpetsData from '../data/carpets.json';
 import UsageLimitBadge from '../components/UsageLimitBadge';
 import LimitReachedModal from '../components/LimitReachedModal';
@@ -194,10 +195,13 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         }
         try {
             setIsPlacing(true);
-            const consumeResult = await consumeOne();
-            if (!consumeResult.allowed) {
-                setShowLimitModal(true);
-                return;
+            // Backend mode: kredi düşümü render endpointinde yapılır, burada tekrar düşmeyelim.
+            if (!USE_BACKEND_LIMIT) {
+                const consumeResult = await consumeOne();
+                if (!consumeResult.allowed) {
+                    setShowLimitModal(true);
+                    return;
+                }
             }
             navigation.navigate('Result', { roomImageUri, carpet: selectedCarpet, mode });
         } catch (error: any) {
@@ -814,9 +818,9 @@ const styles = StyleSheet.create({
     },
     hintText: { color: COLORS.textMuted, fontSize: 13, textAlign: 'center', flex: 1 },
     selectionThumb: { width: 52, height: 52, borderRadius: RADIUS.md },
-    selectionInfo: { flex: 1 },
+    selectionInfo: { flex: 1, minWidth: 0 },
     selectionBrand: { color: COLORS.primary, fontSize: 11, fontWeight: '700' },
-    selectionName: { color: COLORS.text, fontSize: 15, fontWeight: '600' },
+    selectionName: { color: COLORS.text, fontSize: 15, fontWeight: '600', flexShrink: 1 },
     limitErrorText: { color: '#CC7B7B', fontSize: 11, marginTop: 2 },
     btnGroup: { flexDirection: 'column', gap: 6 },
     placeBtn: {

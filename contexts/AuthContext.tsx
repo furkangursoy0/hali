@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { Platform } from 'react-native';
 import { API_BASE_URL } from '../constants/env';
 
 export type UserRole = 'ADMIN' | 'STAFF';
@@ -48,6 +49,8 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const SESSION_STORAGE_KEY = 'hali_auth_session_v1';
+const isWeb = Platform.OS === 'web';
 
 function sanitizeUser(user: ManagedUser): AuthUser {
   return {
@@ -76,6 +79,27 @@ function toManagedUser(input: any): ManagedUser {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
+
+  const persistSession = (token: string, authUser: AuthUser) => {
+    if (!isWeb) return;
+    try {
+      window.localStorage.setItem(
+        SESSION_STORAGE_KEY,
+        JSON.stringify({ token, user: authUser })
+      );
+    } catch {
+      // ignore persistence errors
+    }
+  };
+
+  const clearSession = () => {
+    if (!isWeb) return;
+    try {
+      window.localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch {
+      // ignore persistence errors
+    }
+  };
 
   const loadAdminUsers = async () => {
     try {
@@ -149,6 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credit: Number(apiUser.credit || 0),
       } as AuthUser;
       setUser(nextUser);
+      persistSession(token, nextUser);
       if (nextUser.role === 'ADMIN') {
         await loadAdminUsers();
       } else {
@@ -168,6 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setUsers([]);
     delete axios.defaults.headers.common.Authorization;
+    clearSession();
   };
 
   const createUser = async (input: CreateUserInput) => {
@@ -261,6 +287,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }),
     [user, users]
   );
+
+  useEffect(() => {
+    if (!isWeb) return;
+    try {
+      const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const token = String(parsed?.token || '');
+      const savedUser = parsed?.user;
+      if (!token || !savedUser?.id) return;
+
+      axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+      setUser({
+        id: String(savedUser.id),
+        fullName: String(savedUser.fullName || ''),
+        email: String(savedUser.email || ''),
+        username: String(savedUser.username || ''),
+        role: savedUser.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
+        credit: Number(savedUser.credit || 0),
+      });
+
+      void refreshCurrentUser().then(() => {
+        if ((savedUser.role === 'ADMIN')) {
+          void loadAdminUsers();
+        }
+      });
+    } catch {
+      clearSession();
+    }
+  }, []);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

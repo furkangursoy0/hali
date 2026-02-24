@@ -40,8 +40,6 @@ const LOADING_MESSAGES = [
     '🔍 Son rötuşlar yapılıyor...',
 ];
 
-const RENDER_TIMEOUT_MS = 70000;
-
 function mapErrorTitle(code: PlacementResult['errorCode']) {
     switch (code) {
         case 'AUTH':
@@ -57,26 +55,6 @@ function mapErrorTitle(code: PlacementResult['errorCode']) {
         default:
             return 'Bir Hata Oluştu';
     }
-}
-
-async function runRenderWithTimeout(
-    promise: Promise<PlacementResult>,
-    timeoutMs = RENDER_TIMEOUT_MS
-): Promise<PlacementResult> {
-    let timer: any;
-    const timeoutPromise = new Promise<PlacementResult>((resolve) => {
-        timer = setTimeout(() => {
-            resolve({
-                imageUrl: '',
-                success: false,
-                errorCode: 'NETWORK',
-                error: 'İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.',
-            });
-        }, timeoutMs);
-    });
-    const result = await Promise.race([promise, timeoutPromise]);
-    clearTimeout(timer);
-    return result;
 }
 
 export default function ResultScreen({ navigation, route }: ResultScreenProps) {
@@ -131,9 +109,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                 throw new Error('Seçilen halı görseli bulunamadı.');
             }
             const carpetUri = getCarpetFullUrl(carpet.imagePath);
-            const result = await runRenderWithTimeout(
-                placeCarperInRoom(roomImageUri, carpetUri, carpet.name, placementMode)
-            );
+            const result = await placeCarperInRoom(roomImageUri, carpetUri, carpet.name, placementMode);
 
             if (result.success && result.imageUrl) {
                 setResultImageUri(result.imageUrl);
@@ -192,7 +168,32 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
     const handleShare = async () => {
         try {
             const shareUrl = cloudImageUrl || resultImageUri;
-            await Share.share({ url: shareUrl, title: `${carpet.name} - Halıcı Gürsoylar` });
+            const hasHttpUrl = /^https?:\/\//i.test(shareUrl);
+
+            if (isWeb) {
+                const nav: any = navigator;
+                if (nav?.share && hasHttpUrl) {
+                    await nav.share({
+                        title: `${carpet.name} - HALI AI`,
+                        text: `${carpet.name} sonucunu paylas`,
+                        url: shareUrl,
+                    });
+                    return;
+                }
+                if (hasHttpUrl && nav?.clipboard?.writeText) {
+                    await nav.clipboard.writeText(shareUrl);
+                    Alert.alert('Kopyalandı', 'Paylaşım linki panoya kopyalandı.');
+                    return;
+                }
+                Alert.alert('Paylaşım hazır değil', 'Bulut linki henüz hazır değil. Birkaç saniye sonra tekrar deneyin.');
+                return;
+            }
+
+            await Share.share({
+                title: `${carpet.name} - HALI AI`,
+                message: hasHttpUrl ? `${carpet.name} sonucu: ${shareUrl}` : `${carpet.name} sonucu hazır.`,
+                ...(hasHttpUrl ? { url: shareUrl } : {}),
+            });
         } catch (err) {
             Alert.alert('Hata', 'Paylaşım başarısız.');
         }
