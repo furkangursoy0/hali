@@ -13,6 +13,7 @@ import {
     StatusBar,
     Dimensions,
     Platform,
+    useWindowDimensions,
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { USE_BACKEND_LIMIT } from '../constants/env';
@@ -80,6 +81,7 @@ interface SelectScreenProps {
 const ALL = 'Tümü';
 
 export default function SelectScreen({ navigation, route }: SelectScreenProps) {
+    const { width: viewportWidth } = useWindowDimensions();
     const { roomImageUri } = route.params;
     const { isLoggedIn } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
@@ -93,6 +95,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [visibleCount, setVisibleCount] = useState(isWeb ? WEB_PAGE_SIZE : MOBILE_PAGE_SIZE);
     const [isPlacing, setIsPlacing] = useState(false);
     const { remaining, limit, loading: limitLoading, error: limitError, consumeOne, isLimitReached } = useUsageLimit();
+    const isCompactWeb = isWeb && viewportWidth < 820;
 
     useEffect(() => {
         if (!isWeb) return;
@@ -362,6 +365,18 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
 
     const BottomBar = () => {
         if (!selectedCarpet) {
+            if (isCompactWeb) {
+                return (
+                    <View style={[styles.bottomBar, styles.bottomBarCompact]}>
+                        <Text style={styles.hintText}>Bir halı seçin, ardından AI ile yerleştirin</Text>
+                        <View style={styles.compactActionsRow}>
+                            {isLoggedIn ? (
+                                <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} />
+                            ) : null}
+                        </View>
+                    </View>
+                );
+            }
             return (
                 <View style={styles.bottomBar}>
                     <Text style={styles.hintText}>Bir hali secin, ardindan AI ile yerlestirin</Text>
@@ -374,13 +389,49 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         const selectedThumbUri = selectedCarpet.imagePath
             ? getCarpetThumbnailUrl(selectedCarpet.imagePath, selectedCarpet.thumbPath, 240, 70)
             : '';
+        if (isCompactWeb) {
+            return (
+                <View style={[styles.bottomBar, styles.bottomBarCompact]}>
+                    <View style={styles.compactTopRow}>
+                        {selectedThumbUri && (
+                            <Image source={{ uri: selectedThumbUri }} style={[styles.selectionThumb, styles.selectionThumbCompact]} resizeMode="cover" />
+                        )}
+                        <View style={[styles.selectionInfo, styles.selectionInfoCompact]}>
+                            <Text style={styles.selectionBrand} numberOfLines={1}>
+                                {selectedCarpet.brand} · {selectedCarpet.collection}
+                            </Text>
+                            <Text style={styles.selectionName} numberOfLines={1}>{selectedCarpet.name}</Text>
+                            {!!limitError && <Text style={styles.limitErrorText}>Limit durumu geçici olarak alınamadı</Text>}
+                        </View>
+                    </View>
+                    <View style={styles.compactActionsRow}>
+                        {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
+                        <View style={[styles.btnGroup, styles.btnGroupCompact]}>
+                            <Pressable
+                                style={({ hovered }: any) => [
+                                    styles.placeBtn,
+                                    styles.placeBtnCompact,
+                                    isPlacing && styles.placeBtnDisabled,
+                                    hovered && !isPlacing && styles.placeBtnHover,
+                                ]}
+                                onPress={() => handlePlace('normal')}
+                                disabled={isPlacing}
+                            >
+                                <Text style={styles.placeBtnIcon}>✨</Text>
+                                <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'AI ile Yerleştir'}</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            );
+        }
         return (
             <View style={styles.bottomBar}>
                 {selectedThumbUri && (
                     <Image source={{ uri: selectedThumbUri }} style={styles.selectionThumb} resizeMode="cover" />
                 )}
                 <View style={styles.selectionInfo}>
-                    <Text style={styles.selectionBrand}>{selectedCarpet.brand} · {selectedCarpet.collection}</Text>
+                    <Text style={styles.selectionBrand} numberOfLines={1}>{selectedCarpet.brand} · {selectedCarpet.collection}</Text>
                     <Text style={styles.selectionName} numberOfLines={1}>{selectedCarpet.name}</Text>
                     {!!limitError && <Text style={styles.limitErrorText}>Limit durumu gecici olarak alinamadi</Text>}
                 </View>
@@ -816,13 +867,32 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0, left: 0, right: 0,
     },
+    bottomBarCompact: {
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: SPACING.sm,
+    },
+    compactTopRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.sm,
+    },
+    compactActionsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: SPACING.sm,
+    },
     hintText: { color: COLORS.textMuted, fontSize: 13, textAlign: 'center', flex: 1 },
     selectionThumb: { width: 52, height: 52, borderRadius: RADIUS.md },
+    selectionThumbCompact: { width: 44, height: 44 },
     selectionInfo: { flex: 1, minWidth: 0 },
+    selectionInfoCompact: { flex: 1, minWidth: 0 },
     selectionBrand: { color: COLORS.primary, fontSize: 11, fontWeight: '700' },
     selectionName: { color: COLORS.text, fontSize: 15, fontWeight: '600', flexShrink: 1 },
     limitErrorText: { color: '#CC7B7B', fontSize: 11, marginTop: 2 },
     btnGroup: { flexDirection: 'column', gap: 6 },
+    btnGroupCompact: { marginLeft: 'auto' },
     placeBtn: {
         backgroundColor: COLORS.primary,
         borderRadius: RADIUS.lg,
@@ -831,6 +901,10 @@ const styles = StyleSheet.create({
         shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.4, shadowRadius: 6, elevation: 5,
+    },
+    placeBtnCompact: {
+        minHeight: 42,
+        paddingHorizontal: SPACING.sm + 2,
     },
     placeBtnHover: { backgroundColor: COLORS.primaryLight },
     placeBtnDisabled: {

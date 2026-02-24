@@ -35,6 +35,7 @@ interface CreateUserInput {
 
 interface AuthContextValue {
   user: AuthUser | null;
+  isHydrated: boolean;
   isLoggedIn: boolean;
   isAdmin: boolean;
   users: ManagedUser[];
@@ -79,6 +80,7 @@ function toManagedUser(input: any): ManagedUser {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isHydrated, setIsHydrated] = useState(!isWeb);
 
   const persistSession = (token: string, authUser: AuthUser) => {
     if (!isWeb) return;
@@ -273,6 +275,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       user,
+      isHydrated,
       isLoggedIn: !!user,
       isAdmin: user?.role === 'ADMIN',
       users,
@@ -285,11 +288,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshCurrentUser,
       syncCurrentUserCredit,
     }),
-    [user, users]
+    [user, users, isHydrated]
   );
 
   useEffect(() => {
-    if (!isWeb) return;
+    if (!isWeb) {
+      setIsHydrated(true);
+      return;
+    }
     try {
       const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
       if (!raw) return;
@@ -315,6 +321,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     } catch {
       clearSession();
+    } finally {
+      setIsHydrated(true);
     }
   }, []);
 
