@@ -169,29 +169,24 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     const AccountPanel = () => {
         if (isLoggedIn && user) {
             return (
-                <View style={styles.accountCard}>
-                    <View style={styles.accountTopRow}>
+                <View style={styles.accountBar}>
+                    <View style={styles.accountBarLeft}>
                         <UserIcon />
-                        <View style={styles.accountTexts}>
-                            <Text style={styles.accountName} numberOfLines={1}>{user.fullName}</Text>
-                            <Text style={styles.accountMeta} numberOfLines={1}>{user.email}</Text>
-                        </View>
+                        <Text style={styles.accountBarName} numberOfLines={1}>{user.fullName}</Text>
                     </View>
-                    <View style={styles.accountBottomRow}>
+                    <View style={styles.accountBarRight}>
                         <View style={styles.creditBadge}>
                             <CreditIcon />
-                            <Text style={styles.creditBadgeText}>
-                                {user.credit}
-                            </Text>
+                            <Text style={styles.creditBadgeText}>{user.credit}</Text>
                         </View>
-                        <Pressable style={({ hovered }: any) => [styles.accountGhostBtn, hovered && styles.accountGhostBtnHover]} onPress={signOut}>
-                            <Text style={styles.accountGhostBtnText}>Çıkış</Text>
-                        </Pressable>
                         {isAdmin && (
                             <Pressable style={({ hovered }: any) => [styles.accountAdminBtn, hovered && styles.accountAdminBtnHover]} onPress={() => navigation.navigate('Admin')}>
                                 <Text style={styles.accountAdminBtnText}>Admin</Text>
                             </Pressable>
                         )}
+                        <Pressable style={({ hovered }: any) => [styles.accountGhostBtn, hovered && styles.accountGhostBtnHover]} onPress={signOut}>
+                            <Text style={styles.accountGhostBtnText}>Çıkış</Text>
+                        </Pressable>
                     </View>
                 </View>
             );
@@ -202,9 +197,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
     const renderHeader = () => (
         <View style={styles.header}>
-            <View style={styles.headerTopRow}>
-                <AccountPanel />
-            </View>
+            <AccountPanel />
             <View style={styles.brandRow}>
                 <Text style={styles.logo}>HALI</Text>
                 <View style={styles.logoAiBadge}>
@@ -223,7 +216,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         </View>
     );
 
-    const renderBody = (includeInlineNext: boolean) => (
+    const renderBody = () => (
         <>
             {showQuickCards && (
                 <View style={styles.quickGrid}>
@@ -355,18 +348,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                         </View>
                     </View>
 
-            {includeInlineNext && (
-                <Pressable
-                    style={({ hovered }: any) => [
-                        styles.nextBtn,
-                        !roomImage && styles.nextBtnDisabled,
-                        hovered && roomImage && styles.nextBtnHover,
-                    ]}
-                    onPress={handleNext}
-                >
-                    <Text style={styles.nextBtnText}>İlerle  →</Text>
-                </Pressable>
-            )}
         </>
     );
 
@@ -385,9 +366,23 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                     >
                         <View style={styles.content}>
                             {renderHeader()}
-                            {renderBody(true)}
+                            {renderBody()}
                         </View>
                     </ScrollView>
+                    <View style={styles.webBottomBar}>
+                        <View style={styles.webBottomInner}>
+                            <Pressable
+                                style={({ hovered }: any) => [
+                                    styles.nextBtn,
+                                    !roomImage && styles.nextBtnDisabled,
+                                    hovered && roomImage && styles.nextBtnHover,
+                                ]}
+                                onPress={handleNext}
+                            >
+                                <Text style={styles.nextBtnText}>İlerle  →</Text>
+                            </Pressable>
+                        </View>
+                    </View>
                 </View>
             </View>
         );
@@ -409,9 +404,20 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                     {renderHeader()}
                 </View>
                 <View style={styles.content}>
-                    {renderBody(true)}
+                    {renderBody()}
                 </View>
             </ScrollView>
+            <View style={styles.stickyBottom}>
+                <Pressable
+                    style={[
+                        styles.nextBtn,
+                        !roomImage && styles.nextBtnDisabled,
+                    ]}
+                    onPress={handleNext}
+                >
+                    <Text style={styles.nextBtnText}>İlerle  →</Text>
+                </Pressable>
+            </View>
         </View>
     );
 }
@@ -458,11 +464,11 @@ const styles = StyleSheet.create({
     },
     scrollContentMobile: {
         paddingTop: SPACING.lg,
-        paddingBottom: SPACING.xxl + SPACING.sm,
+        paddingBottom: 120,
     },
     scrollContentWeb: {
         paddingHorizontal: SPACING.xl,
-        paddingBottom: 180,
+        paddingBottom: SPACING.xl,
     },
     content: {
         width: '100%',
@@ -475,12 +481,32 @@ const styles = StyleSheet.create({
         width: '100%',
         backgroundColor: 'transparent',
     },
-    headerTopRow: {
+    accountBar: {
         width: '100%',
-        minHeight: isWeb ? 70 : 54,
-        justifyContent: 'flex-end',
-        alignItems: isWeb ? 'center' : 'flex-end',
-        marginBottom: SPACING.sm,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 6,
+        marginBottom: SPACING.xs,
+    },
+    accountBarLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        flex: 1,
+        minWidth: 0,
+    },
+    accountBarName: {
+        color: COLORS.textSecondary,
+        fontSize: 12,
+        fontWeight: '600',
+        flexShrink: 1,
+    },
+    accountBarRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        flexShrink: 0,
     },
     logo: {
         fontSize: 32,
@@ -520,38 +546,6 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.sm,
         paddingHorizontal: 14,
         paddingVertical: 8,
-    },
-    accountCard: {
-        backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.md,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        paddingHorizontal: SPACING.sm,
-        paddingVertical: 6,
-        minWidth: isWeb ? 220 : 122,
-        maxWidth: 250,
-        alignItems: 'stretch',
-        minHeight: isWeb ? 76 : 44,
-    },
-    accountTopRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 7,
-    },
-    accountTexts: {
-        flex: 1,
-    },
-    accountName: {
-        color: COLORS.text,
-        fontSize: 11,
-        fontWeight: '700',
-        textAlign: 'right',
-    },
-    accountMeta: {
-        color: COLORS.textMuted,
-        fontSize: 10,
-        marginTop: 1,
-        textAlign: 'right',
     },
     creditBadge: {
         marginTop: 0,
@@ -604,13 +598,6 @@ const styles = StyleSheet.create({
         color: COLORS.primaryLight,
         fontSize: 11,
         fontWeight: '700',
-    },
-    accountBottomRow: {
-        marginTop: 6,
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        gap: 6,
     },
     accountIconWrap: {
         width: 20,
@@ -1097,7 +1084,7 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.lg,
         paddingVertical: SPACING.md + 2,
         alignItems: 'center',
-        marginBottom: SPACING.xl,
+        marginBottom: 0,
         shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
@@ -1117,6 +1104,24 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         letterSpacing: 0.3,
     },
-    webBottomBar: {},
-    webBottomInner: {},
+    stickyBottom: {
+        paddingHorizontal: SPACING.md,
+        paddingTop: SPACING.sm,
+        paddingBottom: SPACING.xl,
+        backgroundColor: COLORS.background,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+    },
+    webBottomBar: {
+        backgroundColor: COLORS.background,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+        paddingHorizontal: SPACING.xl,
+        paddingVertical: SPACING.md,
+    },
+    webBottomInner: {
+        width: '100%',
+        maxWidth: 940,
+        alignSelf: 'center',
+    },
 });
