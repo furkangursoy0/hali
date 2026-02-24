@@ -28,6 +28,7 @@ const isWeb = Platform.OS === 'web';
 const CARPET_IMAGE_RATIO = 1.35;
 const WEB_PAGE_SIZE = 60;
 const MOBILE_PAGE_SIZE = 40;
+const MOBILE_WEB_BOTTOM_BAR_HEIGHT = 90;
 
 function normalizeText(value: string) {
     return value
@@ -96,6 +97,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [isPlacing, setIsPlacing] = useState(false);
     const { remaining, limit, loading: limitLoading, error: limitError, consumeOne, isLimitReached } = useUsageLimit();
     const isCompactWeb = isWeb && viewportWidth < 820;
+    const isMobileWeb = isWeb && viewportWidth < 900;
 
     useEffect(() => {
         if (!isWeb) return;
@@ -406,7 +408,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     </View>
                     <View style={styles.compactActionsRow}>
                         {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
-                        <View style={[styles.btnGroup, styles.btnGroupCompact]}>
+                        <View style={[styles.btnGroup, styles.btnGroupCompact, styles.btnGroupCompactFixed]}>
                             <Pressable
                                 style={({ hovered }: any) => [
                                     styles.placeBtn,
@@ -567,7 +569,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 keyExtractor={item => `${item.brand}_${item.image}`}
                 numColumns={2}
                 columnWrapperStyle={styles.mobileRow}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={[styles.listContent, isMobileWeb && styles.listContentMobileWeb]}
                 showsVerticalScrollIndicator={false}
                 initialNumToRender={8}
                 maxToRenderPerBatch={8}
@@ -591,7 +593,9 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 }
             />
             <View style={styles.mobileBottomBar}>
-                <BottomBar />
+                <View style={[styles.mobileBottomInner, isMobileWeb && styles.mobileBottomInnerWeb]}>
+                    <BottomBar />
+                </View>
             </View>
             <LimitReachedModal
                 visible={showLimitModal}
@@ -741,6 +745,7 @@ const styles = StyleSheet.create({
     },
 
     listContent: { paddingHorizontal: SPACING.md, paddingBottom: 130 },
+    listContentMobileWeb: { paddingBottom: MOBILE_WEB_BOTTOM_BAR_HEIGHT + 28 },
     mobileRow: { justifyContent: 'space-between', marginBottom: SPACING.sm },
     loadMoreBtn: {
         marginTop: SPACING.sm,
@@ -867,10 +872,19 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0, left: 0, right: 0,
     },
+    mobileBottomInner: {
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+        backgroundColor: COLORS.surfaceElevated,
+    },
+    mobileBottomInnerWeb: {
+        paddingBottom: 'max(10px, env(safe-area-inset-bottom))',
+    } as any,
     bottomBarCompact: {
         flexDirection: 'column',
         alignItems: 'stretch',
-        gap: SPACING.sm,
+        gap: SPACING.xs,
+        paddingVertical: SPACING.sm,
     },
     compactTopRow: {
         flexDirection: 'row',
@@ -881,7 +895,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: SPACING.sm,
+        gap: SPACING.xs,
     },
     hintText: { color: COLORS.textMuted, fontSize: 13, textAlign: 'center', flex: 1 },
     selectionThumb: { width: 52, height: 52, borderRadius: RADIUS.md },
@@ -893,6 +907,9 @@ const styles = StyleSheet.create({
     limitErrorText: { color: '#CC7B7B', fontSize: 11, marginTop: 2 },
     btnGroup: { flexDirection: 'column', gap: 6 },
     btnGroupCompact: { marginLeft: 'auto' },
+    btnGroupCompactFixed: {
+        flexShrink: 0,
+    },
     placeBtn: {
         backgroundColor: COLORS.primary,
         borderRadius: RADIUS.lg,
@@ -903,7 +920,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.4, shadowRadius: 6, elevation: 5,
     },
     placeBtnCompact: {
-        minHeight: 42,
+        minHeight: 40,
         paddingHorizontal: SPACING.sm + 2,
     },
     placeBtnHover: { backgroundColor: COLORS.primaryLight },

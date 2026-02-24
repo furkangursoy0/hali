@@ -18,7 +18,6 @@ import {
 import * as MediaLibrary from 'expo-media-library';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { placeCarperInRoom, PlacementMode, PlacementResult } from '../services/openai';
-import { getStorageClient } from '../services/storage';
 import { getCarpetFullUrl, getCarpetThumbnailUrl } from '../services/carpet-image';
 
 const { width, height } = Dimensions.get('window');
@@ -30,7 +29,6 @@ interface ResultScreenProps {
 }
 
 type Status = 'loading' | 'success' | 'error' | 'limit';
-type CloudStatus = 'idle' | 'uploading' | 'uploaded' | 'failed';
 
 const LOADING_MESSAGES = [
     '🎨 Halı deseni analiz ediliyor...',
@@ -62,9 +60,6 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
     const placementMode: PlacementMode = mode || 'normal';
     const [status, setStatus] = useState<Status>('loading');
     const [resultImageUri, setResultImageUri] = useState<string>('');
-    const [cloudImageUrl, setCloudImageUrl] = useState<string>('');
-    const [cloudStatus, setCloudStatus] = useState<CloudStatus>('idle');
-    const [cloudErrorMessage, setCloudErrorMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [errorCode, setErrorCode] = useState<PlacementResult['errorCode']>('UNKNOWN');
     const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
@@ -101,9 +96,6 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
     const processImage = async () => {
         try {
             setStatus('loading');
-            setCloudStatus('idle');
-            setCloudImageUrl('');
-            setCloudErrorMessage('');
             setErrorCode('UNKNOWN');
             if (!carpet?.imagePath) {
                 throw new Error('Seçilen halı görseli bulunamadı.');
@@ -114,7 +106,6 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
             if (result.success && result.imageUrl) {
                 setResultImageUri(result.imageUrl);
                 setStatus('success');
-                void uploadResultToCloud(result.imageUrl);
             } else {
                 const nextErrorMessage = result.error || 'Bilinmeyen hata';
                 setErrorMessage(nextErrorMessage);
@@ -126,19 +117,6 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
             setErrorMessage(nextErrorMessage);
             setErrorCode('NETWORK');
             setStatus('error');
-        }
-    };
-
-    const uploadResultToCloud = async (localUri: string) => {
-        try {
-            setCloudStatus('uploading');
-            const client = getStorageClient();
-            const uploaded = await client.uploadImage(localUri, { folder: 'hali-ai/results' });
-            setCloudImageUrl(uploaded.url);
-            setCloudStatus('uploaded');
-        } catch (err: any) {
-            setCloudErrorMessage(err?.message || 'Cloud upload başarısız');
-            setCloudStatus('failed');
         }
     };
 
@@ -167,32 +145,28 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
 
     const handleShare = async () => {
         try {
-            const shareUrl = cloudImageUrl || resultImageUri;
-            const hasHttpUrl = /^https?:\/\//i.test(shareUrl);
-
             if (isWeb) {
                 const nav: any = navigator;
-                if (nav?.share && hasHttpUrl) {
+                const response = await fetch(resultImageUri);
+                const blob = await response.blob();
+                const file = new File([blob], `hali-sonuc-${Date.now()}.png`, { type: blob.type || 'image/png' });
+
+                if (nav?.canShare?.({ files: [file] }) && nav?.share) {
                     await nav.share({
                         title: `${carpet.name} - HALI AI`,
-                        text: `${carpet.name} sonucunu paylas`,
-                        url: shareUrl,
+                        text: `${carpet.name} sonucu`,
+                        files: [file],
                     });
                     return;
                 }
-                if (hasHttpUrl && nav?.clipboard?.writeText) {
-                    await nav.clipboard.writeText(shareUrl);
-                    Alert.alert('Kopyalandı', 'Paylaşım linki panoya kopyalandı.');
-                    return;
-                }
-                Alert.alert('Paylaşım hazır değil', 'Bulut linki henüz hazır değil. Birkaç saniye sonra tekrar deneyin.');
+                Alert.alert('Paylaşım', 'Tarayıcı doğrudan paylaşımı desteklemiyor. Kaydet ile indirip WhatsApp’tan paylaşabilirsin.');
                 return;
             }
 
             await Share.share({
                 title: `${carpet.name} - HALI AI`,
-                message: hasHttpUrl ? `${carpet.name} sonucu: ${shareUrl}` : `${carpet.name} sonucu hazır.`,
-                ...(hasHttpUrl ? { url: shareUrl } : {}),
+                message: `${carpet.name} sonucu hazır.`,
+                url: resultImageUri,
             });
         } catch (err) {
             Alert.alert('Hata', 'Paylaşım başarısız.');
@@ -311,15 +285,13 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                             <Text style={styles.actionBtnText}>Paylaş</Text>
                         </Pressable>
                     </View>
-                    <View style={styles.cloudStatusWrap}>
-                        {cloudStatus === 'uploading' && <Text style={styles.cloudStatusText}>Buluta yükleniyor...</Text>}
-                        {cloudStatus === 'uploaded' && <Text style={styles.cloudStatusTextSuccess}>Bulut URL hazır (paylaşım cloud link kullanır)</Text>}
-                        {cloudStatus === 'failed' && <Text style={styles.cloudStatusTextError}>Bulut yükleme hatası: {cloudErrorMessage}</Text>}
-                    </View>
 
-                    {/* Retry */}
-                    <Pressable style={({ hovered }: any) => [styles.retryBtn, hovered && styles.retryBtnHover]} onPress={processImage}>
-                        <Text style={styles.retryBtnText}>🔄 Tekrar Oluştur</Text>
+                    {/* Try another carpet */}
+                    <Pressable
+                        style={({ hovered }: any) => [styles.retryBtn, hovered && styles.retryBtnHover]}
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Text style={styles.retryBtnText}>← Başka halı dene</Text>
                     </Pressable>
 
                     {/* New Search */}
@@ -623,22 +595,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: SPACING.sm,
         marginBottom: SPACING.sm,
-    },
-    cloudStatusWrap: {
-        marginBottom: SPACING.sm,
-        minHeight: 20,
-    },
-    cloudStatusText: {
-        color: COLORS.textSecondary,
-        fontSize: 12,
-    },
-    cloudStatusTextSuccess: {
-        color: '#9ed8b2',
-        fontSize: 12,
-    },
-    cloudStatusTextError: {
-        color: '#cc7b7b',
-        fontSize: 12,
     },
     actionBtn: {
         flex: 1,
