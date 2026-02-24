@@ -10,6 +10,7 @@ import {
     ScrollView,
     Platform,
     ActivityIndicator,
+    useWindowDimensions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
@@ -22,9 +23,12 @@ interface HomeScreenProps {
 }
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
+    const { width: viewportWidth } = useWindowDimensions();
     const { user, isLoggedIn, isAdmin, signOut } = useAuth();
     const [roomImage, setRoomImage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const showQuickCards = isWeb && viewportWidth >= 900;
+    const isCompactLayout = !isWeb || viewportWidth < 900;
 
     const requestCameraPermission = async () => {
         if (isWeb) return true;
@@ -218,7 +222,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
     const renderBody = (includeInlineNext: boolean) => (
         <>
-            {isWeb && (
+            {showQuickCards && (
                 <View style={styles.quickGrid}>
                     <View style={styles.quickCard}>
                         <View style={styles.quickCardRow}>
@@ -317,24 +321,24 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 </View>
             </View>
 
-                    <View style={[styles.flowRow, isWeb ? styles.flowRowWeb : styles.flowRowMobile]}>
+                    <View style={[styles.flowRow, isCompactLayout ? styles.flowRowMobile : styles.flowRowWeb]}>
                         <View style={styles.flowItem}>
                             <View style={styles.stepBadge}><Text style={styles.stepNum}>1</Text></View>
-                            <Text style={[styles.stepText, !isWeb && styles.stepTextMobile]}>Oda Fotoğrafı</Text>
+                            <Text style={[styles.stepText, isCompactLayout && styles.stepTextMobile]}>Oda Fotoğrafı</Text>
                         </View>
-                        <View style={[styles.stepArrowWrap, !isWeb && styles.stepArrowWrapMobile]}>
-                            <Text style={[styles.stepArrowText, !isWeb && styles.stepArrowTextMobile]}>→</Text>
+                        <View style={[styles.stepArrowWrap, isCompactLayout && styles.stepArrowWrapMobile]}>
+                            <Text style={[styles.stepArrowText, isCompactLayout && styles.stepArrowTextMobile]}>→</Text>
                         </View>
                         <View style={styles.flowItem}>
                             <View style={styles.stepBadge}><Text style={styles.stepNum}>2</Text></View>
-                            <Text style={[styles.stepText, !isWeb && styles.stepTextMobile]}>Halı Seçimi</Text>
+                            <Text style={[styles.stepText, isCompactLayout && styles.stepTextMobile]}>Halı Seçimi</Text>
                         </View>
-                        <View style={[styles.stepArrowWrap, !isWeb && styles.stepArrowWrapMobile]}>
-                            <Text style={[styles.stepArrowText, !isWeb && styles.stepArrowTextMobile]}>→</Text>
+                        <View style={[styles.stepArrowWrap, isCompactLayout && styles.stepArrowWrapMobile]}>
+                            <Text style={[styles.stepArrowText, isCompactLayout && styles.stepArrowTextMobile]}>→</Text>
                         </View>
                         <View style={styles.flowItem}>
                             <View style={styles.stepBadge}><Text style={styles.stepNum}>3</Text></View>
-                            <Text style={[styles.stepText, !isWeb && styles.stepTextMobile]}>AI Yerleştirme</Text>
+                            <Text style={[styles.stepText, isCompactLayout && styles.stepTextMobile]}>AI Yerleştirme</Text>
                         </View>
                     </View>
 
