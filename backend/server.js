@@ -36,8 +36,6 @@ const RUG_MAX_HEIGHT_RATIO = Number(process.env.RUG_MAX_HEIGHT_RATIO || 0.85);
 const RUG_TOUCH_MARGIN_RATIO = Number(process.env.RUG_TOUCH_MARGIN_RATIO || 0.02);
 const EDGE_CONTRAST_THRESHOLD = Number(process.env.EDGE_CONTRAST_THRESHOLD || 0.5);
 
-const INNER_EDIT_ALPHA = Number(process.env.INNER_EDIT_ALPHA ?? 0);
-
 const OPENAI_ENABLE_SHADOW_PASS = process.env.OPENAI_ENABLE_SHADOW_PASS === 'true';
 const OPENAI_ENABLE_EDGE_POLISH = process.env.OPENAI_ENABLE_EDGE_POLISH === 'true';
 const OPENAI_ENABLE_CANDIDATE_SCORING = process.env.OPENAI_ENABLE_CANDIDATE_SCORING === 'true';
@@ -96,13 +94,15 @@ function createGradientFloorMasks(width, height) {
                 const edgeDistance = Math.min(dLeft, dRight, dTop, dBottom);
 
                 if (edgeDistance <= blendPx) {
-                    // At boundary (edgeDistance=0): alpha=255 (preserve, seamlessly continues outside)
-                    // At blendPx inside (edgeDistance=blendPx): alpha=0 (fully editable)
                     const blendT = Math.max(0, Math.min(1, edgeDistance / Math.max(1, blendPx)));
-                    aApi = Math.round(255 * (1 - blendT));
-                    aScore = Math.round(255 * blendT);
+                    const editStrength = 0.35 + 0.65 * blendT;
+                    const alpha = Math.round(255 * (1 - editStrength));
+                    const scoreStrength = blendT;
+                    const sAlpha = Math.round(255 * scoreStrength);
+                    aApi = alpha;
+                    aScore = sAlpha;
                 } else {
-                    // Center of floor: fully editable (INNER_EDIT_ALPHA from env, default 0)
+                    const INNER_EDIT_ALPHA = 40;
                     aApi = INNER_EDIT_ALPHA;
                     aScore = 255;
                 }
