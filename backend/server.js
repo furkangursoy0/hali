@@ -131,7 +131,7 @@ async function prepareRoomImage(buffer) {
     const metadata = await image.metadata();
     const width = Number(metadata.width || 0);
     const height = Number(metadata.height || 0);
-    const preparedBuffer = await image.resize({ width: 1536, height: 1536, fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 86, mozjpeg: true }).toBuffer();
+    const preparedBuffer = await image.resize({ width: 1536, height: 1536, fit: 'inside', withoutEnlargement: true }).png({ compressionLevel: 6 }).toBuffer();
     const preparedMeta = await sharp(preparedBuffer).metadata();
     const preparedWidth = Number(preparedMeta.width || 1024);
     const preparedHeight = Number(preparedMeta.height || 1024);
@@ -153,7 +153,7 @@ async function prepareRoomImage(buffer) {
 }
 
 async function prepareCarpetImage(buffer) {
-    return sharp(buffer).rotate().resize({ width: 1024, height: 1024, fit: 'inside', withoutEnlargement: true }).png({ compressionLevel: 9 }).toBuffer();
+    return sharp(buffer).rotate().resize({ width: 2048, height: 2048, fit: 'inside', withoutEnlargement: true }).png({ compressionLevel: 6 }).toBuffer();
 }
 
 function pickOpenAiSize(originalWidth, originalHeight) {
@@ -300,8 +300,8 @@ async function applyEdgePolish(base64Image, roomBuffer, maskBuffer) {
 
 function buildRenderFormData({ roomBuffer, carpetBuffer, prompt, n, size, quality, maskBuffer }) {
     const formData = new FormData();
-    formData.append('model', 'gpt-image-1');
-    formData.append('image[]', roomBuffer, { filename: 'room.jpg', contentType: 'image/jpeg' });
+    formData.append('model', 'gpt-image-1.5');
+    formData.append('image[]', roomBuffer, { filename: 'room.png', contentType: 'image/png' });
     if (carpetBuffer) formData.append('image[]', carpetBuffer, { filename: 'carpet.png', contentType: 'image/png' });
     if (maskBuffer) formData.append('mask', maskBuffer, { filename: 'floor-mask.png', contentType: 'image/png' });
     formData.append('prompt', prompt);
@@ -960,9 +960,9 @@ app.post(
 
                 if (OPENAI_ENABLE_SHADOW_PASS && rugAreaRatio <= 0.6) {
                     try {
-                        const intermediateJpeg = await sharp(Buffer.from(finalBase64, 'base64')).jpeg({ quality: 92 }).toBuffer();
+                        const intermediatePng = await sharp(Buffer.from(finalBase64, 'base64')).png({ compressionLevel: 6 }).toBuffer();
                         const shadowFormData = buildRenderFormData({
-                            roomBuffer: intermediateJpeg,
+                            roomBuffer: intermediatePng,
                             carpetBuffer: null,
                             prompt: SHADOW_PASS_PROMPT,
                             n: 1,
