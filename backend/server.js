@@ -857,6 +857,7 @@ app.post(
             const roomFile = req.files?.roomImage?.[0];
             const carpetFile = req.files?.carpetImage?.[0];
             const mode = req.body?.mode === 'preview' ? 'preview' : 'normal';
+            const customerNote = (req.body?.customerNote || '').trim().slice(0, 120);
 
             if (!roomFile || !carpetFile) {
                 return res.status(400).json({ error: 'roomImage and carpetImage are required.' });
@@ -877,10 +878,14 @@ app.post(
             renderJobId = job.id;
 
             let firstPassResponse;
+            let renderPrompt = PROMPTS[mode];
+            if (customerNote) {
+                renderPrompt += ` Customer request (try to accommodate if possible without compromising image quality or rug pattern fidelity): ${customerNote}`;
+            }
             const formData = buildRenderFormData({
                 roomBuffer: preparedBuffer,
                 carpetBuffer: preparedCarpetBuffer,
-                prompt: PROMPTS[mode],
+                prompt: renderPrompt,
                 n: mode === 'preview' ? OPENAI_RENDER_VARIANTS_PREVIEW : OPENAI_RENDER_VARIANTS_NORMAL,
                 size: renderSize,
                 quality: renderQuality,
@@ -895,7 +900,7 @@ app.post(
                     firstPassResponse = await callOpenAiEdit(buildRenderFormData({
                         roomBuffer: preparedBuffer,
                         carpetBuffer: preparedCarpetBuffer,
-                        prompt: PROMPTS[mode],
+                        prompt: renderPrompt,
                         n: 1,
                         size: renderSize,
                         quality: renderQuality,
