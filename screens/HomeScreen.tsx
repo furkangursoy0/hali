@@ -201,7 +201,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <View style={styles.brandRow}>
                 <Text style={styles.logo}>HALI</Text>
                 <View style={styles.logoAiBadge}>
-                    <Text style={styles.logoAi}>AI</Text>
+                    <Text style={styles.logoAi}>YERLEŞTİR</Text>
                 </View>
             </View>
             <Text style={styles.subtitle}>Halınızı müşterinizin odasında anında gösterin</Text>
@@ -529,10 +529,11 @@ const styles = StyleSheet.create({
         paddingVertical: 2,
     },
     logoAi: {
-        fontSize: 18,
-        fontWeight: '900',
+        fontSize: 11,
+        fontWeight: '800',
         color: COLORS.primaryLight,
-        letterSpacing: 1,
+        letterSpacing: 0.5,
+        textTransform: 'uppercase',
     },
     subtitle: {
         fontSize: 15,
