@@ -97,6 +97,8 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [isPlacing, setIsPlacing] = useState(false);
     const [customCarpetUri, setCustomCarpetUri] = useState<string | null>(null);
     const [mobileWebBottomOffset, setMobileWebBottomOffset] = useState(0);
+    const [customerNote, setCustomerNote] = useState('');
+    const [showNoteInput, setShowNoteInput] = useState(false);
     const { remaining, limit, loading: limitLoading, error: limitError, consumeOne, isLimitReached } = useUsageLimit();
     const isCompactWeb = isWeb && viewportWidth < 820;
     const isMobileWeb = isWeb && viewportWidth < 900;
@@ -300,7 +302,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     return;
                 }
             }
-            navigation.navigate('Result', { roomImageUri, carpet: selectedCarpet, mode });
+            navigation.navigate('Result', { roomImageUri, carpet: selectedCarpet, mode, customerNote: customerNote.trim() || undefined });
         } catch (error: any) {
             Alert.alert('İşlem Başarısız', error?.message || 'Render başlatılamadı. Lütfen tekrar deneyin.');
         } finally {
@@ -514,19 +516,41 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                             </Text>
                         </View>
                     </View>
-                    <Pressable
-                        style={({ hovered }: any) => [
-                            styles.placeBtn,
-                            styles.placeBtnUltraCompact,
-                            isPlacing && styles.placeBtnDisabled,
-                            hovered && !isPlacing && styles.placeBtnHover,
-                        ]}
-                        onPress={() => handlePlace('normal')}
-                        disabled={isPlacing}
-                    >
-                        <Text style={styles.placeBtnIcon}>✨</Text>
-                        <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Yerleştir'}</Text>
-                    </Pressable>
+                    {showNoteInput && (
+                        <TextInput
+                            style={styles.noteInput}
+                            placeholder="Ör: 4 metrekare olsun, masanın altına girmesin"
+                            placeholderTextColor={COLORS.textMuted}
+                            value={customerNote}
+                            onChangeText={(t) => setCustomerNote(t.slice(0, 120))}
+                            maxLength={120}
+                            multiline
+                            numberOfLines={2}
+                            returnKeyType="done"
+                            blurOnSubmit
+                        />
+                    )}
+                    <View style={styles.placeRow}>
+                        <Pressable
+                            style={({ hovered }: any) => [styles.noteToggleBtn, hovered && styles.noteToggleBtnHover, showNoteInput && styles.noteToggleBtnActive]}
+                            onPress={() => setShowNoteInput(v => !v)}
+                        >
+                            <Text style={styles.noteToggleBtnText}>{showNoteInput ? '−' : '+'}</Text>
+                        </Pressable>
+                        <Pressable
+                            style={({ hovered }: any) => [
+                                styles.placeBtn,
+                                { flex: 1, justifyContent: 'center' },
+                                isPlacing && styles.placeBtnDisabled,
+                                hovered && !isPlacing && styles.placeBtnHover,
+                            ]}
+                            onPress={() => handlePlace('normal')}
+                            disabled={isPlacing}
+                        >
+                            <Text style={styles.placeBtnIcon}>✨</Text>
+                            <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Yerleştir'}</Text>
+                        </Pressable>
+                    </View>
                 </View>
             );
         }
@@ -545,13 +569,88 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                             {!!limitError && <Text style={styles.limitErrorText}>Limit durumu geçici olarak alınamadı</Text>}
                         </View>
                     </View>
+                    {showNoteInput && (
+                        <TextInput
+                            style={styles.noteInput}
+                            placeholder="Ör: 4 metrekare olsun, masanın altına girmesin"
+                            placeholderTextColor={COLORS.textMuted}
+                            value={customerNote}
+                            onChangeText={(t) => setCustomerNote(t.slice(0, 120))}
+                            maxLength={120}
+                            multiline
+                            numberOfLines={2}
+                            returnKeyType="done"
+                            blurOnSubmit
+                        />
+                    )}
                     <View style={styles.compactActionsRow}>
                         {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
                         <View style={[styles.btnGroup, styles.btnGroupCompact, styles.btnGroupCompactFixed]}>
+                            <View style={styles.placeRow}>
+                                <Pressable
+                                    style={({ hovered }: any) => [styles.noteToggleBtn, hovered && styles.noteToggleBtnHover, showNoteInput && styles.noteToggleBtnActive]}
+                                    onPress={() => setShowNoteInput(v => !v)}
+                                >
+                                    <Text style={styles.noteToggleBtnText}>{showNoteInput ? '−' : '+'}</Text>
+                                </Pressable>
+                                <Pressable
+                                    style={({ hovered }: any) => [
+                                        styles.placeBtn,
+                                        styles.placeBtnCompact,
+                                        isPlacing && styles.placeBtnDisabled,
+                                        hovered && !isPlacing && styles.placeBtnHover,
+                                    ]}
+                                    onPress={() => handlePlace('normal')}
+                                    disabled={isPlacing}
+                                >
+                                    <Text style={styles.placeBtnIcon}>✨</Text>
+                                    <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Yerleştir'}</Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            );
+        }
+        return (
+            <View style={styles.bottomBarWrap}>
+                {showNoteInput && (
+                    <View style={styles.noteInputRow}>
+                        <TextInput
+                            style={[styles.noteInput, styles.noteInputDesktop]}
+                            placeholder="Ör: 4 metrekare olsun, masanın altına girmesin"
+                            placeholderTextColor={COLORS.textMuted}
+                            value={customerNote}
+                            onChangeText={(t) => setCustomerNote(t.slice(0, 120))}
+                            maxLength={120}
+                            multiline
+                            numberOfLines={2}
+                            returnKeyType="done"
+                            blurOnSubmit
+                        />
+                    </View>
+                )}
+                <View style={styles.bottomBar}>
+                    {selectedThumbUri && (
+                        <Image source={{ uri: selectedThumbUri }} style={styles.selectionThumb} resizeMode="cover" />
+                    )}
+                    <View style={styles.selectionInfo}>
+                        <Text style={styles.selectionBrand} numberOfLines={1}>{isCustomCarpet ? '📷 Kameranızdan' : `${selectedCarpet.brand} · ${selectedCarpet.collection}`}</Text>
+                        <Text style={styles.selectionName} numberOfLines={1}>{selectedCarpet.name}</Text>
+                        {!!limitError && <Text style={styles.limitErrorText}>Limit durumu geçici olarak alınamadı</Text>}
+                    </View>
+                    {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
+                    <View style={styles.btnGroup}>
+                        <View style={styles.placeRow}>
+                            <Pressable
+                                style={({ hovered }: any) => [styles.noteToggleBtn, hovered && styles.noteToggleBtnHover, showNoteInput && styles.noteToggleBtnActive]}
+                                onPress={() => setShowNoteInput(v => !v)}
+                            >
+                                <Text style={styles.noteToggleBtnText}>{showNoteInput ? '−' : '+'}</Text>
+                            </Pressable>
                             <Pressable
                                 style={({ hovered }: any) => [
                                     styles.placeBtn,
-                                    styles.placeBtnCompact,
                                     isPlacing && styles.placeBtnDisabled,
                                     hovered && !isPlacing && styles.placeBtnHover,
                                 ]}
@@ -563,33 +662,6 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                             </Pressable>
                         </View>
                     </View>
-                </View>
-            );
-        }
-        return (
-            <View style={styles.bottomBar}>
-                {selectedThumbUri && (
-                    <Image source={{ uri: selectedThumbUri }} style={styles.selectionThumb} resizeMode="cover" />
-                )}
-                <View style={styles.selectionInfo}>
-                    <Text style={styles.selectionBrand} numberOfLines={1}>{isCustomCarpet ? '📷 Kameranızdan' : `${selectedCarpet.brand} · ${selectedCarpet.collection}`}</Text>
-                    <Text style={styles.selectionName} numberOfLines={1}>{selectedCarpet.name}</Text>
-                    {!!limitError && <Text style={styles.limitErrorText}>Limit durumu geçici olarak alınamadı</Text>}
-                </View>
-                {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
-                <View style={styles.btnGroup}>
-                    <Pressable
-                        style={({ hovered }: any) => [
-                            styles.placeBtn,
-                            isPlacing && styles.placeBtnDisabled,
-                            hovered && !isPlacing && styles.placeBtnHover,
-                        ]}
-                        onPress={() => handlePlace('normal')}
-                        disabled={isPlacing}
-                    >
-                        <Text style={styles.placeBtnIcon}>✨</Text>
-                        <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Yerleştir'}</Text>
-                    </Pressable>
                 </View>
             </View>
         );
@@ -1121,5 +1193,61 @@ const styles = StyleSheet.create({
     },
     cameraBtnIcon: {
         fontSize: 18,
+    },
+
+    // Customer note styles
+    bottomBarWrap: {
+        backgroundColor: COLORS.surfaceElevated,
+    },
+    noteInputRow: {
+        paddingHorizontal: SPACING.md,
+        paddingTop: SPACING.sm,
+        paddingBottom: SPACING.xs,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+    },
+    noteInput: {
+        backgroundColor: COLORS.surface,
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        color: COLORS.text,
+        fontSize: 13,
+        paddingHorizontal: SPACING.sm + 2,
+        paddingVertical: SPACING.xs + 2,
+        minHeight: 36,
+        maxHeight: 58,
+        textAlignVertical: 'top',
+    },
+    noteInputDesktop: {
+        maxWidth: 460,
+    },
+    noteToggleBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: RADIUS.lg,
+        backgroundColor: 'rgba(200, 134, 10, 0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(200, 134, 10, 0.4)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    noteToggleBtnHover: {
+        backgroundColor: 'rgba(200, 134, 10, 0.25)',
+    },
+    noteToggleBtnActive: {
+        backgroundColor: 'rgba(200, 134, 10, 0.3)',
+        borderColor: COLORS.primary,
+    },
+    noteToggleBtnText: {
+        color: COLORS.primary,
+        fontSize: 20,
+        fontWeight: '700',
+        lineHeight: 22,
+    },
+    placeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
 });

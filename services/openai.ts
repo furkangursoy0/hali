@@ -71,7 +71,8 @@ export async function placeCarperInRoom(
     roomImageUri: string,
     carpetImageUri: string,
     carpetName: string,
-    mode: PlacementMode = 'normal'
+    mode: PlacementMode = 'normal',
+    customerNote?: string,
 ): Promise<PlacementResult> {
     try {
         const roomBlob = await uriToBlob(roomImageUri, 'image/jpeg');
@@ -82,6 +83,9 @@ export async function placeCarperInRoom(
         formData.append('carpetImage', carpetBlob as any, 'carpet.png');
         formData.append('mode', mode);
         formData.append('carpetName', carpetName);
+        if (customerNote) {
+            formData.append('customerNote', customerNote);
+        }
 
         const response = await axios.post(
             `${API_BASE_URL}/api/render`,

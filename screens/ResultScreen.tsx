@@ -56,7 +56,7 @@ function mapErrorTitle(code: PlacementResult['errorCode']) {
 }
 
 export default function ResultScreen({ navigation, route }: ResultScreenProps) {
-    const { roomImageUri, carpet, mode } = route.params;
+    const { roomImageUri, carpet, mode, customerNote } = route.params;
     const placementMode: PlacementMode = mode || 'normal';
     const [status, setStatus] = useState<Status>('loading');
     const [resultImageUri, setResultImageUri] = useState<string>('');
@@ -104,7 +104,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
             const carpetUri = carpet.id === '__custom__'
                 ? carpet.imagePath
                 : getCarpetFullUrl(carpet.imagePath);
-            const result = await placeCarperInRoom(roomImageUri, carpetUri, carpet.name, placementMode);
+            const result = await placeCarperInRoom(roomImageUri, carpetUri, carpet.name, placementMode, customerNote);
 
             if (result.success && result.imageUrl) {
                 setResultImageUri(result.imageUrl);
