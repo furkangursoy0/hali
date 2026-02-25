@@ -187,8 +187,10 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                     <Text style={styles.backBtnText}>← Geri</Text>
                 </Pressable>
                 <View style={styles.brandTitleWrap}>
-                    <Text style={styles.title}>Halı </Text>
-                    <Text style={[styles.title, styles.titleAccent]}>AI</Text>
+                    <Text style={styles.title}>HALI</Text>
+                    <View style={styles.headerBadge}>
+                        <Text style={styles.headerBadgeText}>YERLEŞTİR</Text>
+                    </View>
                 </View>
                 <View style={{ width: 60 }} />
             </View>
@@ -200,7 +202,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                         <View style={styles.loadingIconContainer}>
                             <ActivityIndicator size="large" color={COLORS.primary} />
                         </View>
-                        <Text style={styles.loadingTitle}>AI Yerleştirme</Text>
+                        <Text style={styles.loadingTitle}>Halı Yerleştirme</Text>
                         <Text style={styles.loadingMessage}>{LOADING_MESSAGES[loadingMsgIndex]}</Text>
                         <View style={styles.carpetPreviewRow}>
                             <Image source={{ uri: roomImageUri }} style={styles.previewThumb} resizeMode="cover" />
@@ -350,10 +352,25 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                 onRequestClose={() => setIsFullscreenOpen(false)}
             >
                 <View style={styles.fullscreenOverlay}>
+                    <ScrollView
+                        style={styles.fullscreenScroll}
+                        contentContainerStyle={styles.fullscreenScrollContent}
+                        maximumZoomScale={4}
+                        minimumZoomScale={1}
+                        centerContent
+                        showsHorizontalScrollIndicator={false}
+                        showsVerticalScrollIndicator={false}
+                        bouncesZoom
+                    >
+                        <Image
+                            source={{ uri: resultImageUri }}
+                            style={[styles.fullscreenImage, { aspectRatio: imageAspectRatio }]}
+                            resizeMode="contain"
+                        />
+                    </ScrollView>
                     <Pressable style={styles.fullscreenCloseBtn} onPress={() => setIsFullscreenOpen(false)}>
-                        <Text style={styles.fullscreenCloseBtnText}>Kapat</Text>
+                        <Text style={styles.fullscreenCloseBtnText}>✕ Kapat</Text>
                     </Pressable>
-                    <Image source={{ uri: resultImageUri }} style={styles.fullscreenImage} resizeMode="contain" />
                 </View>
             </Modal>
         </View>
@@ -381,6 +398,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 1,
+        gap: 6,
+    },
+    headerBadge: {
+        backgroundColor: 'rgba(200, 134, 10, 0.16)',
+        borderWidth: 1,
+        borderColor: 'rgba(200, 134, 10, 0.45)',
+        borderRadius: 6,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+    },
+    headerBadgeText: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: COLORS.primaryLight,
+        letterSpacing: 0.5,
+        textTransform: 'uppercase',
     },
     backBtn: {
         paddingVertical: SPACING.xs,
@@ -722,23 +755,27 @@ const styles = StyleSheet.create({
     },
     fullscreenOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.96)',
+        backgroundColor: '#000',
+    },
+    fullscreenScroll: {
+        flex: 1,
+    },
+    fullscreenScrollContent: {
+        flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: SPACING.md,
     },
     fullscreenImage: {
-        width: '100%',
-        height: '100%',
+        width: width,
     },
     fullscreenCloseBtn: {
         position: 'absolute',
         right: SPACING.md,
-        top: SPACING.xxl,
+        top: isWeb ? SPACING.lg : SPACING.xxl,
         zIndex: 10,
-        backgroundColor: 'rgba(0,0,0,0.6)',
+        backgroundColor: 'rgba(0,0,0,0.72)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: 'rgba(255,255,255,0.25)',
         borderRadius: RADIUS.md,
         paddingHorizontal: SPACING.md,
         paddingVertical: SPACING.xs,
