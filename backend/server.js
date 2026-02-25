@@ -880,7 +880,7 @@ app.post(
             let firstPassResponse;
             let renderPrompt = PROMPTS[mode];
             if (customerNote) {
-                renderPrompt += ` Customer request (this overrides shape/geometry constraints — rug shape changes such as round, oval, or square ARE permitted; if a shape change is requested, apply it while preserving the pattern texture on the new shape): ${customerNote}`;
+                renderPrompt += ` Customer request — OVERRIDE SIZE, SHAPE, AND PLACEMENT RULES: The following customer instruction takes priority over the default size, placement, and geometry constraints. Specifically: (1) Rug shape changes such as round, oval, or square ARE permitted — apply the new shape while preserving pattern texture. (2) Large rugs covering most of the floor or going wall-to-wall ARE permitted if requested. (3) Placing the rug under furniture (sofa legs, coffee table, etc.) IS permitted — it is realistic and expected that furniture partially overlaps the rug edges. (4) If a large or furniture-covering placement is requested, do NOT add extra floor margins on all sides. Customer instruction: ${customerNote}`;
             }
             const formData = buildRenderFormData({
                 roomBuffer: preparedBuffer,
