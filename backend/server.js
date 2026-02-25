@@ -880,7 +880,7 @@ app.post(
             let firstPassResponse;
             let renderPrompt = PROMPTS[mode];
             if (customerNote) {
-                renderPrompt += ` Customer request (try to accommodate if possible without compromising image quality or rug pattern fidelity): ${customerNote}`;
+                renderPrompt += ` Customer request (this overrides shape/geometry constraints — rug shape changes such as round, oval, or square ARE permitted; if a shape change is requested, apply it while preserving the pattern texture on the new shape): ${customerNote}`;
             }
             const formData = buildRenderFormData({
                 roomBuffer: preparedBuffer,
