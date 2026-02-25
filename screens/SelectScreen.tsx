@@ -235,8 +235,15 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             const input = document.createElement('input') as any;
             input.type = 'file';
             input.accept = 'image/*';
+            // iOS Safari requires the input to be in the DOM before .click()
+            input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
+            document.body.appendChild(input);
+            const cleanup = () => {
+                if (document.body.contains(input)) document.body.removeChild(input);
+            };
             input.onchange = (e: any) => {
                 const file = e.target?.files?.[0];
+                cleanup();
                 if (!file) return;
                 if (customCarpetUri && customCarpetUri.startsWith('blob:')) {
                     URL.revokeObjectURL(customCarpetUri);
@@ -253,6 +260,8 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 });
                 setOpenDropdown(null);
             };
+            // Cleanup on cancel (supported in modern browsers)
+            input.addEventListener('cancel', cleanup);
             input.click();
         }
     };
