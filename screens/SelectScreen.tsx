@@ -99,6 +99,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [mobileWebBottomOffset, setMobileWebBottomOffset] = useState(0);
     const [customerNote, setCustomerNote] = useState('');
     const [showNoteInput, setShowNoteInput] = useState(false);
+    const [isNoteInputFocused, setIsNoteInputFocused] = useState(false);
     const { remaining, limit, loading: limitLoading, error: limitError, consumeOne, isLimitReached } = useUsageLimit();
     const isCompactWeb = isWeb && viewportWidth < 820;
     const isMobileWeb = isWeb && viewportWidth < 900;
@@ -471,7 +472,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         </Text>
     );
 
-    const BottomBar = () => {
+    const renderBottomBar = () => {
         if (!selectedCarpet) {
             if (isCompactWeb) {
                 return (
@@ -518,7 +519,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     </View>
                     {showNoteInput && (
                         <TextInput
-                            style={styles.noteInput}
+                            style={[styles.noteInput, isNoteInputFocused && styles.noteInputFocused]}
                             placeholder="Ör: 4 metrekare olsun, masanın altına girmesin"
                             placeholderTextColor={COLORS.textMuted}
                             value={customerNote}
@@ -526,8 +527,9 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                             maxLength={120}
                             multiline
                             numberOfLines={2}
-                            returnKeyType="done"
-                            blurOnSubmit
+                            blurOnSubmit={false}
+                            onFocus={() => setIsNoteInputFocused(true)}
+                            onBlur={() => setIsNoteInputFocused(false)}
                         />
                     )}
                     <View style={styles.placeRow}>
@@ -571,7 +573,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     </View>
                     {showNoteInput && (
                         <TextInput
-                            style={styles.noteInput}
+                            style={[styles.noteInput, isNoteInputFocused && styles.noteInputFocused]}
                             placeholder="Ör: 4 metrekare olsun, masanın altına girmesin"
                             placeholderTextColor={COLORS.textMuted}
                             value={customerNote}
@@ -579,8 +581,9 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                             maxLength={120}
                             multiline
                             numberOfLines={2}
-                            returnKeyType="done"
-                            blurOnSubmit
+                            blurOnSubmit={false}
+                            onFocus={() => setIsNoteInputFocused(true)}
+                            onBlur={() => setIsNoteInputFocused(false)}
                         />
                     )}
                     <View style={styles.compactActionsRow}>
@@ -617,7 +620,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 {showNoteInput && (
                     <View style={styles.noteInputRow}>
                         <TextInput
-                            style={[styles.noteInput, styles.noteInputDesktop]}
+                            style={[styles.noteInput, styles.noteInputDesktop, isNoteInputFocused && styles.noteInputFocused]}
                             placeholder="Ör: 4 metrekare olsun, masanın altına girmesin"
                             placeholderTextColor={COLORS.textMuted}
                             value={customerNote}
@@ -625,8 +628,9 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                             maxLength={120}
                             multiline
                             numberOfLines={2}
-                            returnKeyType="done"
-                            blurOnSubmit
+                            blurOnSubmit={false}
+                            onFocus={() => setIsNoteInputFocused(true)}
+                            onBlur={() => setIsNoteInputFocused(false)}
                         />
                     </View>
                 )}
@@ -739,7 +743,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 </ScrollView>
 
                 {/* Bottom: always visible action bar */}
-                <BottomBar />
+                {renderBottomBar()}
                 <LimitReachedModal
                     visible={showLimitModal}
                     onClose={() => setShowLimitModal(false)}
@@ -815,7 +819,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             />
             <View style={[styles.mobileBottomBar, isMobileWeb && { bottom: mobileWebBottomOffset }]}>
                 <View style={[styles.mobileBottomInner, isMobileWeb && styles.mobileBottomInnerWeb]}>
-                    <BottomBar />
+                    {renderBottomBar()}
                 </View>
             </View>
             <LimitReachedModal
@@ -1212,15 +1216,25 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
         color: COLORS.text,
-        fontSize: 13,
+        // ≥16px prevents iOS Safari from auto-zooming on focus
+        fontSize: isWeb ? 16 : 13,
         paddingHorizontal: SPACING.sm + 2,
         paddingVertical: SPACING.xs + 2,
-        minHeight: 36,
-        maxHeight: 58,
+        minHeight: isWeb ? 44 : 36,
+        maxHeight: isWeb ? 68 : 58,
         textAlignVertical: 'top',
+        ...(isWeb ? { outlineStyle: 'none', outlineWidth: 0 } as any : {}),
     },
     noteInputDesktop: {
         maxWidth: 460,
+    },
+    noteInputFocused: {
+        borderColor: COLORS.primary,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 4,
     },
     noteToggleBtn: {
         width: 36,
