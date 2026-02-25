@@ -95,6 +95,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [showLimitModal, setShowLimitModal] = useState(false);
     const [visibleCount, setVisibleCount] = useState(isWeb ? WEB_PAGE_SIZE : MOBILE_PAGE_SIZE);
     const [isPlacing, setIsPlacing] = useState(false);
+    const [customCarpetUri, setCustomCarpetUri] = useState<string | null>(null);
     const [mobileWebBottomOffset, setMobileWebBottomOffset] = useState(0);
     const { remaining, limit, loading: limitLoading, error: limitError, consumeOne, isLimitReached } = useUsageLimit();
     const isCompactWeb = isWeb && viewportWidth < 820;
@@ -136,6 +137,30 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             vv?.removeEventListener?.('scroll', syncBottomOffset);
         };
     }, [isMobileWeb]);
+
+    // Prevent window-level scroll on web — force scroll to happen inside gridScroll only
+    useEffect(() => {
+        if (!isWeb) return;
+        const html = document.documentElement;
+        const body = document.body;
+        const prevHtmlOverflow = html.style.overflow;
+        const prevBodyOverflow = body.style.overflow;
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+        return () => {
+            html.style.overflow = prevHtmlOverflow;
+            body.style.overflow = prevBodyOverflow;
+        };
+    }, []);
+
+    // Cleanup blob URL when custom carpet changes or component unmounts
+    useEffect(() => {
+        return () => {
+            if (customCarpetUri && customCarpetUri.startsWith('blob:')) {
+                URL.revokeObjectURL(customCarpetUri);
+            }
+        };
+    }, [customCarpetUri]);
 
     const allCarpets = carpetsData as Carpet[];
 
@@ -205,6 +230,33 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         setVisibleCount((prev) => Math.min(prev + step, filteredCarpets.length));
     };
 
+    const handleCameraPress = () => {
+        if (isWeb) {
+            const input = document.createElement('input') as any;
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e: any) => {
+                const file = e.target?.files?.[0];
+                if (!file) return;
+                if (customCarpetUri && customCarpetUri.startsWith('blob:')) {
+                    URL.revokeObjectURL(customCarpetUri);
+                }
+                const url = URL.createObjectURL(file);
+                setCustomCarpetUri(url);
+                setSelectedCarpet({
+                    id: '__custom__',
+                    name: 'Sizin Halınız',
+                    brand: 'Özel',
+                    collection: '',
+                    image: url,
+                    imagePath: url,
+                });
+                setOpenDropdown(null);
+            };
+            input.click();
+        }
+    };
+
     const handleWebGridScroll = (event: any) => {
         const nativeEvent = event?.nativeEvent;
         if (!nativeEvent) return;
@@ -250,7 +302,9 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const renderCarpetCard = (item: Carpet) => {
         const { cardSize } = layout;
         const isSelected = selectedCarpet?.id === item.id && selectedCarpet?.image === item.image;
-        const thumbUri = item.imagePath ? getCarpetThumbnailUrl(item.imagePath, item.thumbPath) : '';
+        const thumbUri = item.id === '__custom__'
+            ? item.imagePath
+            : (item.imagePath ? getCarpetThumbnailUrl(item.imagePath, item.thumbPath) : '');
         return (
             <Pressable
                 key={`${item.brand}_${item.image}`}
@@ -384,6 +438,16 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     />
                     {renderDropdownMenu('collection', collections, selectedCollection, setSelectedCollection)}
                 </View>
+                <Pressable
+                    style={({ hovered }: any) => [
+                        styles.cameraBtn,
+                        customCarpetUri && styles.cameraBtnActive,
+                        hovered && styles.cameraBtnHover,
+                    ]}
+                    onPress={handleCameraPress}
+                >
+                    <Text style={styles.cameraBtnIcon}>📷</Text>
+                </Pressable>
             </View>
         </View>
     );
@@ -419,9 +483,12 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 </View>
             );
         }
-        const selectedThumbUri = selectedCarpet.imagePath
-            ? getCarpetThumbnailUrl(selectedCarpet.imagePath, selectedCarpet.thumbPath, 240, 70)
-            : '';
+        const isCustomCarpet = selectedCarpet.id === '__custom__';
+        const selectedThumbUri = isCustomCarpet
+            ? selectedCarpet.imagePath
+            : (selectedCarpet.imagePath
+                ? getCarpetThumbnailUrl(selectedCarpet.imagePath, selectedCarpet.thumbPath, 240, 70)
+                : '');
         if (isUltraCompactWeb) {
             return (
                 <View style={[styles.bottomBar, styles.bottomBarCompact, styles.bottomBarUltraCompact]}>
@@ -431,7 +498,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                         ) : null}
                         <View style={[styles.selectionInfo, styles.selectionInfoCompact]}>
                             <Text style={styles.selectionBrand} numberOfLines={1}>
-                                {selectedCarpet.brand} · {selectedCarpet.collection}
+                                {isCustomCarpet ? '📷 Kameranızdan' : `${selectedCarpet.brand} · ${selectedCarpet.collection}`}
                             </Text>
                             <Text style={styles.selectionNameCompactWeb} numberOfLines={1}>
                                 {selectedCarpet.name}
@@ -463,7 +530,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                         )}
                         <View style={[styles.selectionInfo, styles.selectionInfoCompact]}>
                             <Text style={styles.selectionBrand} numberOfLines={1}>
-                                {selectedCarpet.brand} · {selectedCarpet.collection}
+                                {isCustomCarpet ? '📷 Kameranızdan' : `${selectedCarpet.brand} · ${selectedCarpet.collection}`}
                             </Text>
                             <Text style={styles.selectionName} numberOfLines={1}>{selectedCarpet.name}</Text>
                             {!!limitError && <Text style={styles.limitErrorText}>Limit durumu geçici olarak alınamadı</Text>}
@@ -496,7 +563,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     <Image source={{ uri: selectedThumbUri }} style={styles.selectionThumb} resizeMode="cover" />
                 )}
                 <View style={styles.selectionInfo}>
-                    <Text style={styles.selectionBrand} numberOfLines={1}>{selectedCarpet.brand} · {selectedCarpet.collection}</Text>
+                    <Text style={styles.selectionBrand} numberOfLines={1}>{isCustomCarpet ? '📷 Kameranızdan' : `${selectedCarpet.brand} · ${selectedCarpet.collection}`}</Text>
                     <Text style={styles.selectionName} numberOfLines={1}>{selectedCarpet.name}</Text>
                     {!!limitError && <Text style={styles.limitErrorText}>Limit durumu geçici olarak alınamadı</Text>}
                 </View>
@@ -557,6 +624,11 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     <FilterBar />
                     <ResultsText />
                 </View>
+
+                {/* Dropdown backdrop — closes open dropdown when clicking outside */}
+                {openDropdown !== null && (
+                    <Pressable style={webStyles.dropdownOverlay} onPress={() => setOpenDropdown(null)} />
+                )}
 
                 {/* Middle: scrollable grid */}
                 <ScrollView
@@ -642,6 +714,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 maxToRenderPerBatch={8}
                 windowSize={7}
                 removeClippedSubviews
+                onScrollBeginDrag={() => setOpenDropdown(null)}
                 onEndReachedThreshold={0.4}
                 onEndReached={loadMoreCarpets}
                 ListEmptyComponent={
@@ -690,6 +763,11 @@ const webStyles = {
         position: 'relative' as any,
         zIndex: 200 as any,
         overflow: 'visible' as any,
+    } as any,
+    dropdownOverlay: {
+        position: 'fixed' as any,
+        inset: 0 as any,
+        zIndex: 150 as any,
     } as any,
     gridScroll: {
         flex: 1,
@@ -777,7 +855,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
         paddingHorizontal: SPACING.sm,
-        paddingVertical: 8,
+        paddingVertical: 6,
     },
     dropdownTriggerDisabled: { opacity: 0.5 },
     dropdownTriggerHover: { borderColor: '#444444' },
@@ -798,7 +876,7 @@ const styles = StyleSheet.create({
     dropdownArrow: {
         position: 'absolute',
         right: 10,
-        top: 18,
+        top: 16,
         color: COLORS.textSecondary,
         fontSize: 12,
     },
@@ -1012,4 +1090,27 @@ const styles = StyleSheet.create({
     },
     placeBtnIcon: { fontSize: 15 },
     placeBtnText: { color: COLORS.white, fontSize: 13, fontWeight: '700' },
+
+    // Camera button in FilterBar
+    cameraBtn: {
+        alignSelf: 'stretch',
+        width: 44,
+        flexShrink: 0,
+        backgroundColor: COLORS.surface,
+        borderRadius: RADIUS.lg,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    cameraBtnActive: {
+        borderColor: COLORS.primary,
+        backgroundColor: '#1A1208',
+    },
+    cameraBtnHover: {
+        borderColor: '#444444',
+    },
+    cameraBtnIcon: {
+        fontSize: 18,
+    },
 });
