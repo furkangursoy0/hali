@@ -1,143 +1,132 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
+const { PrismaClient } = require('@prisma/client');
 const axios = require('axios');
 const FormData = require('form-data');
-const sharp = require('sharp');
-const crypto = require('crypto');
-const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
+require('dotenv').config();
+const sharp = require('sharp');
+const crypto = require('crypto');
 
-dotenv.config();
-
-const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
 const prisma = new PrismaClient();
-
-const PORT = Number(process.env.PORT || 8787);
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const JWT_SECRET = process.env.JWT_SECRET;
-const OPENAI_IMAGE_SIZE = String(process.env.OPENAI_IMAGE_SIZE || '1024x1024').trim();
-const OPENAI_IMAGE_QUALITY_PREVIEW = String(process.env.OPENAI_IMAGE_QUALITY_PREVIEW || 'low').trim().toLowerCase();
-const OPENAI_IMAGE_QUALITY_NORMAL = String(process.env.OPENAI_IMAGE_QUALITY_NORMAL || 'medium').trim().toLowerCase();
-const DB_CONNECT_RETRIES = Math.max(1, Number(process.env.DB_CONNECT_RETRIES || 20));
-const DB_CONNECT_RETRY_MS = Math.max(500, Number(process.env.DB_CONNECT_RETRY_MS || 3000));
-
-const ALLOWED_IMAGE_QUALITY = new Set(['low', 'medium', 'high']);
-const ALLOWED_IMAGE_SIZES = new Set(['auto', '1024x1024', '1536x1024', '1024x1536']);
-
-const FLOOR_MASK_TOP_RATIO_MIN = Math.min(0.8, Math.max(0.4, Number(process.env.FLOOR_MASK_TOP_RATIO_MIN || 0.55)));
-const FLOOR_MASK_TOP_RATIO_MAX = Math.min(0.9, Math.max(FLOOR_MASK_TOP_RATIO_MIN, Number(process.env.FLOOR_MASK_TOP_RATIO_MAX || 0.66)));
-const FLOOR_MASK_INSET_RATIO_MIN = Math.min(0.3, Math.max(0.01, Number(process.env.FLOOR_MASK_INSET_RATIO_MIN || 0.08)));
-const FLOOR_MASK_INSET_RATIO_MAX = Math.min(0.35, Math.max(FLOOR_MASK_INSET_RATIO_MIN, Number(process.env.FLOOR_MASK_INSET_RATIO_MAX || 0.18)));
-const FLOOR_MASK_SKEW_RATIO = Math.min(0.12, Math.max(0, Number(process.env.FLOOR_MASK_SKEW_RATIO || 0.05)));
-const EDGE_CONTRAST_THRESHOLD = Math.max(6, Number(process.env.EDGE_CONTRAST_THRESHOLD || 14));
-const RUG_TOUCH_MARGIN_RATIO = Math.min(0.08, Math.max(0.01, Number(process.env.RUG_TOUCH_MARGIN_RATIO || 0.02)));
-const RUG_MAX_WIDTH_RATIO = Math.min(0.95, Math.max(0.45, Number(process.env.RUG_MAX_WIDTH_RATIO || 0.78)));
-const RUG_MAX_HEIGHT_RATIO = Math.min(0.95, Math.max(0.35, Number(process.env.RUG_MAX_HEIGHT_RATIO || 0.62)));
-
-const OPENAI_RENDER_VARIANTS_PREVIEW = 1; // Strict single render
-const OPENAI_RENDER_VARIANTS_NORMAL = 1; // Strict single render
-const OPENAI_ENABLE_CANDIDATE_SCORING = false; // Disable A/B candidate comparison strictly
-const OPENAI_ENABLE_SHADOW_PASS = String(process.env.OPENAI_ENABLE_SHADOW_PASS || 'false').toLowerCase() === 'true';
-const OPENAI_ENABLE_EDGE_POLISH = String(process.env.OPENAI_ENABLE_EDGE_POLISH || 'false').toLowerCase() === 'true';
-
-const roomPreparationCache = new Map();
-const ROOM_PREP_CACHE_MAX = 50;
-
-let dbConnected = false;
-
-if (!OPENAI_API_KEY) {
-    console.warn('OPENAI_API_KEY is missing. /api/render will fail until it is set.');
-}
-if (!JWT_SECRET) {
-    console.warn('JWT_SECRET is missing. Auth endpoints will fail until it is set.');
-}
+const app = express();
 
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json());
 
-function resolveImageQuality(mode) {
-    const selected = mode === 'preview' ? OPENAI_IMAGE_QUALITY_PREVIEW : OPENAI_IMAGE_QUALITY_NORMAL;
-    return ['low', 'medium', 'high'].includes(selected) ? selected : (mode === 'preview' ? 'low' : 'medium');
-}
+const PORT = process.env.PORT || 8080;
+const JWT_SECRET = process.env.JWT_SECRET || '';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+
+const DB_CONNECT_RETRIES = 5;
+const DB_CONNECT_RETRY_MS = 5000;
+let dbConnected = false;
+
+// --- DYNAMIC MASK VARIABLES ---
+const FLOOR_MASK_TOP_RATIO_MIN = Number(process.env.FLOOR_MASK_TOP_RATIO_MIN || 0.55);
+const FLOOR_MASK_TOP_RATIO_MAX = Number(process.env.FLOOR_MASK_TOP_RATIO_MAX || 0.60);
+const FLOOR_MASK_BOTTOM_MARGIN_RATIO = Number(process.env.FLOOR_MASK_BOTTOM_MARGIN_RATIO || 0.05);
+const FLOOR_MASK_WIDTH_RATIO_MIN = Number(process.env.FLOOR_MASK_WIDTH_RATIO_MIN || 0.65);
+const FLOOR_MASK_WIDTH_RATIO_MAX = Number(process.env.FLOOR_MASK_WIDTH_RATIO_MAX || 0.75);
+
+const RUG_MAX_WIDTH_RATIO = Number(process.env.RUG_MAX_WIDTH_RATIO || 0.90);
+const RUG_MAX_HEIGHT_RATIO = Number(process.env.RUG_MAX_HEIGHT_RATIO || 0.85);
+const RUG_TOUCH_MARGIN_RATIO = Number(process.env.RUG_TOUCH_MARGIN_RATIO || 0.02);
+const EDGE_CONTRAST_THRESHOLD = Number(process.env.EDGE_CONTRAST_THRESHOLD || 0.5);
+
+const OPENAI_ENABLE_SHADOW_PASS = process.env.OPENAI_ENABLE_SHADOW_PASS === 'true';
+const OPENAI_ENABLE_EDGE_POLISH = process.env.OPENAI_ENABLE_EDGE_POLISH === 'true';
+const OPENAI_ENABLE_CANDIDATE_SCORING = process.env.OPENAI_ENABLE_CANDIDATE_SCORING === 'true';
+
+const OPENAI_IMAGE_QUALITY_PREVIEW = process.env.OPENAI_IMAGE_QUALITY_PREVIEW || 'low';
+const OPENAI_IMAGE_QUALITY_NORMAL = process.env.OPENAI_IMAGE_QUALITY_NORMAL || 'low';
+const OPENAI_RENDER_VARIANTS_PREVIEW = Number(process.env.OPENAI_RENDER_VARIANTS_PREVIEW || 1);
+const OPENAI_RENDER_VARIANTS_NORMAL = Number(process.env.OPENAI_RENDER_VARIANTS_NORMAL || 1);
+
+const ROOM_PREP_CACHE_MAX = 50;
 
 function resolveImageSize() {
-    if (OPENAI_IMAGE_SIZE === 'auto') return 'auto';
-    if (OPENAI_IMAGE_SIZE === '1024x1024') return '1024x1024';
-    if (OPENAI_IMAGE_SIZE === '1536x1024') return '1536x1024';
-    if (OPENAI_IMAGE_SIZE === '1024x1536') return '1024x1536';
     return '1024x1024';
 }
 
-function pickOpenAiSize(width, height) {
-    if (OPENAI_IMAGE_SIZE !== 'auto') return OPENAI_IMAGE_SIZE;
-    if (!width || !height) return '1024x1024';
-    const ratio = width / height;
-    if (ratio > 1.15) return '1536x1024';
-    if (ratio < 0.87) return '1024x1536';
-    return '1024x1024';
+function resolveImageQuality(mode) {
+    return mode === 'preview' ? 'low' : 'high';
 }
 
-function buildPerspectiveFloorBounds(width, height) {
-    const leftTopY = Math.round(height * FLOOR_MASK_TOP_RATIO_MIN);
-    const rightTopY = Math.round(height * FLOOR_MASK_TOP_RATIO_MAX);
-    const leftInsetX = Math.round(width * FLOOR_MASK_INSET_RATIO_MIN);
-    const rightInsetX = Math.round(width * FLOOR_MASK_INSET_RATIO_MAX);
-    const skewOffset = Math.round(height * FLOOR_MASK_SKEW_RATIO);
-    return {
-        leftTopX: leftInsetX,
-        rightTopX: width - rightInsetX,
-        leftTopY: Math.max(0, leftTopY - skewOffset),
-        rightTopY: Math.min(height - 1, rightTopY + skewOffset),
-    };
-}
+const DEFAULT_CREDIT_AMOUNT = 5;
+
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+});
+
+const roomPreparationCache = new Map();
 
 function createGradientFloorMasks(width, height) {
-    const { leftTopX, rightTopX, leftTopY, rightTopY } = buildPerspectiveFloorBounds(width, height);
     const apiMask = Buffer.alloc(width * height * 4);
     const scoreMask = Buffer.alloc(width * height * 4);
+
+    const targetTopRatio = FLOOR_MASK_TOP_RATIO_MIN + Math.random() * (FLOOR_MASK_TOP_RATIO_MAX - FLOOR_MASK_TOP_RATIO_MIN);
+    const targetWidthRatio = FLOOR_MASK_WIDTH_RATIO_MIN + Math.random() * (FLOOR_MASK_WIDTH_RATIO_MAX - FLOOR_MASK_WIDTH_RATIO_MIN);
+
+    let yGate = Math.floor(height * targetTopRatio);
+    if (yGate < height * 0.4) yGate = Math.floor(height * 0.4);
+
+    const bottomMargin = Math.floor(height * FLOOR_MASK_BOTTOM_MARGIN_RATIO);
+    const effectiveTargetWidth = targetWidthRatio * width;
+    const xLeft = Math.floor((width - effectiveTargetWidth) / 2);
+    const xRight = xLeft + Math.floor(effectiveTargetWidth);
     const blendPx = 14;
+
     for (let y = 0; y < height; y += 1) {
-        const t = y / Math.max(1, height - 1);
-        const xLeft = Math.round(leftTopX + (0 - leftTopX) * t);
-        const xRight = Math.round(rightTopX + ((width - 1) - rightTopX) * t);
-        const topYAtXLeft = leftTopY + (height - leftTopY) * t;
-        const topYAtXRight = rightTopY + (height - rightTopY) * t;
-        const yGate = Math.round(Math.min(topYAtXLeft, topYAtXRight));
         for (let x = 0; x < width; x += 1) {
             const idx = (y * width + x) * 4;
-            const inside = y >= yGate && x >= xLeft && x <= xRight;
-            if (!inside) {
-                apiMask[idx] = 255; apiMask[idx + 1] = 255; apiMask[idx + 2] = 255; apiMask[idx + 3] = 255;
-                scoreMask[idx] = 0; scoreMask[idx + 1] = 0; scoreMask[idx + 2] = 0; scoreMask[idx + 3] = 255;
-                continue;
+            let aApi = 0;
+            let aScore = 0;
+
+            if (y > yGate && y < height - bottomMargin && x > xLeft && x < xRight) {
+                const dLeft = x - xLeft;
+                const dRight = xRight - x;
+                const dTop = y - yGate;
+                const dBottom = height - 1 - bottomMargin - y;
+                const edgeDistance = Math.min(dLeft, dRight, dTop, dBottom);
+                const INNER_EDIT_ALPHA = 40;
+                let alpha = INNER_EDIT_ALPHA;
+                let sAlpha = 255;
+
+                if (edgeDistance <= blendPx) {
+                    const blendT = Math.max(0, Math.min(1, edgeDistance / Math.max(1, blendPx)));
+                    const editStrength = 0.35 + 0.65 * blendT;
+                    alpha = Math.round(255 * (1 - editStrength));
+                    const scoreStrength = blendT;
+                    sAlpha = Math.round(255 * scoreStrength);
+                }
+
+                aApi = alpha;
+                aScore = sAlpha;
+            } else {
+                aApi = 255;
+                aScore = 0;
             }
-            const dLeft = x - xLeft;
-            const dRight = xRight - x;
-            const dTop = y - yGate;
-            const dBottom = (height - 1) - y;
-            const edgeDistance = Math.min(dLeft, dRight, dTop, dBottom);
-            const INNER_EDIT_ALPHA = 40; // %15 edit freedom
-            let alpha = INNER_EDIT_ALPHA;
-            if (edgeDistance <= blendPx) {
-                const blendT = Math.max(0, Math.min(1, edgeDistance / Math.max(1, blendPx)));
-                const editStrength = 0.35 + 0.65 * blendT;
-                alpha = Math.round(255 * (1 - editStrength));
-            }
-            apiMask[idx] = 255; apiMask[idx + 1] = 255; apiMask[idx + 2] = 255; apiMask[idx + 3] = alpha;
-            scoreMask[idx] = 255; scoreMask[idx + 1] = 255; scoreMask[idx + 2] = 255; scoreMask[idx + 3] = 255;
+
+            apiMask[idx] = 0; apiMask[idx + 1] = 0; apiMask[idx + 2] = 0; apiMask[idx + 3] = aApi;
+            scoreMask[idx] = 0; scoreMask[idx + 1] = 0; scoreMask[idx + 2] = 0; scoreMask[idx + 3] = aScore;
         }
     }
     return { apiMask, scoreMask };
 }
 
 async function prepareRoomImage(buffer) {
-    const roomHash = crypto.createHash('sha1').update(buffer).digest('hex');
-    const cached = roomPreparationCache.get(roomHash);
-    if (cached) { return cached; }
+    const hashSum = crypto.createHash('sha256');
+    hashSum.update(buffer);
+    const roomHash = hashSum.digest('hex');
+
+    if (roomPreparationCache.has(roomHash)) {
+        return roomPreparationCache.get(roomHash);
+    }
+
     const image = sharp(buffer).rotate();
     const metadata = await image.metadata();
     const width = Number(metadata.width || 0);
@@ -151,17 +140,24 @@ async function prepareRoomImage(buffer) {
         sharp(apiMask, { raw: { width: preparedWidth, height: preparedHeight, channels: 4 } }).png().toBuffer(),
         sharp(scoreMask, { raw: { width: preparedWidth, height: preparedHeight, channels: 4 } }).png().toBuffer(),
     ]);
+
     const prepared = { preparedBuffer, maskBuffer, scoreMaskBuffer, width, height };
     roomPreparationCache.set(roomHash, prepared);
+
     if (roomPreparationCache.size > ROOM_PREP_CACHE_MAX) {
         const firstKey = roomPreparationCache.keys().next().value;
         if (firstKey) roomPreparationCache.delete(firstKey);
     }
+
     return prepared;
 }
 
 async function prepareCarpetImage(buffer) {
     return sharp(buffer).rotate().resize({ width: 768, height: 768, fit: 'inside', withoutEnlargement: true }).png({ compressionLevel: 9 }).toBuffer();
+}
+
+function pickOpenAiSize(originalWidth, originalHeight) {
+    return '1024x1024';
 }
 
 async function scoreCandidate(candidateBase64, roomBuffer, maskBuffer) {
@@ -173,10 +169,12 @@ async function scoreCandidate(candidateBase64, roomBuffer, maskBuffer) {
         sharp(Buffer.from(candidateBase64, 'base64')).resize(targetWidth, targetHeight, { fit: 'cover' }).ensureAlpha().raw().toBuffer(),
         sharp(maskBuffer).resize(targetWidth, targetHeight, { fit: 'fill' }).ensureAlpha().raw().toBuffer(),
     ]);
+
     let outsideDiff = 0, insideDiff = 0, outsideCount = 0, insideCount = 0;
     let edgeContrastSum = 0, edgeCount = 0, changedCount = 0, insideMaskCount = 0;
     let minX = targetWidth, maxX = -1, minY = targetHeight, maxY = -1;
     const step = 4 * 4;
+
     for (let i = 0; i < roomRaw.length; i += step) {
         const pixelIndex = i / 4;
         const x = pixelIndex % targetWidth;
@@ -186,35 +184,43 @@ async function scoreCandidate(candidateBase64, roomBuffer, maskBuffer) {
         const dg = Math.abs(roomRaw[i + 1] - candidateRaw[i + 1]);
         const db = Math.abs(roomRaw[i + 2] - candidateRaw[i + 2]);
         const d = (dr + dg + db) / 3;
+
         if (maskValue > 120) {
             insideMaskCount += 1; insideDiff += d; insideCount += 1;
         } else {
             outsideDiff += d; outsideCount += 1;
         }
+
         if (maskValue > 120 && d > 18) {
             edgeContrastSum += d; edgeCount += 1; changedCount += 1;
             if (x < minX) minX = x; if (x > maxX) maxX = x;
             if (y < minY) minY = y; if (y > maxY) maxY = y;
         }
     }
+
     const outsideMean = outsideCount > 0 ? outsideDiff / outsideCount : 0;
     const insideMean = insideCount > 0 ? insideDiff / insideCount : 0;
     const edgeContrast = edgeCount > 0 ? edgeContrastSum / edgeCount : 0;
+
     if (edgeContrast < EDGE_CONTRAST_THRESHOLD || changedCount === 0 || maxX <= minX || maxY <= minY) {
         return { score: Number.POSITIVE_INFINITY, rugAreaRatio: 1 };
     }
+
     const bboxWidthRatio = (maxX - minX + 1) / targetWidth;
     const bboxHeightRatio = (maxY - minY + 1) / targetHeight;
     const touchMarginX = Math.round(targetWidth * RUG_TOUCH_MARGIN_RATIO);
     const touchMarginY = Math.round(targetHeight * RUG_TOUCH_MARGIN_RATIO);
     const touchesFrame = minX <= touchMarginX || maxX >= targetWidth - 1 - touchMarginX || minY <= touchMarginY || maxY >= targetHeight - 1 - touchMarginY;
+
     let geometryPenalty = 0;
     if (touchesFrame) geometryPenalty += 180;
     if (bboxWidthRatio > RUG_MAX_WIDTH_RATIO) geometryPenalty += (bboxWidthRatio - RUG_MAX_WIDTH_RATIO) * 900;
     if (bboxHeightRatio > RUG_MAX_HEIGHT_RATIO) geometryPenalty += (bboxHeightRatio - RUG_MAX_HEIGHT_RATIO) * 900;
+
     const changedMaskRatio = insideMaskCount > 0 ? changedCount / insideMaskCount : 1;
     const rugAreaRatio = Math.max(((maxX - minX + 1) * (maxY - minY + 1)) / Math.max(1, targetWidth * targetHeight), changedMaskRatio);
     const lowInsidePenalty = insideMean < 8 ? 18 : 0;
+
     return { score: outsideMean * 2.2 + lowInsidePenalty - insideMean * 0.2 + geometryPenalty, rugAreaRatio };
 }
 
@@ -224,7 +230,9 @@ async function pickBestCandidateBase64(candidateList, roomBuffer, maskBuffer) {
         const singleMetrics = await scoreCandidate(candidateList[0], roomBuffer, maskBuffer);
         return { base64: candidateList[0], metrics: singleMetrics };
     }
+
     let best = candidateList[0], bestScore = Number.POSITIVE_INFINITY, bestMetrics = { score: Number.POSITIVE_INFINITY, rugAreaRatio: 1 };
+
     for (const candidate of candidateList) {
         try {
             const metrics = await scoreCandidate(candidate, roomBuffer, maskBuffer);
@@ -245,15 +253,19 @@ async function applyEdgePolish(base64Image, roomBuffer, maskBuffer) {
         sharp(roomBuffer).ensureAlpha().raw().toBuffer(),
         sharp(maskBuffer).resize(width, height, { fit: 'fill' }).ensureAlpha().raw().toBuffer(),
     ]);
+
     const pixelCount = width * height;
     const changed = new Uint8Array(pixelCount);
+
     for (let p = 0; p < pixelCount; p += 1) {
         const i = p * 4;
         if (scoreMaskRaw[i] < 120) continue;
         const d = (Math.abs(candidateRaw[i] - roomRaw[i]) + Math.abs(candidateRaw[i + 1] - roomRaw[i + 1]) + Math.abs(candidateRaw[i + 2] - roomRaw[i + 2])) / 3;
         changed[p] = d > 18 ? 1 : 0;
     }
+
     const edge = new Uint8Array(pixelCount);
+
     for (let y = 1; y < height - 1; y += 1) {
         for (let x = 1; x < width - 1; x += 1) {
             const p = y * width + x;
@@ -261,7 +273,9 @@ async function applyEdgePolish(base64Image, roomBuffer, maskBuffer) {
             if (!changed[p - 1] || !changed[p + 1] || !changed[p - width] || !changed[p + width]) { edge[p] = 1; }
         }
     }
+
     const out = Buffer.from(candidateRaw);
+
     for (let p = 0; p < pixelCount; p += 1) {
         if (!edge[p]) continue;
         const i = p * 4;
@@ -269,7 +283,9 @@ async function applyEdgePolish(base64Image, roomBuffer, maskBuffer) {
         out[i + 1] = Math.max(0, Math.round(out[i + 1] * 0.95));
         out[i + 2] = Math.max(0, Math.round(out[i + 2] * 0.95));
     }
+
     const blurred = await sharp(out, { raw: { width, height, channels: 4 } }).blur(1.2).raw().toBuffer();
+
     for (let p = 0; p < pixelCount; p += 1) {
         if (!edge[p]) continue;
         const i = p * 4;
@@ -277,6 +293,7 @@ async function applyEdgePolish(base64Image, roomBuffer, maskBuffer) {
         out[i + 1] = Math.round(out[i + 1] * 0.75 + blurred[i + 1] * 0.25);
         out[i + 2] = Math.round(out[i + 2] * 0.75 + blurred[i + 2] * 0.25);
     }
+
     const polished = await sharp(out, { raw: { width, height, channels: 4 } }).png({ compressionLevel: 9 }).toBuffer();
     return polished.toString('base64');
 }
@@ -477,7 +494,6 @@ async function ensureBootstrapAdmin() {
 }
 
 app.get('/health', (_req, res) => {
-    res.json({ ok: true, service: 'hali-backend' });
     res.json({ ok: true, service: 'hali-backend', dbConnected });
 });
 
@@ -626,7 +642,6 @@ app.post('/api/usage/consume', requireAuth, async (req, res) => {
             },
         });
 
-        return res.json(normalizeUsagePayload(updatedUser.credit));
         const payload = await normalizeUsagePayload(req.user.id, updatedUser.credit);
         return res.json(payload);
     } catch (error) {
@@ -1000,36 +1015,33 @@ app.post(
 );
 
 async function start() {
+    const tryConnectDb = async () => {
+        for (let attempt = 1; attempt <= DB_CONNECT_RETRIES; attempt += 1) {
+            try {
+                await prisma.$connect();
+                dbConnected = true;
+                console.log(`[db] Connected on attempt ${attempt}/${DB_CONNECT_RETRIES}`);
+                await ensureBootstrapAdmin();
+                return true;
+            } catch (error) {
+                dbConnected = false;
+                const message = error?.message || String(error);
+                console.warn(`[db] Connect failed (${attempt}/${DB_CONNECT_RETRIES}): ${message}`);
+                if (attempt < DB_CONNECT_RETRIES) {
+                    await new Promise((resolve) => setTimeout(resolve, DB_CONNECT_RETRY_MS));
+                }
+            }
+        }
+        return false;
+    };
+
     try {
         await prisma.$connect();
         await ensureBootstrapAdmin();
-        const tryConnectDb = async () => {
-            for (let attempt = 1; attempt <= DB_CONNECT_RETRIES; attempt += 1) {
-                try {
-                    await prisma.$connect();
-                    dbConnected = true;
-                    console.log(`[db] Connected on attempt ${attempt}/${DB_CONNECT_RETRIES}`);
-                    await ensureBootstrapAdmin();
-                    return true;
-                } catch (error) {
-                    dbConnected = false;
-                    const message = error?.message || String(error);
-                    console.warn(`[db] Connect failed (${attempt}/${DB_CONNECT_RETRIES}): ${message}`);
-                    if (attempt < DB_CONNECT_RETRIES) {
-                        await new Promise((resolve) => setTimeout(resolve, DB_CONNECT_RETRY_MS));
-                    }
-                }
-            }
-            return false;
-        };
-
-        app.listen(PORT, () => {
-            console.log(`Backend listening on http://localhost:${PORT}`);
-        });
     } catch (error) {
-        console.error('Backend startup failed:', error);
-        process.exit(1);
+        console.error('Backend startup setup failed:', error);
     }
+
     const connectedAtBoot = await tryConnectDb();
 
     app.listen(PORT, () => {
