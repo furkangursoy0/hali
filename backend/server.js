@@ -36,6 +36,8 @@ const RUG_MAX_HEIGHT_RATIO = Number(process.env.RUG_MAX_HEIGHT_RATIO || 0.85);
 const RUG_TOUCH_MARGIN_RATIO = Number(process.env.RUG_TOUCH_MARGIN_RATIO || 0.02);
 const EDGE_CONTRAST_THRESHOLD = Number(process.env.EDGE_CONTRAST_THRESHOLD || 0.5);
 
+const INNER_EDIT_ALPHA = Number(process.env.INNER_EDIT_ALPHA ?? 0);
+
 const OPENAI_ENABLE_SHADOW_PASS = process.env.OPENAI_ENABLE_SHADOW_PASS === 'true';
 const OPENAI_ENABLE_EDGE_POLISH = process.env.OPENAI_ENABLE_EDGE_POLISH === 'true';
 const OPENAI_ENABLE_CANDIDATE_SCORING = process.env.OPENAI_ENABLE_CANDIDATE_SCORING === 'true';
@@ -92,20 +94,18 @@ function createGradientFloorMasks(width, height) {
                 const dTop = y - yGate;
                 const dBottom = height - 1 - bottomMargin - y;
                 const edgeDistance = Math.min(dLeft, dRight, dTop, dBottom);
-                const INNER_EDIT_ALPHA = 40;
-                let alpha = INNER_EDIT_ALPHA;
-                let sAlpha = 255;
 
                 if (edgeDistance <= blendPx) {
+                    // At boundary (edgeDistance=0): alpha=255 (preserve, seamlessly continues outside)
+                    // At blendPx inside (edgeDistance=blendPx): alpha=0 (fully editable)
                     const blendT = Math.max(0, Math.min(1, edgeDistance / Math.max(1, blendPx)));
-                    const editStrength = 0.35 + 0.65 * blendT;
-                    alpha = Math.round(255 * (1 - editStrength));
-                    const scoreStrength = blendT;
-                    sAlpha = Math.round(255 * scoreStrength);
+                    aApi = Math.round(255 * (1 - blendT));
+                    aScore = Math.round(255 * blendT);
+                } else {
+                    // Center of floor: fully editable (INNER_EDIT_ALPHA from env, default 0)
+                    aApi = INNER_EDIT_ALPHA;
+                    aScore = 255;
                 }
-
-                aApi = alpha;
-                aScore = sAlpha;
             } else {
                 aApi = 255;
                 aScore = 0;
@@ -153,7 +153,7 @@ async function prepareRoomImage(buffer) {
 }
 
 async function prepareCarpetImage(buffer) {
-    return sharp(buffer).rotate().resize({ width: 768, height: 768, fit: 'inside', withoutEnlargement: true }).png({ compressionLevel: 9 }).toBuffer();
+    return sharp(buffer).rotate().resize({ width: 1024, height: 1024, fit: 'inside', withoutEnlargement: true }).png({ compressionLevel: 9 }).toBuffer();
 }
 
 function pickOpenAiSize(originalWidth, originalHeight) {
