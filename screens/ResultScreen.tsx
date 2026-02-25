@@ -65,6 +65,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
     const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
     const [imageAspectRatio, setImageAspectRatio] = useState(1.45);
     const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+    const [isCarpetModalOpen, setIsCarpetModalOpen] = useState(false);
 
     useEffect(() => {
         // Cycle loading messages
@@ -182,6 +183,10 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
             ? getCarpetThumbnailUrl(carpet.imagePath, carpet.thumbPath, 320, 68)
             : '');
 
+    const carpetFullUri = carpet?.id === '__custom__'
+        ? (carpet?.imagePath || '')
+        : (carpet?.imagePath ? getCarpetFullUrl(carpet.imagePath) : '');
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
@@ -267,17 +272,28 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
 
                     {/* Carpet Info */}
                     <View style={styles.carpetInfoCard}>
-                        {carpetThumbUri ? (
-                            <Image source={{ uri: carpetThumbUri }} style={styles.carpetThumb} resizeMode="cover" />
-                        ) : (
-                            <View style={[styles.carpetThumb, styles.previewThumbFallback]} />
-                        )}
-                        <View style={styles.carpetDetails}>
-                            <View style={styles.carpetCodeBadge}>
-                                <Text style={styles.carpetCode}>{carpet.id}</Text>
+                        <Pressable onPress={() => setIsCarpetModalOpen(true)} style={styles.carpetThumbWrap}>
+                            {carpetThumbUri ? (
+                                <Image source={{ uri: carpetThumbUri }} style={styles.carpetThumb} resizeMode="cover" />
+                            ) : (
+                                <View style={[styles.carpetThumb, styles.previewThumbFallback]} />
+                            )}
+                            <View style={styles.carpetThumbZoomBadge}>
+                                <Text style={styles.carpetThumbZoomText}>⛶</Text>
                             </View>
-                            <Text style={styles.carpetName}>{carpet.name}</Text>
-                            <Text style={styles.carpetMeta}>{carpet.size} · {carpet.material}</Text>
+                        </Pressable>
+                        <View style={styles.carpetDetails}>
+                            {carpet.brand ? (
+                                <View style={styles.carpetCodeBadge}>
+                                    <Text style={styles.carpetCode}>{carpet.brand}</Text>
+                                </View>
+                            ) : null}
+                            <Text style={styles.carpetName}>{carpet.id} {carpet.name}</Text>
+                            {(carpet.size || carpet.material) ? (
+                                <Text style={styles.carpetMeta}>
+                                    {[carpet.size, carpet.material].filter(Boolean).join(' · ')}
+                                </Text>
+                            ) : null}
                         </View>
                     </View>
 
@@ -378,6 +394,38 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                     </Pressable>
                 </View>
             </Modal>
+
+            {/* Carpet Fullscreen Modal */}
+            <Modal
+                visible={isCarpetModalOpen}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setIsCarpetModalOpen(false)}
+            >
+                <View style={styles.fullscreenOverlay}>
+                    <ScrollView
+                        style={styles.fullscreenScroll}
+                        contentContainerStyle={styles.fullscreenScrollContent}
+                        maximumZoomScale={4}
+                        minimumZoomScale={1}
+                        centerContent
+                        showsHorizontalScrollIndicator={false}
+                        showsVerticalScrollIndicator={false}
+                        bouncesZoom
+                    >
+                        {carpetFullUri ? (
+                            <Image
+                                source={{ uri: carpetFullUri }}
+                                style={styles.carpetFullscreenImage}
+                                resizeMode="contain"
+                            />
+                        ) : null}
+                    </ScrollView>
+                    <Pressable style={styles.fullscreenCloseBtn} onPress={() => setIsCarpetModalOpen(false)}>
+                        <Text style={styles.fullscreenCloseBtnText}>✕ Kapat</Text>
+                    </Pressable>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -387,7 +435,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.background,
         width: '100%',
-        overflow: 'hidden',
     },
     header: {
         flexDirection: 'row',
@@ -597,10 +644,28 @@ const styles = StyleSheet.create({
         gap: SPACING.md,
         alignItems: 'center',
     },
+    carpetThumbWrap: {
+        position: 'relative',
+        width: 68,
+        height: 68,
+    },
     carpetThumb: {
-        width: 60,
-        height: 60,
+        width: 68,
+        height: 68,
         borderRadius: RADIUS.md,
+    },
+    carpetThumbZoomBadge: {
+        position: 'absolute',
+        bottom: 3,
+        right: 3,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        borderRadius: 4,
+        paddingHorizontal: 3,
+        paddingVertical: 1,
+    },
+    carpetThumbZoomText: {
+        color: '#fff',
+        fontSize: 10,
     },
     carpetDetails: {
         flex: 1,
@@ -789,5 +854,9 @@ const styles = StyleSheet.create({
         color: COLORS.white,
         fontSize: 14,
         fontWeight: '700',
+    },
+    carpetFullscreenImage: {
+        width: width,
+        height: width,
     },
 });
