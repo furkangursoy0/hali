@@ -100,7 +100,10 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
             if (!carpet?.imagePath) {
                 throw new Error('Seçilen halı görseli bulunamadı.');
             }
-            const carpetUri = getCarpetFullUrl(carpet.imagePath);
+            // Custom carpet: imagePath is already a blob URL — don't run it through CDN transform
+            const carpetUri = carpet.id === '__custom__'
+                ? carpet.imagePath
+                : getCarpetFullUrl(carpet.imagePath);
             const result = await placeCarperInRoom(roomImageUri, carpetUri, carpet.name, placementMode);
 
             if (result.success && result.imageUrl) {
@@ -173,9 +176,11 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
         }
     };
 
-    const carpetThumbUri = carpet?.imagePath
-        ? getCarpetThumbnailUrl(carpet.imagePath, carpet.thumbPath, 320, 68)
-        : '';
+    const carpetThumbUri = carpet?.id === '__custom__'
+        ? (carpet?.imagePath || '')
+        : (carpet?.imagePath
+            ? getCarpetThumbnailUrl(carpet.imagePath, carpet.thumbPath, 320, 68)
+            : '');
 
     return (
         <View style={styles.container}>
