@@ -16,6 +16,7 @@ import {
     Modal,
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { placeCarperInRoom, PlacementMode, PlacementResult } from '../services/openai';
 import { getCarpetFullUrl, getCarpetThumbnailUrl } from '../services/carpet-image';
@@ -126,24 +127,29 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
 
     const handleSave = async () => {
         try {
-            if (Platform.OS === 'web') {
-                const link = document.createElement('a');
-                link.href = resultImageUri;
+            if (Platform.OS === ‘web’) {
+                // data: URI’yi blob URL’ye çevir — Chrome 60+ data URI download engeller
+                const response = await fetch(resultImageUri);
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement(‘a’);
+                link.href = blobUrl;
                 link.download = `hali-sonuc-${Date.now()}.png`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
                 return;
             }
             const { status: permStatus } = await MediaLibrary.requestPermissionsAsync();
-            if (permStatus !== 'granted') {
-                Alert.alert('İzin Gerekli', 'Fotoğraf kaydetmek için galeri iznine ihtiyaç var.');
+            if (permStatus !== ‘granted’ && permStatus !== ‘limited’) {
+                Alert.alert(‘İzin Gerekli’, ‘Fotoğraf kaydetmek için galeri iznine ihtiyaç var.’);
                 return;
             }
             await MediaLibrary.saveToLibraryAsync(resultImageUri);
-            Alert.alert('✅ Kaydedildi', 'Görsel galerinize kaydedildi.');
+            Alert.alert(‘✅ Kaydedildi’, ‘Görsel galerinize kaydedildi.’);
         } catch (err) {
-            Alert.alert('Hata', 'Görsel kaydedilemedi.');
+            Alert.alert(‘Hata’, ‘Görsel kaydedilemedi.’);
         }
     };
 
@@ -153,7 +159,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                 const nav: any = navigator;
                 const response = await fetch(resultImageUri);
                 const blob = await response.blob();
-                const file = new File([blob], `hali-sonuc-${Date.now()}.png`, { type: blob.type || 'image/png' });
+                const file = new File([blob], `hali-sonuc-${Date.now()}.png`, { type: blob.type || ‘image/png’ });
 
                 if (nav?.canShare?.({ files: [file] }) && nav?.share) {
                     await nav.share({
@@ -163,17 +169,22 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                     });
                     return;
                 }
-                Alert.alert('Paylaşım', 'Tarayıcı doğrudan paylaşımı desteklemiyor. Kaydet ile indirip WhatsApp’tan paylaşabilirsin.');
+                Alert.alert(‘Paylaşım’, ‘Tarayıcı doğrudan paylaşımı desteklemiyor. Kaydet ile indirip WhatsApp\’tan paylaşabilirsin.’);
                 return;
             }
 
-            await Share.share({
-                title: `${carpet.name} - HALI`,
-                message: `${carpet.name} sonucu hazır.`,
-                url: resultImageUri,
-            });
+            // Native: expo-sharing ile paylaş (iOS + Android ikisinde de çalışır)
+            const canShare = await Sharing.isAvailableAsync();
+            if (canShare) {
+                await Sharing.shareAsync(resultImageUri, {
+                    mimeType: ‘image/png’,
+                    dialogTitle: `${carpet.name} - HALI`,
+                });
+            } else {
+                Alert.alert(‘Hata’, ‘Bu cihazda paylaşım desteklenmiyor.’);
+            }
         } catch (err) {
-            Alert.alert('Hata', 'Paylaşım başarısız.');
+            Alert.alert(‘Hata’, ‘Paylaşım başarısız.’);
         }
     };
 
