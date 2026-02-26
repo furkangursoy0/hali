@@ -13,6 +13,10 @@ const crypto = require('crypto');
 const prisma = new PrismaClient();
 const app = express();
 
+// trust proxy: req.ip'yi reverse proxy (Railway, Fly.io vs) arkasında doğru okur
+// x-forwarded-for header'ı client tarafından manipüle edilemez hale gelir
+app.set('trust proxy', 1);
+
 app.use(cors());
 app.use(express.json());
 
@@ -320,7 +324,8 @@ async function callOpenAiEdit(formData) {
 
 const rateStore = new Map();
 app.use((req, res, next) => {
-    const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+    // trust proxy aktifken req.ip zaten güvenilir IP'yi verir
+    const ip = req.ip || 'unknown';
     const now = Date.now();
     const windowMs = 60_000;
     const maxReq = 60;
@@ -857,7 +862,12 @@ app.post(
             const roomFile = req.files?.roomImage?.[0];
             const carpetFile = req.files?.carpetImage?.[0];
             const mode = req.body?.mode === 'preview' ? 'preview' : 'normal';
-            const customerNote = (req.body?.customerNote || '').trim().slice(0, 120);
+            // Prompt injection önlemi: tırnak ve kontrol karakterlerini temizle
+            const customerNote = (req.body?.customerNote || '')
+                .trim()
+                .replace(/["""''`\\]/g, '')   // tırnak karakterleri
+                .replace(/[\x00-\x1F\x7F]/g, '') // kontrol karakterleri
+                .slice(0, 120);
 
             if (!roomFile || !carpetFile) {
                 return res.status(400).json({ error: 'roomImage and carpetImage are required.' });
