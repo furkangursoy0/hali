@@ -32,7 +32,18 @@ const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'];
 // Özel marka/koleksiyon adı geçersiz kılmaları
 const BRAND_OVERRIDES = {
     'Royal_Hali': 'Royal Halı',
+    'empara': 'Empara',
 };
+
+// Klasör adı disk'te farklı case'de olabilir ama Git'te farklı kayıtlı
+// imagePath / thumbPath için doğru path segment'i belirtir
+const PATH_OVERRIDES = {
+    'empara': 'Empara',
+};
+
+function sanitizePath(brand) {
+    return PATH_OVERRIDES[brand] || brand;
+}
 
 function sanitize(str, overrides = BRAND_OVERRIDES) {
     if (overrides[str.trim()]) return overrides[str.trim()];
@@ -114,6 +125,7 @@ function scanCarpets() {
             files.forEach(file => {
                 const { code, name } = parseModelInfo(file);
                 const key = `${brand}__${code}`.replace(/[^a-zA-Z0-9_]/g, '_');
+                const brandPath2 = sanitizePath(brand);
                 carpets.push({
                     id: code,
                     name,
@@ -122,10 +134,10 @@ function scanCarpets() {
                     size: '',
                     material: '',
                     image: key,
-                    imagePath: `carpets/${brand}/${file}`,
-                    thumbPath: `carpets-thumbs/${brand}/${path.basename(file, path.extname(file))}.webp`,
+                    imagePath: `carpets/${brandPath2}/${file}`,
+                    thumbPath: `carpets-thumbs/${brandPath2}/${path.basename(file, path.extname(file))}.webp`,
                 });
-                imageKeys.push({ key, relativePath: `../assets/carpets/${brand}/${file}` });
+                imageKeys.push({ key, relativePath: `../assets/carpets/${brandPath2}/${file}` });
             });
         } else {
             collectionDirs.forEach(collection => {
@@ -137,6 +149,7 @@ function scanCarpets() {
                 files.forEach(file => {
                     const { code, name } = parseModelInfo(file);
                     const key = `${brand}__${collection}__${code}`.replace(/[^a-zA-Z0-9_]/g, '_');
+                    const brandPath2 = sanitizePath(brand);
                     carpets.push({
                         id: code,
                         name,
@@ -145,10 +158,10 @@ function scanCarpets() {
                         size: '',
                         material: '',
                         image: key,
-                        imagePath: `carpets/${brand}/${collection}/${file}`,
-                        thumbPath: `carpets-thumbs/${brand}/${collection}/${path.basename(file, path.extname(file))}.webp`,
+                        imagePath: `carpets/${brandPath2}/${collection}/${file}`,
+                        thumbPath: `carpets-thumbs/${brandPath2}/${collection}/${path.basename(file, path.extname(file))}.webp`,
                     });
-                    imageKeys.push({ key, relativePath: `../assets/carpets/${brand}/${collection}/${file}` });
+                    imageKeys.push({ key, relativePath: `../assets/carpets/${brandPath2}/${collection}/${file}` });
                 });
             });
         }
