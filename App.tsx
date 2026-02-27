@@ -36,8 +36,8 @@ function AppNavigator() {
           gestureEnabled: true,
         }}
       >
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Halı Dene | Giriş' }} />
+        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Halı Dene' }} />
         <Stack.Screen name="Contact" component={ContactScreen} />
         <Stack.Screen name="Admin" component={AdminScreen} />
         <Stack.Screen name="Select" component={SelectScreen} />

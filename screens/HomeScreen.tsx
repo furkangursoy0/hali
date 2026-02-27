@@ -201,7 +201,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <View style={styles.brandRow}>
                 <Text style={styles.logo}>HALI</Text>
                 <View style={styles.logoAiBadge}>
-                    <Text style={styles.logoAi}>YERLEŞTİR</Text>
+                    <Text style={styles.logoAi}>DENE</Text>
                 </View>
             </View>
             <Text style={styles.subtitle}>Halınızı müşterinizin odasında anında gösterin</Text>

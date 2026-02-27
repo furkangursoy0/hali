@@ -210,7 +210,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                 <View style={styles.brandTitleWrap}>
                     <Text style={styles.title}>HALI</Text>
                     <View style={styles.headerBadge}>
-                        <Text style={styles.headerBadgeText}>YERLEŞTİR</Text>
+                        <Text style={styles.headerBadgeText}>DENE</Text>
                     </View>
                 </View>
                 <View style={{ width: 60 }} />
