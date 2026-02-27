@@ -70,11 +70,11 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           <View style={styles.kickerRow}>
             <Text style={styles.kicker}>HALI</Text>
             <View style={styles.kickerBadge}>
-              <Text style={styles.kickerBadgeText}>Yerleştir</Text>
+              <Text style={styles.kickerBadgeText}>Dene</Text>
             </View>
           </View>
           <Text style={styles.title}>Giriş Yap</Text>
-          <Text style={styles.subtitle}>Hızlı yerleştirme için hesabına giriş yap</Text>
+          <Text style={styles.subtitle}>Hızlı deneme için hesabına giriş yap</Text>
 
           <View style={styles.form}>
             <View style={[styles.inputWrap, focused === 'email' && styles.inputWrapFocused]}>

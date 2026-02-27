@@ -477,7 +477,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             if (isCompactWeb) {
                 return (
                     <View style={[styles.bottomBar, styles.bottomBarCompact]}>
-                        <Text style={styles.hintText}>Bir halı seçin, ardından halıyı yerleştirin</Text>
+                        <Text style={styles.hintText}>Bir halı seçin, ardından halıyı deneyin</Text>
                         <View style={styles.compactActionsRow}>
                             {isLoggedIn ? (
                                 <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} />
@@ -488,7 +488,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             }
             return (
                 <View style={styles.bottomBar}>
-                    <Text style={styles.hintText}>Bir halı seçin, ardından halıyı yerleştirin</Text>
+                    <Text style={styles.hintText}>Bir halı seçin, ardından halıyı deneyin</Text>
                     {isLoggedIn ? (
                         <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} />
                     ) : null}
@@ -550,7 +550,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                             disabled={isPlacing}
                         >
                             <Text style={styles.placeBtnIcon}>✨</Text>
-                            <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Yerleştir'}</Text>
+                            <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Dene'}</Text>
                         </Pressable>
                     </View>
                 </View>
@@ -607,7 +607,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                                     disabled={isPlacing}
                                 >
                                     <Text style={styles.placeBtnIcon}>✨</Text>
-                                    <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Yerleştir'}</Text>
+                                    <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Dene'}</Text>
                                 </Pressable>
                             </View>
                         </View>
@@ -662,7 +662,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                                 disabled={isPlacing}
                             >
                                 <Text style={styles.placeBtnIcon}>✨</Text>
-                                <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Yerleştir'}</Text>
+                                <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Dene'}</Text>
                             </Pressable>
                         </View>
                     </View>

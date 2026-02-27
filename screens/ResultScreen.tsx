@@ -34,7 +34,7 @@ type Status = 'loading' | 'success' | 'error' | 'limit';
 const LOADING_MESSAGES = [
     '🎨 Halı deseni analiz ediliyor...',
     '📐 Oda perspektifi hesaplanıyor...',
-    '✨ AI yerleştirme yapılıyor...',
+    '✨ AI halı deneme yapılıyor...',
     '🖼️ Görsel oluşturuluyor...',
     '🔍 Son rötuşlar yapılıyor...',
 ];
@@ -223,7 +223,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                         <View style={styles.loadingIconContainer}>
                             <ActivityIndicator size="large" color={COLORS.primary} />
                         </View>
-                        <Text style={styles.loadingTitle}>Halı Yerleştirme</Text>
+                        <Text style={styles.loadingTitle}>Halı Deneme</Text>
                         <Text style={styles.loadingMessage}>{LOADING_MESSAGES[loadingMsgIndex]}</Text>
                         <View style={styles.carpetPreviewRow}>
                             <Image source={{ uri: roomImageUri }} style={styles.previewThumb} resizeMode="cover" />

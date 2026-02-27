@@ -31,7 +31,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     const isCompactLayout = !isWeb || viewportWidth < 900;
     const step1Label = isCompactLayout ? 'Fotoğraf' : 'Oda Fotoğrafı';
     const step2Label = isCompactLayout ? 'Halı' : 'Halı Seçimi';
-    const step3Label = isCompactLayout ? 'Yerleştir' : 'Halı Yerleştirme';
+    const step3Label = isCompactLayout ? 'Dene' : 'Halı Deneme';
 
     const requestCameraPermission = async () => {
         if (isWeb) return true;
@@ -276,7 +276,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                             <Text style={styles.placeholderIcon}>📷</Text>
                             <Text style={styles.placeholderTitle}>Oda Fotoğrafı</Text>
                             <Text style={styles.placeholderDesc}>
-                                Fotoğrafı yükleyin, sistem halıyı otomatik olarak zemine yerleştirsin.
+                                Fotoğrafı yükleyin, sistem halıyı otomatik olarak odanızda deneyin.
                             </Text>
                         </View>
                     )}
