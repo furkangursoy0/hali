@@ -9,7 +9,9 @@
     "web": "expo start --web",
     "backend": "npm --prefix backend run dev",
     "carpets:thumbs": "node scripts/generate-carpet-thumbs.js",
-    "carpets:catalog": "node scripts/generate-catalog.js"
+    "carpets:catalog": "node scripts/generate-catalog.js",
+    "carpets:dolcevita": "node scripts/scrape-dolcevita.js",
+    "carpets:dolcevita:download": "node scripts/download-dolcevita.js"
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.28",
