@@ -520,8 +520,8 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const renderSearchBar = () => (
         <View style={styles.filterArea}>
             <View style={styles.filterRow}>
-                <Pressable style={styles.filterBtn} onPress={collapseSearch}>
-                    <Text style={styles.filterBtnIcon}>←</Text>
+                <Pressable style={styles.filterCollapseBtn} onPress={collapseSearch}>
+                    <Text style={styles.filterCollapseBtnText}>← Geri</Text>
                 </Pressable>
                 <View style={[styles.searchInputInline, isSearchFocused && styles.searchInputInlineFocused]}>
                     <TextInput
@@ -585,7 +585,9 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         );
     };
 
-    const NoteInput = () => {
+    // Defined as a plain function (NOT a React component) so the TextInput stays in
+    // the parent's render tree and never loses focus / keyboard on re-renders.
+    const renderNoteInput = () => {
         if (!showNoteInput) return null;
         return (
             <TextInput
@@ -659,7 +661,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             return (
                 <View style={[styles.bottomBar, styles.bottomBarCompact, isUltraCompactWeb && styles.bottomBarUltraCompact]}>
                     <SelectionStrip />
-                    <NoteInput />
+                    {renderNoteInput()}
                     <View style={styles.compactActionsRow}>
                         {isLoggedIn && !isUltraCompactWeb ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
                         <PlaceButtonRow compact={!isUltraCompactWeb} />
@@ -1180,6 +1182,22 @@ const styles = StyleSheet.create({
     },
     filterBtnIcon: {
         fontSize: 18,
+    },
+    filterCollapseBtn: {
+        alignSelf: 'stretch',
+        paddingHorizontal: SPACING.md,
+        flexShrink: 0,
+        backgroundColor: COLORS.surface,
+        borderRadius: RADIUS.lg,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    filterCollapseBtnText: {
+        color: COLORS.primary,
+        fontSize: 15,
+        fontWeight: '600' as const,
     },
     searchInputInline: {
         flex: 1,
