@@ -99,6 +99,38 @@ export function useUsageLimit() {
     }
   }, [isLoggedIn, user?.id]);
 
+  const consumeAmount = useCallback(async (amount: number) => {
+    if (isLoggedIn && user) {
+      try {
+        const next = await backendUsageLimitClient.consumeAmount(amount);
+        setSnapshot(next);
+        syncCreditRef.current(next.remaining);
+        return { allowed: true, snapshot: next };
+      } catch (err: any) {
+        if (err?.code === LIMIT_REACHED_CODE || err?.response?.status === 429) {
+          const latest = await backendUsageLimitClient.getUsage();
+          setSnapshot(latest);
+          syncCreditRef.current(latest.remaining);
+          return { allowed: false, snapshot: latest };
+        }
+        throw err;
+      }
+    }
+
+    try {
+      const next = await limitClient.consumeAmount(amount);
+      setSnapshot(next);
+      return { allowed: true, snapshot: next };
+    } catch (err: any) {
+      if (err?.code === LIMIT_REACHED_CODE) {
+        const latest = await limitClient.getUsage();
+        setSnapshot(latest);
+        return { allowed: false, snapshot: latest };
+      }
+      throw err;
+    }
+  }, [isLoggedIn, user?.id]);
+
   useEffect(() => {
     refresh();
   }, [refresh]);
@@ -110,5 +142,6 @@ export function useUsageLimit() {
     isLimitReached: snapshot.remaining <= 0,
     refresh,
     consumeOne,
-  }), [snapshot, loading, error, refresh, consumeOne]);
+    consumeAmount,
+  }), [snapshot, loading, error, refresh, consumeOne, consumeAmount]);
 }

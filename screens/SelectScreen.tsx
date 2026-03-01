@@ -28,7 +28,8 @@ const isWeb = Platform.OS === 'web';
 const CARPET_IMAGE_RATIO = 1.35;
 const WEB_PAGE_SIZE = 60;
 const MOBILE_PAGE_SIZE = 40;
-const MOBILE_WEB_BOTTOM_BAR_HEIGHT = 118;
+const MOBILE_WEB_BOTTOM_BAR_HEIGHT = 148;
+const MAX_SELECTIONS = 4;
 
 function normalizeText(value: string) {
     return value
@@ -88,7 +89,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedBrand, setSelectedBrand] = useState<string>(ALL);
     const [selectedCollection, setSelectedCollection] = useState<string>(ALL);
-    const [selectedCarpet, setSelectedCarpet] = useState<Carpet | null>(null);
+    const [selectedCarpets, setSelectedCarpets] = useState<Carpet[]>([]);
     const [layout, setLayout] = useState(getLayout());
     const [openDropdown, setOpenDropdown] = useState<'brand' | 'collection' | null>(null);
     const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -100,7 +101,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [customerNote, setCustomerNote] = useState('');
     const [showNoteInput, setShowNoteInput] = useState(false);
     const [isNoteInputFocused, setIsNoteInputFocused] = useState(false);
-    const { remaining, limit, loading: limitLoading, error: limitError, consumeOne, isLimitReached } = useUsageLimit();
+    const { remaining, limit, loading: limitLoading, consumeOne, consumeAmount } = useUsageLimit();
     const isCompactWeb = isWeb && viewportWidth < 820;
     const isMobileWeb = isWeb && viewportWidth < 900;
     const isUltraCompactWeb = isWeb && viewportWidth < 520;
@@ -181,7 +182,16 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const handleBrandSelect = (brand: string) => {
         setSelectedBrand(brand);
         setSelectedCollection(ALL);
-        setSelectedCarpet(null);
+    };
+
+    const toggleCarpetSelection = (carpet: Carpet) => {
+        setSelectedCarpets(prev => {
+            const key = `${carpet.brand}_${carpet.image}`;
+            const idx = prev.findIndex(c => `${c.brand}_${c.image}` === key);
+            if (idx >= 0) return prev.filter((_, i) => i !== idx);
+            if (prev.length >= MAX_SELECTIONS) return prev;
+            return [...prev, carpet];
+        });
     };
 
     const filteredCarpets = useMemo(() => {
@@ -253,13 +263,19 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 }
                 const url = URL.createObjectURL(file);
                 setCustomCarpetUri(url);
-                setSelectedCarpet({
+                const customCarpet: Carpet = {
                     id: '__custom__',
                     name: 'Sizin Halınız',
                     brand: 'Özel',
                     collection: '',
                     image: url,
                     imagePath: url,
+                };
+                setSelectedCarpets(prev => {
+                    // Önceki custom varsa kaldır
+                    const filtered = prev.filter(c => c.id !== '__custom__');
+                    if (filtered.length >= MAX_SELECTIONS) return [...filtered.slice(0, MAX_SELECTIONS - 1), customCarpet];
+                    return [...filtered, customCarpet];
                 });
                 setOpenDropdown(null);
             };
@@ -285,25 +301,41 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             navigation.navigate('Login');
             return;
         }
-        if (!selectedCarpet) {
-            Alert.alert('Halı Seçin', 'Lütfen önce bir halı seçin.');
+        const count = selectedCarpets.length;
+        if (count === 0) {
+            Alert.alert('Halı Seçin', 'Lütfen en az bir halı seçin.');
             return;
         }
-        if (isLimitReached) {
+        if (remaining < count) {
             setShowLimitModal(true);
             return;
         }
         try {
             setIsPlacing(true);
-            // Backend mode: kredi düşümü render endpointinde yapılır, burada tekrar düşmeyelim.
-            if (!USE_BACKEND_LIMIT) {
-                const consumeResult = await consumeOne();
+            if (USE_BACKEND_LIMIT) {
+                // Çoklu seçimde toplu kredi kes
+                const consumeResult = await consumeAmount(count);
                 if (!consumeResult.allowed) {
                     setShowLimitModal(true);
                     return;
                 }
+            } else {
+                // Mock: tek tek kes
+                for (let i = 0; i < count; i++) {
+                    const consumeResult = await consumeOne();
+                    if (!consumeResult.allowed) {
+                        setShowLimitModal(true);
+                        return;
+                    }
+                }
             }
-            navigation.navigate('Result', { roomImageUri, carpet: selectedCarpet, mode, customerNote: customerNote.trim() || undefined });
+            navigation.navigate('Result', {
+                roomImageUri,
+                carpets: selectedCarpets,
+                carpet: selectedCarpets[0], // Geriye uyumluluk
+                mode,
+                customerNote: customerNote.trim() || undefined,
+            });
         } catch (error: any) {
             Alert.alert('İşlem Başarısız', error?.message || 'Render başlatılamadı. Lütfen tekrar deneyin.');
         } finally {
@@ -313,20 +345,22 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
 
     const renderCarpetCard = (item: Carpet) => {
         const { cardSize } = layout;
-        const isSelected = selectedCarpet?.id === item.id && selectedCarpet?.image === item.image;
+        const key = `${item.brand}_${item.image}`;
+        const selectionIndex = selectedCarpets.findIndex(c => `${c.brand}_${c.image}` === key);
+        const isSelected = selectionIndex >= 0;
         const thumbUri = item.id === '__custom__'
             ? item.imagePath
             : (item.imagePath ? getCarpetThumbnailUrl(item.imagePath, item.thumbPath) : '');
         return (
             <Pressable
-                key={`${item.brand}_${item.image}`}
+                key={key}
                 style={({ hovered }: any) => [
                     styles.carpetCard,
                     { width: cardSize, marginBottom: SPACING.sm },
                     isSelected && styles.carpetCardSelected,
                     hovered && styles.carpetCardHover,
                 ]}
-                onPress={() => setSelectedCarpet(item)}
+                onPress={() => toggleCarpetSelection(item)}
             >
                 <View style={[styles.imageFrame, { height: cardSize * CARPET_IMAGE_RATIO }]}>
                     {thumbUri ? (
@@ -339,7 +373,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 </View>
                 {isSelected && (
                     <View style={styles.selectedBadge}>
-                        <Text style={styles.selectedBadgeText}>✓</Text>
+                        <Text style={styles.selectedBadgeText}>{selectionIndex + 1}</Text>
                     </View>
                 )}
                 <View style={styles.carpetInfo}>
@@ -472,12 +506,96 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         </Text>
     );
 
+    const selectionCount = selectedCarpets.length;
+    const placeBtnLabel = isPlacing
+        ? 'Başlatılıyor...'
+        : selectionCount > 1
+            ? `Halıları Dene (${selectionCount} kredi)`
+            : 'Halıyı Dene';
+
+    const SelectionStrip = () => {
+        if (selectionCount === 0) return null;
+        return (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selectionStrip} contentContainerStyle={styles.selectionStripContent}>
+                {selectedCarpets.map((carpet, idx) => {
+                    const thumbUri = carpet.id === '__custom__'
+                        ? carpet.imagePath
+                        : (carpet.imagePath ? getCarpetThumbnailUrl(carpet.imagePath, carpet.thumbPath, 120, 60) : '');
+                    return (
+                        <View key={`${carpet.brand}_${carpet.image}`} style={styles.selectionChip}>
+                            {thumbUri ? (
+                                <Image source={{ uri: thumbUri }} style={styles.selectionChipImage} resizeMode="cover" />
+                            ) : (
+                                <View style={[styles.selectionChipImage, { backgroundColor: COLORS.surfaceElevated, alignItems: 'center', justifyContent: 'center' }]}>
+                                    <Text style={{ fontSize: 16 }}>🖼️</Text>
+                                </View>
+                            )}
+                            <Pressable
+                                style={styles.selectionChipRemove}
+                                onPress={() => toggleCarpetSelection(carpet)}
+                            >
+                                <Text style={styles.selectionChipRemoveText}>✕</Text>
+                            </Pressable>
+                            <Text style={styles.selectionChipName} numberOfLines={1}>{carpet.name}</Text>
+                        </View>
+                    );
+                })}
+                <Text style={styles.selectionCounter}>{selectionCount}/{MAX_SELECTIONS}</Text>
+            </ScrollView>
+        );
+    };
+
+    const NoteInput = () => {
+        if (!showNoteInput) return null;
+        return (
+            <TextInput
+                style={[styles.noteInput, isNoteInputFocused && styles.noteInputFocused]}
+                placeholder="Ör: 4 metrekare olsun, masanın altına girmesin"
+                placeholderTextColor={COLORS.textMuted}
+                value={customerNote}
+                onChangeText={(t) => setCustomerNote(t.slice(0, 120))}
+                maxLength={120}
+                multiline
+                numberOfLines={2}
+                blurOnSubmit={false}
+                onFocus={() => setIsNoteInputFocused(true)}
+                onBlur={() => setIsNoteInputFocused(false)}
+            />
+        );
+    };
+
+    const PlaceButtonRow = ({ compact = false }: { compact?: boolean }) => (
+        <View style={styles.placeRow}>
+            <Pressable
+                style={({ hovered }: any) => [styles.noteToggleBtn, hovered && styles.noteToggleBtnHover, showNoteInput && styles.noteToggleBtnActive]}
+                onPress={() => setShowNoteInput(v => !v)}
+            >
+                <Text style={styles.noteToggleBtnText}>{showNoteInput ? '−' : '+'}</Text>
+            </Pressable>
+            <Pressable
+                style={({ hovered }: any) => [
+                    styles.placeBtn,
+                    compact && styles.placeBtnCompact,
+                    !compact && { flex: 1, justifyContent: 'center' as const },
+                    isPlacing && styles.placeBtnDisabled,
+                    (remaining < selectionCount) && styles.placeBtnDisabled,
+                    hovered && !isPlacing && styles.placeBtnHover,
+                ]}
+                onPress={() => handlePlace('normal')}
+                disabled={isPlacing || selectionCount === 0 || remaining < selectionCount}
+            >
+                <Text style={styles.placeBtnIcon}>✨</Text>
+                <Text style={styles.placeBtnText}>{placeBtnLabel}</Text>
+            </Pressable>
+        </View>
+    );
+
     const renderBottomBar = () => {
-        if (!selectedCarpet) {
+        if (selectionCount === 0) {
             if (isCompactWeb) {
                 return (
                     <View style={[styles.bottomBar, styles.bottomBarCompact]}>
-                        <Text style={styles.hintText}>Bir halı seçin, ardından halıyı deneyin</Text>
+                        <Text style={styles.hintText}>Halı seçin (maks. {MAX_SELECTIONS} adet)</Text>
                         <View style={styles.compactActionsRow}>
                             {isLoggedIn ? (
                                 <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} />
@@ -488,133 +606,29 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
             }
             return (
                 <View style={styles.bottomBar}>
-                    <Text style={styles.hintText}>Bir halı seçin, ardından halıyı deneyin</Text>
+                    <Text style={styles.hintText}>Halı seçin (maks. {MAX_SELECTIONS} adet)</Text>
                     {isLoggedIn ? (
                         <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} />
                     ) : null}
                 </View>
             );
         }
-        const isCustomCarpet = selectedCarpet.id === '__custom__';
-        const selectedThumbUri = isCustomCarpet
-            ? selectedCarpet.imagePath
-            : (selectedCarpet.imagePath
-                ? getCarpetThumbnailUrl(selectedCarpet.imagePath, selectedCarpet.thumbPath, 240, 70)
-                : '');
-        if (isUltraCompactWeb) {
+
+        // Compact / ultra-compact layout
+        if (isUltraCompactWeb || isCompactWeb) {
             return (
-                <View style={[styles.bottomBar, styles.bottomBarCompact, styles.bottomBarUltraCompact]}>
-                    <View style={styles.compactTopRow}>
-                        {selectedThumbUri ? (
-                            <Image source={{ uri: selectedThumbUri }} style={[styles.selectionThumb, styles.selectionThumbCompact]} resizeMode="cover" />
-                        ) : null}
-                        <View style={[styles.selectionInfo, styles.selectionInfoCompact]}>
-                            <Text style={styles.selectionBrand} numberOfLines={1}>
-                                {isCustomCarpet ? '📷 Kameranızdan' : `${selectedCarpet.brand} · ${selectedCarpet.collection}`}
-                            </Text>
-                            <Text style={styles.selectionNameCompactWeb} numberOfLines={1}>
-                                {selectedCarpet.name}
-                            </Text>
-                        </View>
-                    </View>
-                    {showNoteInput && (
-                        <TextInput
-                            style={[styles.noteInput, isNoteInputFocused && styles.noteInputFocused]}
-                            placeholder="Ör: 4 metrekare olsun, masanın altına girmesin"
-                            placeholderTextColor={COLORS.textMuted}
-                            value={customerNote}
-                            onChangeText={(t) => setCustomerNote(t.slice(0, 120))}
-                            maxLength={120}
-                            multiline
-                            numberOfLines={2}
-                            blurOnSubmit={false}
-                            onFocus={() => setIsNoteInputFocused(true)}
-                            onBlur={() => setIsNoteInputFocused(false)}
-                        />
-                    )}
-                    <View style={styles.placeRow}>
-                        <Pressable
-                            style={({ hovered }: any) => [styles.noteToggleBtn, hovered && styles.noteToggleBtnHover, showNoteInput && styles.noteToggleBtnActive]}
-                            onPress={() => setShowNoteInput(v => !v)}
-                        >
-                            <Text style={styles.noteToggleBtnText}>{showNoteInput ? '−' : '+'}</Text>
-                        </Pressable>
-                        <Pressable
-                            style={({ hovered }: any) => [
-                                styles.placeBtn,
-                                { flex: 1, justifyContent: 'center' },
-                                isPlacing && styles.placeBtnDisabled,
-                                hovered && !isPlacing && styles.placeBtnHover,
-                            ]}
-                            onPress={() => handlePlace('normal')}
-                            disabled={isPlacing}
-                        >
-                            <Text style={styles.placeBtnIcon}>✨</Text>
-                            <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Dene'}</Text>
-                        </Pressable>
-                    </View>
-                </View>
-            );
-        }
-        if (isCompactWeb) {
-            return (
-                <View style={[styles.bottomBar, styles.bottomBarCompact]}>
-                    <View style={styles.compactTopRow}>
-                        {selectedThumbUri && (
-                            <Image source={{ uri: selectedThumbUri }} style={[styles.selectionThumb, styles.selectionThumbCompact]} resizeMode="cover" />
-                        )}
-                        <View style={[styles.selectionInfo, styles.selectionInfoCompact]}>
-                            <Text style={styles.selectionBrand} numberOfLines={1}>
-                                {isCustomCarpet ? '📷 Kameranızdan' : `${selectedCarpet.brand} · ${selectedCarpet.collection}`}
-                            </Text>
-                            <Text style={styles.selectionName} numberOfLines={1}>{selectedCarpet.name}</Text>
-                            {!!limitError && <Text style={styles.limitErrorText}>Limit durumu geçici olarak alınamadı</Text>}
-                        </View>
-                    </View>
-                    {showNoteInput && (
-                        <TextInput
-                            style={[styles.noteInput, isNoteInputFocused && styles.noteInputFocused]}
-                            placeholder="Ör: 4 metrekare olsun, masanın altına girmesin"
-                            placeholderTextColor={COLORS.textMuted}
-                            value={customerNote}
-                            onChangeText={(t) => setCustomerNote(t.slice(0, 120))}
-                            maxLength={120}
-                            multiline
-                            numberOfLines={2}
-                            blurOnSubmit={false}
-                            onFocus={() => setIsNoteInputFocused(true)}
-                            onBlur={() => setIsNoteInputFocused(false)}
-                        />
-                    )}
+                <View style={[styles.bottomBar, styles.bottomBarCompact, isUltraCompactWeb && styles.bottomBarUltraCompact]}>
+                    <SelectionStrip />
+                    <NoteInput />
                     <View style={styles.compactActionsRow}>
-                        {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
-                        <View style={[styles.btnGroup, styles.btnGroupCompact, styles.btnGroupCompactFixed]}>
-                            <View style={styles.placeRow}>
-                                <Pressable
-                                    style={({ hovered }: any) => [styles.noteToggleBtn, hovered && styles.noteToggleBtnHover, showNoteInput && styles.noteToggleBtnActive]}
-                                    onPress={() => setShowNoteInput(v => !v)}
-                                >
-                                    <Text style={styles.noteToggleBtnText}>{showNoteInput ? '−' : '+'}</Text>
-                                </Pressable>
-                                <Pressable
-                                    style={({ hovered }: any) => [
-                                        styles.placeBtn,
-                                        styles.placeBtnCompact,
-                                        isPlacing && styles.placeBtnDisabled,
-                                        hovered && !isPlacing && styles.placeBtnHover,
-                                    ]}
-                                    onPress={() => handlePlace('normal')}
-                                    disabled={isPlacing}
-                                >
-                                    <Text style={styles.placeBtnIcon}>✨</Text>
-                                    <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Dene'}</Text>
-                                </Pressable>
-                            </View>
-                        </View>
+                        {isLoggedIn && !isUltraCompactWeb ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
+                        <PlaceButtonRow compact={!isUltraCompactWeb} />
                     </View>
                 </View>
             );
         }
+
+        // Desktop layout
         return (
             <View style={styles.bottomBarWrap}>
                 {showNoteInput && (
@@ -635,36 +649,10 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                     </View>
                 )}
                 <View style={styles.bottomBar}>
-                    {selectedThumbUri && (
-                        <Image source={{ uri: selectedThumbUri }} style={styles.selectionThumb} resizeMode="cover" />
-                    )}
-                    <View style={styles.selectionInfo}>
-                        <Text style={styles.selectionBrand} numberOfLines={1}>{isCustomCarpet ? '📷 Kameranızdan' : `${selectedCarpet.brand} · ${selectedCarpet.collection}`}</Text>
-                        <Text style={styles.selectionName} numberOfLines={1}>{selectedCarpet.name}</Text>
-                        {!!limitError && <Text style={styles.limitErrorText}>Limit durumu geçici olarak alınamadı</Text>}
-                    </View>
-                    {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
-                    <View style={styles.btnGroup}>
-                        <View style={styles.placeRow}>
-                            <Pressable
-                                style={({ hovered }: any) => [styles.noteToggleBtn, hovered && styles.noteToggleBtnHover, showNoteInput && styles.noteToggleBtnActive]}
-                                onPress={() => setShowNoteInput(v => !v)}
-                            >
-                                <Text style={styles.noteToggleBtnText}>{showNoteInput ? '−' : '+'}</Text>
-                            </Pressable>
-                            <Pressable
-                                style={({ hovered }: any) => [
-                                    styles.placeBtn,
-                                    isPlacing && styles.placeBtnDisabled,
-                                    hovered && !isPlacing && styles.placeBtnHover,
-                                ]}
-                                onPress={() => handlePlace('normal')}
-                                disabled={isPlacing}
-                            >
-                                <Text style={styles.placeBtnIcon}>✨</Text>
-                                <Text style={styles.placeBtnText}>{isPlacing ? 'Başlatılıyor...' : 'Halıyı Dene'}</Text>
-                            </Pressable>
-                        </View>
+                    <SelectionStrip />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md }}>
+                        {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
+                        <PlaceButtonRow />
                     </View>
                 </View>
             </View>
@@ -1263,5 +1251,60 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
+    },
+
+    // Selection strip styles
+    selectionStrip: {
+        flexGrow: 0,
+        flexShrink: 0,
+        maxHeight: 72,
+    },
+    selectionStripContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.sm,
+        paddingRight: SPACING.sm,
+    },
+    selectionChip: {
+        alignItems: 'center',
+        width: 56,
+    },
+    selectionChipImage: {
+        width: 48,
+        height: 48,
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    selectionChipRemove: {
+        position: 'absolute',
+        top: -4,
+        right: 0,
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        backgroundColor: COLORS.error || '#F44336',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    selectionChipRemoveText: {
+        color: COLORS.white,
+        fontSize: 9,
+        fontWeight: '700',
+        lineHeight: 12,
+    },
+    selectionChipName: {
+        color: COLORS.textSecondary,
+        fontSize: 9,
+        marginTop: 2,
+        textAlign: 'center',
+        maxWidth: 56,
+    },
+    selectionCounter: {
+        color: COLORS.primary,
+        fontSize: 12,
+        fontWeight: '700',
+        alignSelf: 'center',
+        marginLeft: SPACING.xs,
     },
 });

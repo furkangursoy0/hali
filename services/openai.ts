@@ -67,12 +67,17 @@ async function saveResultImage(base64: string): Promise<string> {
 
 export type PlacementMode = 'preview' | 'normal';
 
+export interface PlaceCarperOptions {
+    creditsPreDeducted?: boolean;
+}
+
 export async function placeCarperInRoom(
     roomImageUri: string,
     carpetImageUri: string,
     carpetName: string,
     mode: PlacementMode = 'normal',
     customerNote?: string,
+    options?: PlaceCarperOptions,
 ): Promise<PlacementResult> {
     try {
         const roomBlob = await uriToBlob(roomImageUri, 'image/jpeg');
@@ -85,6 +90,9 @@ export async function placeCarperInRoom(
         formData.append('carpetName', carpetName);
         if (customerNote) {
             formData.append('customerNote', customerNote);
+        }
+        if (options?.creditsPreDeducted) {
+            formData.append('creditsPreDeducted', 'true');
         }
 
         const response = await axios.post(

@@ -862,6 +862,7 @@ app.post(
             const roomFile = req.files?.roomImage?.[0];
             const carpetFile = req.files?.carpetImage?.[0];
             const mode = req.body?.mode === 'preview' ? 'preview' : 'normal';
+            const creditsPreDeducted = req.body?.creditsPreDeducted === 'true' || req.body?.creditsPreDeducted === true;
             // Prompt injection önlemi: tırnak ve kontrol karakterlerini temizle
             const customerNote = (req.body?.customerNote || '')
                 .trim()
@@ -921,39 +922,49 @@ app.post(
                 }
             }
 
-            const consume = await prisma.user.updateMany({
-                where: {
-                    id: req.user.id,
-                    credit: { gte: 1 },
-                },
-                data: {
-                    credit: { decrement: 1 },
-                },
-            });
+            if (!creditsPreDeducted) {
+                const consume = await prisma.user.updateMany({
+                    where: {
+                        id: req.user.id,
+                        credit: { gte: 1 },
+                    },
+                    data: {
+                        credit: { decrement: 1 },
+                    },
+                });
 
-            if (consume.count === 0) {
+                if (consume.count === 0) {
+                    if (renderJobId) {
+                        await prisma.renderJob.update({
+                            where: { id: renderJobId },
+                            data: { status: 'failed', error: 'LIMIT_REACHED' },
+                        });
+                    }
+                    return res.status(429).json({ code: 'LIMIT_REACHED', error: 'Daily limit reached.' });
+                }
+
+                await prisma.$transaction([
+                    prisma.creditLog.create({
+                        data: {
+                            userId: req.user.id,
+                            delta: -1,
+                            reason: 'render',
+                        },
+                    }),
+                    prisma.renderJob.update({
+                        where: { id: renderJobId },
+                        data: { status: 'success' },
+                    }),
+                ]);
+            } else {
+                // Kredi önceden kesildi, sadece job durumunu güncelle
                 if (renderJobId) {
                     await prisma.renderJob.update({
                         where: { id: renderJobId },
-                        data: { status: 'failed', error: 'LIMIT_REACHED' },
+                        data: { status: 'success' },
                     });
                 }
-                return res.status(429).json({ code: 'LIMIT_REACHED', error: 'Daily limit reached.' });
             }
-
-            await prisma.$transaction([
-                prisma.creditLog.create({
-                    data: {
-                        userId: req.user.id,
-                        delta: -1,
-                        reason: 'render',
-                    },
-                }),
-                prisma.renderJob.update({
-                    where: { id: renderJobId },
-                    data: { status: 'success' },
-                }),
-            ]);
 
             const imageList = firstPassResponse?.data?.data || [];
             const base64Candidates = imageList.map((item) => item?.b64_json).filter(Boolean);

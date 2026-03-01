@@ -11,6 +11,7 @@ export interface UsageSnapshot {
 export interface UsageLimitClient {
   getUsage: () => Promise<UsageSnapshot>;
   consumeRender: () => Promise<UsageSnapshot>;
+  consumeAmount: (amount: number) => Promise<UsageSnapshot>;
 }
 
 export const LIMIT_REACHED_CODE = 'LIMIT_REACHED';
@@ -61,6 +62,13 @@ export const mockUsageLimitClient: UsageLimitClient = {
     mockUsedCount += 1;
     return toMockSnapshot();
   },
+  async consumeAmount(amount: number) {
+    if (mockUsedCount + amount > DAILY_RENDER_LIMIT) {
+      throw new LimitReachedError();
+    }
+    mockUsedCount += amount;
+    return toMockSnapshot();
+  },
 };
 
 export const backendUsageLimitClient: UsageLimitClient = {
@@ -73,6 +81,22 @@ export const backendUsageLimitClient: UsageLimitClient = {
       const response = await axios.post(`${API_BASE_URL}/api/usage/consume`, {
         type: 'render',
         amount: 1,
+      });
+      return normalizeSnapshot(response.data);
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const code = error?.response?.data?.code;
+      if (status === 429 || code === LIMIT_REACHED_CODE) {
+        throw new LimitReachedError();
+      }
+      throw error;
+    }
+  },
+  async consumeAmount(amount: number) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/usage/consume`, {
+        type: 'render',
+        amount,
       });
       return normalizeSnapshot(response.data);
     } catch (error: any) {

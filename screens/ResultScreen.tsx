@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
     Pressable,
     Image,
     Alert,
@@ -11,7 +10,6 @@ import {
     Dimensions,
     ActivityIndicator,
     ScrollView,
-    Share,
     Platform,
     Modal,
 } from 'react-native';
@@ -21,15 +19,33 @@ import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { placeCarperInRoom, PlacementMode, PlacementResult } from '../services/openai';
 import { getCarpetFullUrl, getCarpetThumbnailUrl } from '../services/carpet-image';
 
-const { width, height } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
+
+interface Carpet {
+    id: string;
+    name: string;
+    brand: string;
+    collection: string;
+    size?: string;
+    material?: string;
+    image: string;
+    imagePath: string;
+    thumbPath?: string;
+}
+
+interface RenderSlot {
+    carpet: Carpet;
+    status: 'loading' | 'success' | 'error';
+    resultImageUri: string;
+    errorMessage: string;
+    errorCode: PlacementResult['errorCode'];
+}
 
 interface ResultScreenProps {
     navigation: any;
     route: any;
 }
-
-type Status = 'loading' | 'success' | 'error' | 'limit';
 
 const LOADING_MESSAGES = [
     '🎨 Halı deseni analiz ediliyor...',
@@ -41,170 +57,293 @@ const LOADING_MESSAGES = [
 
 function mapErrorTitle(code: PlacementResult['errorCode']) {
     switch (code) {
-        case 'AUTH':
-            return 'Oturum Gerekli';
-        case 'BILLING':
-            return 'Servis Kotası Doldu';
-        case 'API_KEY':
-            return 'Servis Ayarı Hatası';
-        case 'NETWORK':
-            return 'Bağlantı Hatası';
-        case 'RATE_LIMIT':
-            return 'Yoğunluk Nedeniyle Bekleme';
-        default:
-            return 'Bir Hata Oluştu';
+        case 'AUTH': return 'Oturum Gerekli';
+        case 'BILLING': return 'Servis Kotası Doldu';
+        case 'API_KEY': return 'Servis Ayarı Hatası';
+        case 'NETWORK': return 'Bağlantı Hatası';
+        case 'RATE_LIMIT': return 'Yoğunluk Nedeniyle Bekleme';
+        default: return 'Bir Hata Oluştu';
     }
 }
 
-export default function ResultScreen({ navigation, route }: ResultScreenProps) {
-    const { roomImageUri, carpet, mode, customerNote } = route.params;
-    const placementMode: PlacementMode = mode || 'normal';
-    const [status, setStatus] = useState<Status>('loading');
-    const [resultImageUri, setResultImageUri] = useState<string>('');
-    const [errorMessage, setErrorMessage] = useState<string>('');
-    const [errorCode, setErrorCode] = useState<PlacementResult['errorCode']>('UNKNOWN');
-    const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
-    const [imageAspectRatio, setImageAspectRatio] = useState(1.45);
-    const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-    const [isCarpetModalOpen, setIsCarpetModalOpen] = useState(false);
+// ── Module-level save / share helpers ─────────────────────────────────────
+// Defined outside ResultScreen so they are stable references (not recreated on each render).
+async function saveImage(uri: string, carpetName: string) {
+    try {
+        if (isWeb) {
+            const response = await fetch(uri);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `hali-sonuc-${carpetName}-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+            return;
+        }
+        const { status: permStatus } = await MediaLibrary.requestPermissionsAsync();
+        if (permStatus !== 'granted' && (permStatus as string) !== 'limited') {
+            Alert.alert('İzin Gerekli', 'Fotoğraf kaydetmek için galeri iznine ihtiyaç var.');
+            return;
+        }
+        await MediaLibrary.saveToLibraryAsync(uri);
+        Alert.alert('✅ Kaydedildi', 'Görsel galerinize kaydedildi.');
+    } catch (_err) {
+        Alert.alert('Hata', 'Görsel kaydedilemedi.');
+    }
+}
 
+async function shareImage(uri: string, carpetName: string) {
+    try {
+        if (isWeb) {
+            const nav: any = navigator;
+            const response = await fetch(uri);
+            const blob = await response.blob();
+            const file = new File([blob], `hali-sonuc-${carpetName}-${Date.now()}.png`, { type: blob.type || 'image/png' });
+            if (nav?.canShare?.({ files: [file] }) && nav?.share) {
+                await nav.share({ title: `${carpetName} - HALI`, text: `${carpetName} sonucu`, files: [file] });
+                return;
+            }
+            Alert.alert('Paylaşım', 'Tarayıcı doğrudan paylaşımı desteklemiyor. Kaydet ile indirip paylaşabilirsiniz.');
+            return;
+        }
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+            await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: `${carpetName} - HALI` });
+        } else {
+            Alert.alert('Hata', 'Bu cihazda paylaşım desteklenmiyor.');
+        }
+    } catch (_err) {
+        Alert.alert('Hata', 'Paylaşım başarısız.');
+    }
+}
+
+// ── RenderCard ─────────────────────────────────────────────────────────────
+// Defined OUTSIDE ResultScreen so React sees the same component type on every
+// parent re-render.  Previously defined inline, which caused unmount+remount
+// every 2.5 s (on loadingMsgIndex tick) → success-card image flicker.
+interface RenderCardProps {
+    slot: RenderSlot;
+    index: number;
+    isSingle: boolean;
+    loadingMsgIndex: number;
+    onRetry: (index: number, carpet: Carpet) => void;
+    onOpenFullscreen: (index: number) => void;
+    onSave: (uri: string, name: string) => void;
+    onShare: (uri: string, name: string) => void;
+}
+
+const RenderCard = React.memo(function RenderCard({
+    slot,
+    index,
+    isSingle,
+    loadingMsgIndex,
+    onRetry,
+    onOpenFullscreen,
+    onSave,
+    onShare,
+}: RenderCardProps) {
+    const thumbUri = slot.carpet.id === '__custom__'
+        ? slot.carpet.imagePath
+        : (slot.carpet.imagePath ? getCarpetThumbnailUrl(slot.carpet.imagePath, slot.carpet.thumbPath, 200, 60) : '');
+
+    const cardWidth = isSingle ? '100%' : '48.5%';
+
+    if (slot.status === 'loading') {
+        return (
+            <View style={[styles.renderCard, styles.renderCardLoading, !isSingle && { width: cardWidth as any }]}>
+                <ActivityIndicator size="large" color={COLORS.primary} style={{ marginBottom: SPACING.sm }} />
+                <Text style={styles.cardLoadingMsg}>{LOADING_MESSAGES[loadingMsgIndex]}</Text>
+                {thumbUri ? (
+                    <Image source={{ uri: thumbUri }} style={styles.cardThumb} resizeMode="cover" />
+                ) : null}
+                <Text style={styles.cardCarpetName} numberOfLines={1}>{slot.carpet.name}</Text>
+                <Text style={styles.cardSubtext}>20-70 saniye</Text>
+            </View>
+        );
+    }
+
+    if (slot.status === 'error') {
+        return (
+            <View style={[styles.renderCard, styles.renderCardError, !isSingle && { width: cardWidth as any }]}>
+                <Text style={styles.cardErrorIcon}>⚠️</Text>
+                <Text style={styles.cardErrorTitle}>{mapErrorTitle(slot.errorCode)}</Text>
+                <Text style={styles.cardErrorMsg} numberOfLines={3}>{slot.errorMessage}</Text>
+                <Pressable
+                    style={({ hovered }: any) => [styles.cardRetryBtn, hovered && styles.cardRetryBtnHover]}
+                    onPress={() => onRetry(index, slot.carpet)}
+                >
+                    <Text style={styles.cardRetryBtnText}>🔄 Tekrar Dene</Text>
+                </Pressable>
+                <Text style={styles.cardCarpetName} numberOfLines={1}>{slot.carpet.name}</Text>
+            </View>
+        );
+    }
+
+    // Success
+    return (
+        <View style={[styles.renderCard, styles.renderCardSuccess, !isSingle && { width: cardWidth as any }]}>
+            <Pressable
+                onPress={() => onOpenFullscreen(index)}
+                style={({ hovered }: any) => [styles.cardImageWrap, hovered && { opacity: 0.9 }]}
+            >
+                <Image
+                    source={{ uri: slot.resultImageUri }}
+                    style={[styles.cardImage, isSingle && { maxHeight: isWeb ? Math.min(screenHeight * 0.55, 580) : screenWidth * 1.1 }]}
+                    resizeMode="contain"
+                />
+                <View style={styles.cardZoomBadge}>
+                    <Text style={styles.cardZoomText}>Tam ekran</Text>
+                </View>
+            </Pressable>
+            {/* Carpet info + actions */}
+            <View style={styles.cardInfoRow}>
+                {thumbUri ? (
+                    <Image source={{ uri: thumbUri }} style={styles.cardInfoThumb} resizeMode="cover" />
+                ) : null}
+                <View style={styles.cardInfoText}>
+                    <Text style={styles.cardInfoBrand}>{slot.carpet.brand}</Text>
+                    <Text style={styles.cardInfoName} numberOfLines={1}>{slot.carpet.name}</Text>
+                </View>
+                <Pressable
+                    style={({ hovered }: any) => [styles.cardActionBtn, hovered && styles.cardActionBtnHover]}
+                    onPress={() => onSave(slot.resultImageUri, slot.carpet.name)}
+                >
+                    <Text style={styles.cardActionIcon}>💾</Text>
+                </Pressable>
+                <Pressable
+                    style={({ hovered }: any) => [styles.cardActionBtn, hovered && styles.cardActionBtnHover]}
+                    onPress={() => onShare(slot.resultImageUri, slot.carpet.name)}
+                >
+                    <Text style={styles.cardActionIcon}>📤</Text>
+                </Pressable>
+            </View>
+        </View>
+    );
+});
+
+// ── ResultScreen ──────────────────────────────────────────────────────────
+export default function ResultScreen({ navigation, route }: ResultScreenProps) {
+    const { roomImageUri, carpet, carpets, mode, customerNote } = route.params;
+    const placementMode: PlacementMode = mode || 'normal';
+
+    // Geriye uyumluluk: carpets array yoksa tek carpet'tan oluştur
+    const allCarpets: Carpet[] = carpets || (carpet ? [carpet] : []);
+    const totalCount = allCarpets.length;
+    const isSingle = totalCount === 1;
+
+    const [renderSlots, setRenderSlots] = useState<RenderSlot[]>([]);
+    const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+    const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
+    const renderFiredRef = useRef(false);
+
+    // Slot'ları başlat
     useEffect(() => {
-        // Cycle loading messages
+        const slots: RenderSlot[] = allCarpets.map(c => ({
+            carpet: c,
+            status: 'loading',
+            resultImageUri: '',
+            errorMessage: '',
+            errorCode: 'UNKNOWN',
+        }));
+        setRenderSlots(slots);
+    }, []);
+
+    // Loading mesajlarını döndür
+    useEffect(() => {
         const interval = setInterval(() => {
             setLoadingMsgIndex(i => (i + 1) % LOADING_MESSAGES.length);
         }, 2500);
         return () => clearInterval(interval);
     }, []);
 
-    useEffect(() => {
-        processImage();
+    const updateSlot = useCallback((index: number, updates: Partial<RenderSlot>) => {
+        setRenderSlots(prev => prev.map((slot, i) =>
+            i === index ? { ...slot, ...updates } : slot
+        ));
     }, []);
 
-    useEffect(() => {
-        if (!resultImageUri) return;
-        Image.getSize(
-            resultImageUri,
-            (w, h) => {
-                if (w > 0 && h > 0) {
-                    setImageAspectRatio(w / h);
-                }
-            },
-            () => {
-                setImageAspectRatio(1.45);
-            }
-        );
-    }, [resultImageUri]);
-
-    const processImage = async () => {
+    const fireRender = useCallback(async (carpetItem: Carpet, index: number) => {
         try {
-            setStatus('loading');
-            setErrorCode('UNKNOWN');
-            if (!carpet?.imagePath) {
-                throw new Error('Seçilen halı görseli bulunamadı.');
-            }
-            // Custom carpet: imagePath is already a blob URL — don't run it through CDN transform
-            const carpetUri = carpet.id === '__custom__'
-                ? carpet.imagePath
-                : getCarpetFullUrl(carpet.imagePath);
-            const result = await placeCarperInRoom(roomImageUri, carpetUri, carpet.name, placementMode, customerNote);
+            const carpetUri = carpetItem.id === '__custom__'
+                ? carpetItem.imagePath
+                : getCarpetFullUrl(carpetItem.imagePath);
+
+            const result = await placeCarperInRoom(
+                roomImageUri,
+                carpetUri,
+                carpetItem.name,
+                placementMode,
+                customerNote,
+                // FIX: Credits are ALWAYS pre-deducted in SelectScreen via consumeAmount()
+                // before navigating here — for both single and multi-carpet flows.
+                // Passing creditsPreDeducted: true prevents the backend from charging again.
+                { creditsPreDeducted: true },
+            );
 
             if (result.success && result.imageUrl) {
-                setResultImageUri(result.imageUrl);
-                setStatus('success');
+                updateSlot(index, { status: 'success', resultImageUri: result.imageUrl });
             } else {
-                const nextErrorMessage = result.error || 'Bilinmeyen hata';
-                setErrorMessage(nextErrorMessage);
-                setErrorCode(result.errorCode || 'UNKNOWN');
-                setStatus(result.errorCode === 'RENDER_LIMIT' ? 'limit' : 'error');
+                updateSlot(index, {
+                    status: 'error',
+                    errorMessage: result.error || 'Bilinmeyen hata',
+                    errorCode: result.errorCode || 'UNKNOWN',
+                });
             }
         } catch (err: any) {
-            const nextErrorMessage = err.message || 'Bir hata oluştu';
-            setErrorMessage(nextErrorMessage);
-            setErrorCode('NETWORK');
-            setStatus('error');
+            updateSlot(index, {
+                status: 'error',
+                errorMessage: err.message || 'Bir hata oluştu',
+                errorCode: 'NETWORK',
+            });
         }
+    }, [roomImageUri, placementMode, customerNote, updateSlot]);
+
+    // Renderleri başlat (2sn stagger ile)
+    useEffect(() => {
+        if (renderSlots.length === 0 || renderFiredRef.current) return;
+        renderFiredRef.current = true;
+        allCarpets.forEach((carpetItem, index) => {
+            setTimeout(() => fireRender(carpetItem, index), index * 2000);
+        });
+    }, [renderSlots.length]);
+
+    // "Tekrar Dene" handler — free retry (credits already deducted, creditsPreDeducted: true)
+    const handleRetry = useCallback((index: number, carpetItem: Carpet) => {
+        updateSlot(index, { status: 'loading', errorMessage: '', errorCode: 'UNKNOWN' });
+        fireRender(carpetItem, index);
+    }, [updateSlot, fireRender]);
+
+    // Durum özeti
+    const completedCount = renderSlots.filter(s => s.status === 'success').length;
+    const errorCount = renderSlots.filter(s => s.status === 'error').length;
+    const loadingCount = renderSlots.filter(s => s.status === 'loading').length;
+
+    // ── Fullscreen Modal ─────────────────────────────────────────────────
+    const successSlots = renderSlots.filter(s => s.status === 'success');
+    const fullscreenSlot = fullscreenIndex !== null ? renderSlots[fullscreenIndex] : null;
+
+    const navigateFullscreen = (direction: 'prev' | 'next') => {
+        if (fullscreenIndex === null) return;
+        const successIndices = renderSlots.map((s, i) => s.status === 'success' ? i : -1).filter(i => i >= 0);
+        const currentPos = successIndices.indexOf(fullscreenIndex);
+        if (currentPos < 0) return;
+        const nextPos = direction === 'next'
+            ? (currentPos + 1) % successIndices.length
+            : (currentPos - 1 + successIndices.length) % successIndices.length;
+        setFullscreenIndex(successIndices[nextPos]);
     };
 
-    const handleSave = async () => {
-        try {
-            if (Platform.OS === 'web') {
-                // data: URI'yi blob URL'ye çevir — Chrome 60+ data URI download engeller
-                const response = await fetch(resultImageUri);
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = `hali-sonuc-${Date.now()}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-                return;
-            }
-            const { status: permStatus } = await MediaLibrary.requestPermissionsAsync();
-            if (permStatus !== 'granted' && permStatus !== 'limited') {
-                Alert.alert('İzin Gerekli', 'Fotoğraf kaydetmek için galeri iznine ihtiyaç var.');
-                return;
-            }
-            await MediaLibrary.saveToLibraryAsync(resultImageUri);
-            Alert.alert('✅ Kaydedildi', 'Görsel galerinize kaydedildi.');
-        } catch (err) {
-            Alert.alert('Hata', 'Görsel kaydedilemedi.');
-        }
-    };
-
-    const handleShare = async () => {
-        try {
-            if (isWeb) {
-                const nav: any = navigator;
-                const response = await fetch(resultImageUri);
-                const blob = await response.blob();
-                const file = new File([blob], `hali-sonuc-${Date.now()}.png`, { type: blob.type || 'image/png' });
-
-                if (nav?.canShare?.({ files: [file] }) && nav?.share) {
-                    await nav.share({
-                        title: `${carpet.name} - HALI`,
-                        text: `${carpet.name} sonucu`,
-                        files: [file],
-                    });
-                    return;
-                }
-                Alert.alert('Paylaşım', 'Tarayıcı doğrudan paylaşımı desteklemiyor. Kaydet ile indirip WhatsApp\'tan paylaşabilirsin.');
-                return;
-            }
-
-            // Native: expo-sharing ile paylaş (iOS + Android ikisinde de çalışır)
-            const canShare = await Sharing.isAvailableAsync();
-            if (canShare) {
-                await Sharing.shareAsync(resultImageUri, {
-                    mimeType: 'image/png',
-                    dialogTitle: `${carpet.name} - HALI`,
-                });
-            } else {
-                Alert.alert('Hata', 'Bu cihazda paylaşım desteklenmiyor.');
-            }
-        } catch (err) {
-            Alert.alert('Hata', 'Paylaşım başarısız.');
-        }
-    };
-
-    const carpetThumbUri = carpet?.id === '__custom__'
-        ? (carpet?.imagePath || '')
-        : (carpet?.imagePath
-            ? getCarpetThumbnailUrl(carpet.imagePath, carpet.thumbPath, 320, 68)
-            : '');
-
-    const carpetFullUri = carpet?.id === '__custom__'
-        ? (carpet?.imagePath || '')
-        : (carpet?.imagePath ? getCarpetFullUrl(carpet.imagePath) : '');
-
+    // ── Layout ───────────────────────────────────────────────────────────
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
             {/* Header */}
             <View style={styles.header}>
-                <Pressable onPress={() => navigation.goBack()} style={({ hovered }: any) => [styles.backBtn, hovered && styles.backBtnHover]}>
+                <Pressable onPress={() => navigation.goBack()} style={({ hovered }: any) => [styles.backBtn, hovered && { opacity: 0.85 }]}>
                     <Text style={styles.backBtnText}>← Geri</Text>
                 </Pressable>
                 <View style={styles.brandTitleWrap}>
@@ -216,225 +355,118 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                 <View style={{ width: 60 }} />
             </View>
 
-            {/* Content */}
-            {status === 'loading' && (
-                <View style={styles.loadingContainer}>
-                    <View style={styles.loadingCard}>
-                        <View style={styles.loadingIconContainer}>
-                            <ActivityIndicator size="large" color={COLORS.primary} />
-                        </View>
-                        <Text style={styles.loadingTitle}>Halı Deneme</Text>
-                        <Text style={styles.loadingMessage}>{LOADING_MESSAGES[loadingMsgIndex]}</Text>
-                        <View style={styles.carpetPreviewRow}>
-                            <Image source={{ uri: roomImageUri }} style={styles.previewThumb} resizeMode="cover" />
-                            <Text style={styles.plusSign}>+</Text>
-                            {carpetThumbUri ? (
-                                <Image source={{ uri: carpetThumbUri }} style={styles.previewThumb} resizeMode="cover" />
-                            ) : (
-                                <View style={[styles.previewThumb, styles.previewThumbFallback]} />
-                            )}
-                            <Text style={styles.arrowSign}>→</Text>
-                            <View style={styles.resultThumbPlaceholder}>
-                                <ActivityIndicator size="small" color={COLORS.primary} />
-                            </View>
-                        </View>
-                        <Text style={styles.loadingSubtext}>Bu işlem genelde 20-70 saniye sürer</Text>
+            {/* Progress bar */}
+            {totalCount > 1 && (
+                <View style={styles.progressBar}>
+                    <Text style={styles.progressText}>
+                        {completedCount}/{totalCount} tamamlandı
+                        {errorCount > 0 ? ` · ${errorCount} başarısız` : ''}
+                        {loadingCount > 0 ? ` · ${loadingCount} işleniyor` : ''}
+                    </Text>
+                    <View style={styles.progressTrack}>
+                        <View style={[styles.progressFill, { width: `${(completedCount / totalCount) * 100}%` as any }]} />
                     </View>
                 </View>
             )}
 
-            {status === 'success' && (
-                <ScrollView
-                    style={styles.successContainer}
-                    contentContainerStyle={[styles.successContent, isWeb && styles.successContentWeb]}
-                    showsVerticalScrollIndicator={false}
-                    alwaysBounceHorizontal={false}
-                    bounces={false}
-                    overScrollMode="never"
-                >
-                    {/* Result Image */}
-                    <View style={styles.resultImageContainer}>
-                        <Pressable
-                            onPress={() => setIsFullscreenOpen(true)}
-                            style={({ hovered }: any) => [styles.resultImagePressable, hovered && styles.resultImagePressableHover]}
-                        >
-                            <Image
-                                source={{ uri: resultImageUri }}
-                                style={[
-                                    styles.resultImage,
-                                    {
-                                        aspectRatio: imageAspectRatio,
-                                        maxHeight: isWeb ? Math.min(height * 0.62, 640) : width * 1.2,
-                                    },
-                                ]}
-                                resizeMode="contain"
-                            />
-                        </Pressable>
-                        <View style={styles.resultBadge}>
-                            <Text style={styles.resultBadgeText}>HALI</Text>
-                        </View>
-                        <Pressable
-                            style={({ hovered }: any) => [styles.fullscreenBtn, hovered && styles.fullscreenBtnHover]}
-                            onPress={() => setIsFullscreenOpen(true)}
-                        >
-                            <Text style={styles.fullscreenBtnText}>Tam ekran</Text>
-                        </Pressable>
-                    </View>
-
-                    {/* Carpet Info */}
-                    <View style={styles.carpetInfoCard}>
-                        <Pressable onPress={() => setIsCarpetModalOpen(true)} style={styles.carpetThumbWrap}>
-                            {carpetThumbUri ? (
-                                <Image source={{ uri: carpetThumbUri }} style={styles.carpetThumb} resizeMode="cover" />
-                            ) : (
-                                <View style={[styles.carpetThumb, styles.previewThumbFallback]} />
-                            )}
-                            <View style={styles.carpetThumbZoomBadge}>
-                                <Text style={styles.carpetThumbZoomText}>⛶</Text>
-                            </View>
-                        </Pressable>
-                        <View style={styles.carpetDetails}>
-                            {carpet.brand ? (
-                                <View style={styles.carpetCodeBadge}>
-                                    <Text style={styles.carpetCode}>{carpet.brand}</Text>
-                                </View>
-                            ) : null}
-                            <Text style={styles.carpetName}>{carpet.id} {carpet.name}</Text>
-                            {(carpet.size || carpet.material) ? (
-                                <Text style={styles.carpetMeta}>
-                                    {[carpet.size, carpet.material].filter(Boolean).join(' · ')}
-                                </Text>
-                            ) : null}
-                        </View>
-                    </View>
-
-                    {/* Action Buttons */}
-                    <View style={styles.actionRow}>
-                        <Pressable style={({ hovered }: any) => [styles.actionBtn, hovered && styles.actionBtnHover]} onPress={handleSave}>
-                            <Text style={styles.actionBtnIcon}>💾</Text>
-                            <Text style={styles.actionBtnText}>Kaydet</Text>
-                        </Pressable>
-                        <Pressable style={({ hovered }: any) => [styles.actionBtn, hovered && styles.actionBtnHover]} onPress={handleShare}>
-                            <Text style={styles.actionBtnIcon}>📤</Text>
-                            <Text style={styles.actionBtnText}>Paylaş</Text>
-                        </Pressable>
-                    </View>
-
-                    {/* Try another carpet */}
-                    <Pressable
-                        style={({ hovered }: any) => [styles.retryBtn, hovered && styles.retryBtnHover]}
-                        onPress={() => navigation.goBack()}
-                    >
-                        <Text style={styles.retryBtnText}>← Başka halı dene</Text>
-                    </Pressable>
-
-                    {/* New Search */}
-                    <Pressable
-                        style={({ hovered }: any) => [styles.newSearchBtn, hovered && styles.newSearchBtnHover]}
-                        onPress={() => navigation.navigate('Home')}
-                    >
-                        <Text style={styles.newSearchBtnText}>🏠 Yeni Müşteri</Text>
-                    </Pressable>
-                </ScrollView>
-            )}
-
-            {status === 'error' && (
-                <View style={styles.errorContainer}>
-                    <View style={styles.errorCard}>
-                        <Text style={styles.errorIcon}>⚠️</Text>
-                        <Text style={styles.errorTitle}>{mapErrorTitle(errorCode)}</Text>
-                        <Text style={styles.errorMessage}>{errorMessage}</Text>
-                        <Pressable style={({ hovered }: any) => [styles.retryBtnLarge, hovered && styles.retryBtnLargeHover]} onPress={processImage}>
-                            <Text style={styles.retryBtnLargeText}>🔄 Tekrar Dene</Text>
-                        </Pressable>
-                        <Pressable
-                            style={({ hovered }: any) => [styles.backBtnLarge, hovered && styles.backBtnLargeHover]}
-                            onPress={() => navigation.goBack()}
-                        >
-                            <Text style={styles.backBtnLargeText}>← Halı Seçimine Dön</Text>
-                        </Pressable>
-                    </View>
-                </View>
-            )}
-
-            {status === 'limit' && (
-                <View style={styles.errorContainer}>
-                    <View style={styles.errorCard}>
-                        <Text style={styles.errorTitle}>Günlük limit doldu</Text>
-                        <Text style={styles.errorMessage}>
-                            Render hakkınız bu oturum için tükenmiş görünüyor. Yarın tekrar deneyin ya da paket limitini artırın.
-                        </Text>
-                        <Pressable style={({ hovered }: any) => [styles.retryBtnLarge, hovered && styles.retryBtnLargeHover]} onPress={() => navigation.goBack()}>
-                            <Text style={styles.retryBtnLargeText}>Halı seçimine dön</Text>
-                        </Pressable>
-                        <Pressable
-                            style={({ hovered }: any) => [styles.backBtnLarge, hovered && styles.backBtnLargeHover]}
-                            onPress={() => navigation.navigate('Home')}
-                        >
-                            <Text style={styles.backBtnLargeText}>Ana sayfaya git</Text>
-                        </Pressable>
-                    </View>
-                </View>
-            )}
-
-            <Modal
-                visible={isFullscreenOpen}
-                animationType="fade"
-                transparent
-                onRequestClose={() => setIsFullscreenOpen(false)}
+            {/* Results grid */}
+            <ScrollView
+                style={styles.resultScroll}
+                contentContainerStyle={[styles.resultScrollContent, isWeb && styles.resultScrollContentWeb]}
+                showsVerticalScrollIndicator={false}
             >
-                <View style={styles.fullscreenOverlay}>
-                    <ScrollView
-                        style={styles.fullscreenScroll}
-                        contentContainerStyle={styles.fullscreenScrollContent}
-                        maximumZoomScale={4}
-                        minimumZoomScale={1}
-                        centerContent
-                        showsHorizontalScrollIndicator={false}
-                        showsVerticalScrollIndicator={false}
-                        bouncesZoom
-                    >
-                        <Image
-                            source={{ uri: resultImageUri }}
-                            style={[styles.fullscreenImage, { aspectRatio: imageAspectRatio }]}
-                            resizeMode="contain"
+                <View style={[
+                    styles.resultGrid,
+                    isSingle && styles.resultGridSingle,
+                ]}>
+                    {renderSlots.map((slot, index) => (
+                        <RenderCard
+                            key={`${slot.carpet.brand}_${slot.carpet.image}_${index}`}
+                            slot={slot}
+                            index={index}
+                            isSingle={isSingle}
+                            loadingMsgIndex={loadingMsgIndex}
+                            onRetry={handleRetry}
+                            onOpenFullscreen={setFullscreenIndex}
+                            onSave={saveImage}
+                            onShare={shareImage}
                         />
-                    </ScrollView>
-                    <Pressable style={styles.fullscreenCloseBtn} onPress={() => setIsFullscreenOpen(false)}>
-                        <Text style={styles.fullscreenCloseBtnText}>✕ Kapat</Text>
-                    </Pressable>
+                    ))}
                 </View>
-            </Modal>
 
-            {/* Carpet Fullscreen Modal */}
+                {/* Nav buttons */}
+                <Pressable
+                    style={({ hovered }: any) => [styles.navBtn, hovered && styles.navBtnHover]}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Text style={styles.navBtnText}>← Başka halı dene</Text>
+                </Pressable>
+                <Pressable
+                    style={({ hovered }: any) => [styles.navBtnPrimary, hovered && styles.navBtnPrimaryHover]}
+                    onPress={() => navigation.navigate('Home')}
+                >
+                    <Text style={styles.navBtnPrimaryText}>🏠 Yeni Müşteri</Text>
+                </Pressable>
+            </ScrollView>
+
+            {/* Fullscreen modal */}
             <Modal
-                visible={isCarpetModalOpen}
+                visible={fullscreenIndex !== null}
                 animationType="fade"
                 transparent
-                onRequestClose={() => setIsCarpetModalOpen(false)}
+                onRequestClose={() => setFullscreenIndex(null)}
             >
                 <View style={styles.fullscreenOverlay}>
-                    <ScrollView
-                        style={styles.fullscreenScroll}
-                        contentContainerStyle={styles.fullscreenScrollContent}
-                        maximumZoomScale={4}
-                        minimumZoomScale={1}
-                        centerContent
-                        showsHorizontalScrollIndicator={false}
-                        showsVerticalScrollIndicator={false}
-                        bouncesZoom
-                    >
-                        {carpetFullUri ? (
+                    {fullscreenSlot?.status === 'success' && (
+                        <ScrollView
+                            style={styles.fullscreenScroll}
+                            contentContainerStyle={styles.fullscreenScrollContent}
+                            maximumZoomScale={4}
+                            minimumZoomScale={1}
+                            centerContent
+                            showsHorizontalScrollIndicator={false}
+                            showsVerticalScrollIndicator={false}
+                            bouncesZoom
+                        >
                             <Image
-                                source={{ uri: carpetFullUri }}
-                                style={styles.carpetFullscreenImage}
+                                source={{ uri: fullscreenSlot.resultImageUri }}
+                                style={[styles.fullscreenImage, { aspectRatio: 1 }]}
                                 resizeMode="contain"
                             />
-                        ) : null}
-                    </ScrollView>
-                    <Pressable style={styles.fullscreenCloseBtn} onPress={() => setIsCarpetModalOpen(false)}>
+                        </ScrollView>
+                    )}
+                    {/* Fullscreen controls */}
+                    <Pressable style={styles.fullscreenCloseBtn} onPress={() => setFullscreenIndex(null)}>
                         <Text style={styles.fullscreenCloseBtnText}>✕ Kapat</Text>
                     </Pressable>
+                    {/* Carpet name */}
+                    {fullscreenSlot && (
+                        <View style={styles.fullscreenInfoBar}>
+                            <Text style={styles.fullscreenInfoText}>{fullscreenSlot.carpet.brand} · {fullscreenSlot.carpet.name}</Text>
+                        </View>
+                    )}
+                    {/* Nav arrows (multi only) */}
+                    {successSlots.length > 1 && (
+                        <>
+                            <Pressable style={[styles.fullscreenArrow, styles.fullscreenArrowLeft]} onPress={() => navigateFullscreen('prev')}>
+                                <Text style={styles.fullscreenArrowText}>‹</Text>
+                            </Pressable>
+                            <Pressable style={[styles.fullscreenArrow, styles.fullscreenArrowRight]} onPress={() => navigateFullscreen('next')}>
+                                <Text style={styles.fullscreenArrowText}>›</Text>
+                            </Pressable>
+                        </>
+                    )}
+                    {/* Fullscreen save/share */}
+                    {fullscreenSlot?.status === 'success' && (
+                        <View style={styles.fullscreenActions}>
+                            <Pressable style={styles.fullscreenActionBtn} onPress={() => saveImage(fullscreenSlot.resultImageUri, fullscreenSlot.carpet.name)}>
+                                <Text style={styles.fullscreenActionText}>💾 Kaydet</Text>
+                            </Pressable>
+                            <Pressable style={styles.fullscreenActionBtn} onPress={() => shareImage(fullscreenSlot.resultImageUri, fullscreenSlot.carpet.name)}>
+                                <Text style={styles.fullscreenActionText}>📤 Paylaş</Text>
+                            </Pressable>
+                        </View>
+                    )}
                 </View>
             </Modal>
         </View>
@@ -453,14 +485,12 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: SPACING.md,
         paddingTop: isWeb ? SPACING.lg : SPACING.xxl,
-        paddingBottom: SPACING.md,
+        paddingBottom: SPACING.sm,
         width: '100%',
     },
     brandTitleWrap: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 1,
         gap: 6,
     },
     headerBadge: {
@@ -482,9 +512,6 @@ const styles = StyleSheet.create({
         paddingVertical: SPACING.xs,
         paddingRight: SPACING.sm,
     },
-    backBtnHover: {
-        opacity: 0.85,
-    },
     backBtnText: {
         color: COLORS.primary,
         fontSize: 16,
@@ -495,246 +522,211 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         color: COLORS.text,
     },
-    titleAccent: {
-        color: COLORS.primary,
-    },
-    // Loading
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+
+    // Progress bar
+    progressBar: {
         paddingHorizontal: SPACING.md,
-        width: '100%',
+        paddingBottom: SPACING.sm,
     },
-    loadingCard: {
-        backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.xl,
-        padding: SPACING.xl,
-        alignItems: 'center',
-        width: '100%',
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    loadingIconContainer: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        backgroundColor: COLORS.surfaceElevated,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: SPACING.lg,
-    },
-    loadingTitle: {
-        fontSize: 22,
-        fontWeight: '800',
-        color: COLORS.text,
-        marginBottom: SPACING.sm,
-    },
-    loadingMessage: {
-        fontSize: 15,
-        color: COLORS.primary,
-        marginBottom: SPACING.xl,
-        textAlign: 'center',
-        minHeight: 22,
-    },
-    carpetPreviewRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: SPACING.sm,
-        marginBottom: SPACING.lg,
-    },
-    previewThumb: {
-        width: 64,
-        height: 64,
-        borderRadius: RADIUS.md,
-    },
-    previewThumbFallback: {
-        backgroundColor: COLORS.surfaceElevated,
-    },
-    plusSign: {
+    progressText: {
         color: COLORS.textSecondary,
-        fontSize: 20,
-        fontWeight: '700',
+        fontSize: 12,
+        fontWeight: '600',
+        marginBottom: 6,
     },
-    arrowSign: {
-        color: COLORS.primary,
-        fontSize: 20,
-        fontWeight: '700',
+    progressTrack: {
+        height: 4,
+        backgroundColor: COLORS.surface,
+        borderRadius: 2,
+        overflow: 'hidden',
     },
-    resultThumbPlaceholder: {
-        width: 64,
-        height: 64,
-        borderRadius: RADIUS.md,
-        backgroundColor: COLORS.surfaceElevated,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: COLORS.primary,
-        borderStyle: 'dashed',
+    progressFill: {
+        height: '100%',
+        backgroundColor: COLORS.primary,
+        borderRadius: 2,
     },
-    loadingSubtext: {
-        color: COLORS.textMuted,
-        fontSize: 13,
-    },
-    // Success
-    successContainer: {
+
+    // Results scroll
+    resultScroll: {
         flex: 1,
         paddingHorizontal: SPACING.md,
-        width: '100%',
     },
-    successContent: {
+    resultScrollContent: {
         paddingBottom: SPACING.xxl,
     },
-    successContentWeb: {
-        width: '100%',
+    resultScrollContentWeb: {
         maxWidth: 1120,
         alignSelf: 'center',
-        paddingBottom: SPACING.xxl * 2,
+        width: '100%',
     },
-    resultImageContainer: {
+
+    // Grid
+    resultGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        gap: SPACING.sm,
+        marginBottom: SPACING.md,
+    },
+    resultGridSingle: {
+        flexDirection: 'column',
+    },
+
+    // Render card
+    renderCard: {
+        backgroundColor: COLORS.surface,
         borderRadius: RADIUS.xl,
         overflow: 'hidden',
-        marginBottom: SPACING.md,
-        position: 'relative',
-        backgroundColor: COLORS.surface,
         borderWidth: 1,
         borderColor: COLORS.border,
+        marginBottom: SPACING.sm,
     },
-    resultImagePressable: {
-        width: '100%',
-        backgroundColor: COLORS.surface,
+    renderCardLoading: {
+        padding: SPACING.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 220,
     },
-    resultImagePressableHover: {
-        backgroundColor: '#1f1f1f',
+    renderCardError: {
+        padding: SPACING.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 180,
+        borderColor: (COLORS.error || '#F44336') + '40',
     },
-    resultImage: {
-        width: '100%',
+    renderCardSuccess: {},
+
+    // Card loading
+    cardLoadingMsg: {
+        color: COLORS.primary,
+        fontSize: 13,
+        textAlign: 'center',
+        marginBottom: SPACING.md,
+        minHeight: 18,
     },
-    resultBadge: {
-        position: 'absolute',
-        top: 12,
-        right: 12,
-        backgroundColor: 'rgba(200, 134, 10, 0.9)',
-        paddingHorizontal: 12,
+    cardThumb: {
+        width: 48,
+        height: 48,
+        borderRadius: RADIUS.md,
+        marginBottom: SPACING.xs,
+    },
+    cardCarpetName: {
+        color: COLORS.textSecondary,
+        fontSize: 12,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    cardSubtext: {
+        color: COLORS.textMuted,
+        fontSize: 11,
+        marginTop: 2,
+    },
+
+    // Card error
+    cardErrorIcon: {
+        fontSize: 32,
+        marginBottom: SPACING.sm,
+    },
+    cardErrorTitle: {
+        color: COLORS.text,
+        fontSize: 14,
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    cardErrorMsg: {
+        color: COLORS.textSecondary,
+        fontSize: 12,
+        textAlign: 'center',
+        marginBottom: SPACING.md,
+    },
+    cardRetryBtn: {
+        backgroundColor: COLORS.primary,
+        borderRadius: RADIUS.md,
+        paddingHorizontal: SPACING.md,
         paddingVertical: 6,
-        borderRadius: RADIUS.full,
+        marginBottom: SPACING.sm,
     },
-    resultBadgeClipdrop: {
-        backgroundColor: 'rgba(45, 125, 70, 0.9)',
+    cardRetryBtnHover: {
+        backgroundColor: COLORS.primaryLight,
     },
-    resultBadgeText: {
+    cardRetryBtnText: {
         color: COLORS.white,
         fontSize: 13,
         fontWeight: '700',
     },
-    fullscreenBtn: {
+
+    // Card success
+    cardImageWrap: {
+        width: '100%',
+        position: 'relative',
+    },
+    cardImage: {
+        width: '100%',
+        aspectRatio: 1,
+    },
+    cardZoomBadge: {
         position: 'absolute',
-        left: 12,
-        top: 12,
+        left: 8,
+        top: 8,
         backgroundColor: 'rgba(0,0,0,0.58)',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.2)',
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: RADIUS.md,
-    },
-    fullscreenBtnHover: {
-        backgroundColor: 'rgba(0,0,0,0.72)',
-    },
-    fullscreenBtnText: {
-        color: COLORS.text,
-        fontSize: 12,
-        fontWeight: '700',
-    },
-    carpetInfoCard: {
-        flexDirection: 'row',
-        backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.lg,
-        padding: SPACING.md,
-        marginBottom: SPACING.md,
-        gap: SPACING.md,
-        alignItems: 'center',
-    },
-    carpetThumbWrap: {
-        position: 'relative',
-        width: 68,
-        height: 68,
-    },
-    carpetThumb: {
-        width: 68,
-        height: 68,
-        borderRadius: RADIUS.md,
-    },
-    carpetThumbZoomBadge: {
-        position: 'absolute',
-        bottom: 3,
-        right: 3,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        borderRadius: 4,
-        paddingHorizontal: 3,
-        paddingVertical: 1,
-    },
-    carpetThumbZoomText: {
-        color: '#fff',
-        fontSize: 10,
-    },
-    carpetDetails: {
-        flex: 1,
-    },
-    carpetCodeBadge: {
-        backgroundColor: COLORS.surfaceElevated,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
         borderRadius: RADIUS.sm,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        alignSelf: 'flex-start',
-        marginBottom: 4,
     },
-    carpetCode: {
-        color: COLORS.primary,
+    cardZoomText: {
+        color: COLORS.text,
         fontSize: 11,
         fontWeight: '700',
-        letterSpacing: 0.5,
     },
-    carpetName: {
-        color: COLORS.text,
-        fontSize: 16,
-        fontWeight: '700',
-        marginBottom: 2,
-    },
-    carpetMeta: {
-        color: COLORS.textSecondary,
-        fontSize: 13,
-    },
-    actionRow: {
-        flexDirection: 'row',
-        gap: SPACING.sm,
-        marginBottom: SPACING.sm,
-    },
-    actionBtn: {
-        flex: 1,
+
+    // Card info row
+    cardInfoRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        padding: SPACING.sm,
+        gap: SPACING.xs,
+    },
+    cardInfoThumb: {
+        width: 36,
+        height: 36,
+        borderRadius: RADIUS.sm,
+    },
+    cardInfoText: {
+        flex: 1,
+        minWidth: 0,
+    },
+    cardInfoBrand: {
+        color: COLORS.primary,
+        fontSize: 10,
+        fontWeight: '700',
+    },
+    cardInfoName: {
+        color: COLORS.text,
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    cardActionBtn: {
+        width: 34,
+        height: 34,
+        borderRadius: RADIUS.md,
+        backgroundColor: COLORS.surfaceElevated,
+        alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.lg,
-        paddingVertical: SPACING.md,
-        gap: 8,
         borderWidth: 1,
         borderColor: COLORS.border,
     },
-    actionBtnHover: {
+    cardActionBtnHover: {
         borderColor: '#3F3F3F',
-        backgroundColor: '#232323',
+        backgroundColor: '#2A2A2A',
     },
-    actionBtnIcon: {
-        fontSize: 20,
+    cardActionIcon: {
+        fontSize: 16,
     },
-    actionBtnText: {
-        color: COLORS.text,
-        fontSize: 15,
-        fontWeight: '600',
-    },
-    retryBtn: {
+
+    // Nav buttons
+    navBtn: {
         backgroundColor: COLORS.surfaceElevated,
         borderRadius: RADIUS.lg,
         paddingVertical: SPACING.md,
@@ -743,15 +735,15 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
     },
-    retryBtnHover: {
+    navBtnHover: {
         backgroundColor: '#2D2D2D',
     },
-    retryBtnText: {
+    navBtnText: {
         color: COLORS.textSecondary,
         fontSize: 15,
         fontWeight: '600',
     },
-    newSearchBtn: {
+    navBtnPrimary: {
         backgroundColor: COLORS.primary,
         borderRadius: RADIUS.lg,
         paddingVertical: SPACING.md,
@@ -763,77 +755,16 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 6,
     },
-    newSearchBtnHover: {
+    navBtnPrimaryHover: {
         backgroundColor: COLORS.primaryLight,
     },
-    newSearchBtnText: {
+    navBtnPrimaryText: {
         color: COLORS.white,
         fontSize: 16,
         fontWeight: '700',
     },
-    // Error
-    errorContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: SPACING.md,
-    },
-    errorCard: {
-        backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.xl,
-        padding: SPACING.xl,
-        alignItems: 'center',
-        width: '100%',
-        borderWidth: 1,
-        borderColor: COLORS.error + '40',
-    },
-    errorIcon: {
-        fontSize: 56,
-        marginBottom: SPACING.md,
-    },
-    errorTitle: {
-        fontSize: 22,
-        fontWeight: '800',
-        color: COLORS.text,
-        marginBottom: SPACING.sm,
-    },
-    errorMessage: {
-        fontSize: 14,
-        color: COLORS.textSecondary,
-        textAlign: 'center',
-        lineHeight: 20,
-        marginBottom: SPACING.xl,
-    },
-    retryBtnLarge: {
-        backgroundColor: COLORS.primary,
-        borderRadius: RADIUS.lg,
-        paddingVertical: SPACING.md,
-        paddingHorizontal: SPACING.xl,
-        marginBottom: SPACING.sm,
-        width: '100%',
-        alignItems: 'center',
-    },
-    retryBtnLargeHover: {
-        backgroundColor: COLORS.primaryLight,
-    },
-    retryBtnLargeText: {
-        color: COLORS.white,
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    backBtnLarge: {
-        paddingVertical: SPACING.md,
-        width: '100%',
-        alignItems: 'center',
-    },
-    backBtnLargeHover: {
-        opacity: 0.8,
-    },
-    backBtnLargeText: {
-        color: COLORS.textSecondary,
-        fontSize: 15,
-        fontWeight: '600',
-    },
+
+    // Fullscreen modal
     fullscreenOverlay: {
         flex: 1,
         backgroundColor: '#000',
@@ -847,7 +778,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     fullscreenImage: {
-        width: width,
+        width: screenWidth,
     },
     fullscreenCloseBtn: {
         position: 'absolute',
@@ -866,8 +797,65 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
     },
-    carpetFullscreenImage: {
-        width: width,
-        height: width,
+    fullscreenInfoBar: {
+        position: 'absolute',
+        bottom: 80,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+    },
+    fullscreenInfoText: {
+        color: COLORS.white,
+        fontSize: 14,
+        fontWeight: '600',
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.xs,
+        borderRadius: RADIUS.md,
+    },
+    fullscreenArrow: {
+        position: 'absolute',
+        top: '45%',
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10,
+    },
+    fullscreenArrowLeft: {
+        left: SPACING.sm,
+    },
+    fullscreenArrowRight: {
+        right: SPACING.sm,
+    },
+    fullscreenArrowText: {
+        color: COLORS.white,
+        fontSize: 28,
+        fontWeight: '700',
+        lineHeight: 32,
+    },
+    fullscreenActions: {
+        position: 'absolute',
+        bottom: 24,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: SPACING.md,
+    },
+    fullscreenActionBtn: {
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.25)',
+        borderRadius: RADIUS.lg,
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.sm,
+    },
+    fullscreenActionText: {
+        color: COLORS.white,
+        fontSize: 14,
+        fontWeight: '700',
     },
 });
