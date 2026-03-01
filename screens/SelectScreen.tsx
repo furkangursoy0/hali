@@ -510,7 +510,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const placeBtnLabel = isPlacing
         ? 'Başlatılıyor...'
         : selectionCount > 1
-            ? `Halıları Dene (${selectionCount} kredi)`
+            ? 'Halıları Dene'
             : 'Halıyı Dene';
 
     const SelectionStrip = () => {
@@ -650,7 +650,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 )}
                 <View style={styles.bottomBar}>
                     <SelectionStrip />
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginLeft: 'auto' as any }}>
                         {isLoggedIn ? <UsageLimitBadge remaining={remaining} limit={limit} loading={limitLoading} /> : null}
                         <PlaceButtonRow />
                     </View>
@@ -1263,7 +1263,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: SPACING.sm,
+        paddingTop: 6,
         paddingRight: SPACING.sm,
+        paddingBottom: 2,
     },
     selectionChip: {
         alignItems: 'center',
@@ -1283,7 +1285,7 @@ const styles = StyleSheet.create({
         width: 18,
         height: 18,
         borderRadius: 9,
-        backgroundColor: COLORS.error || '#F44336',
+        backgroundColor: COLORS.primary,
         alignItems: 'center',
         justifyContent: 'center',
     },
