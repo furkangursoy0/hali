@@ -521,7 +521,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         <View style={styles.filterArea}>
             <View style={styles.filterRow}>
                 <Pressable style={styles.filterCollapseBtn} onPress={collapseSearch}>
-                    <Text style={styles.filterCollapseBtnText}>← Geri</Text>
+                    <Text style={styles.filterCollapseBtnText}>←</Text>
                 </Pressable>
                 <View style={[styles.searchInputInline, isSearchFocused && styles.searchInputInlineFocused]}>
                     <TextInput
@@ -1196,8 +1196,8 @@ const styles = StyleSheet.create({
     },
     filterCollapseBtnText: {
         color: COLORS.primary,
-        fontSize: 15,
-        fontWeight: '600' as const,
+        fontSize: 22,
+        lineHeight: 26,
     },
     searchInputInline: {
         flex: 1,
@@ -1208,6 +1208,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
         paddingHorizontal: SPACING.sm,
+        paddingVertical: 9,
         alignSelf: 'stretch',
     },
     searchInputInlineFocused: {
