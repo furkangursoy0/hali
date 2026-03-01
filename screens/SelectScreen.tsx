@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
     Pressable,
     Image,
     FlatList,
@@ -101,6 +100,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [customerNote, setCustomerNote] = useState('');
     const [showNoteInput, setShowNoteInput] = useState(false);
     const [isNoteInputFocused, setIsNoteInputFocused] = useState(false);
+    const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const { remaining, limit, loading: limitLoading, consumeOne, consumeAmount } = useUsageLimit();
     const isCompactWeb = isWeb && viewportWidth < 820;
     const isMobileWeb = isWeb && viewportWidth < 900;
@@ -295,6 +295,12 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         }
     };
 
+    const collapseSearch = () => {
+        setIsSearchExpanded(false);
+        setSearchQuery('');
+        setIsSearchFocused(false);
+    };
+
     const handlePlace = async (mode: 'preview' | 'normal') => {
         if (isPlacing) return;
         if (!isLoggedIn) {
@@ -464,9 +470,20 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         );
     };
 
+    // Collapsed filter bar: 🔍 icon + Marka + Koleksiyon + 📷
     const FilterBar = () => (
         <View style={styles.filterArea}>
             <View style={styles.filterRow}>
+                <Pressable
+                    style={({ hovered }: any) => [
+                        styles.filterBtn,
+                        searchQuery.length > 0 && styles.filterBtnActive,
+                        hovered && styles.cameraBtnHover,
+                    ]}
+                    onPress={() => { setIsSearchExpanded(true); setOpenDropdown(null); }}
+                >
+                    <Text style={styles.filterBtnIcon}>🔍</Text>
+                </Pressable>
                 <View style={[styles.dropdownColumn, openDropdown === 'brand' && styles.dropdownColumnOpen]}>
                     <FilterDropdown
                         label="Marka"
@@ -486,24 +503,47 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 </View>
                 <Pressable
                     style={({ hovered }: any) => [
-                        styles.cameraBtn,
+                        styles.filterBtn,
                         customCarpetUri && styles.cameraBtnActive,
                         hovered && styles.cameraBtnHover,
                     ]}
                     onPress={handleCameraPress}
                 >
-                    <Text style={styles.cameraBtnIcon}>📷</Text>
+                    <Text style={styles.filterBtnIcon}>📷</Text>
                 </Pressable>
             </View>
         </View>
     );
 
-    const ResultsText = () => (
-        <Text style={styles.resultsText}>
-            {filteredCarpets.length} halı
-            {selectedBrand !== ALL ? ` · ${selectedBrand}` : ''}
-            {selectedCollection !== ALL ? ` · ${selectedCollection}` : ''}
-        </Text>
+    // Expanded search bar — defined as a plain function (NOT a React component) so the
+    // TextInput stays in the parent's render tree and never loses focus on re-renders.
+    const renderSearchBar = () => (
+        <View style={styles.filterArea}>
+            <View style={styles.filterRow}>
+                <Pressable style={styles.filterBtn} onPress={collapseSearch}>
+                    <Text style={styles.filterBtnIcon}>←</Text>
+                </Pressable>
+                <View style={[styles.searchInputInline, isSearchFocused && styles.searchInputInlineFocused]}>
+                    <TextInput
+                        style={[styles.searchInput, isWeb && styles.searchInputWeb]}
+                        placeholder="Model, kod, koleksiyon..."
+                        placeholderTextColor={COLORS.textMuted}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onFocus={() => setIsSearchFocused(true)}
+                        onBlur={() => setIsSearchFocused(false)}
+                        returnKeyType="search"
+                        autoCorrect={false}
+                        autoFocus
+                    />
+                    {searchQuery.length > 0 && (
+                        <Pressable onPress={() => setSearchQuery('')}>
+                            <Text style={styles.clearBtn}>✕</Text>
+                        </Pressable>
+                    )}
+                </View>
+            </View>
+        </View>
     );
 
     const selectionCount = selectedCarpets.length;
@@ -674,28 +714,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
                 {/* Top: header + filters (not scrollable) */}
                 <View style={webStyles.topSection}>
                     <HeaderBar />
-                    {/* Search */}
-                    <View style={[styles.searchContainer, isSearchFocused && styles.searchContainerFocused]}>
-                        <Text style={styles.searchIcon}>🔍</Text>
-                        <TextInput
-                            style={[styles.searchInput, isWeb && styles.searchInputWeb]}
-                            placeholder="Model adı, kod veya koleksiyon ara..."
-                            placeholderTextColor={COLORS.textMuted}
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                            onFocus={() => setIsSearchFocused(true)}
-                            onBlur={() => setIsSearchFocused(false)}
-                            returnKeyType="search"
-                            autoCorrect={false}
-                        />
-                        {searchQuery.length > 0 && (
-                            <TouchableOpacity onPress={() => setSearchQuery('')}>
-                                <Text style={styles.clearBtn}>✕</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                    <FilterBar />
-                    <ResultsText />
+                    {isSearchExpanded ? renderSearchBar() : <FilterBar />}
                 </View>
 
                 {/* Dropdown backdrop — closes open dropdown when clicking outside */}
@@ -749,28 +768,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
             <HeaderBar />
-            {/* Search */}
-            <View style={[styles.searchContainer, isSearchFocused && styles.searchContainerFocused]}>
-                <Text style={styles.searchIcon}>🔍</Text>
-                <TextInput
-                    style={[styles.searchInput, isWeb && styles.searchInputWeb]}
-                    placeholder="Model adı, kod veya koleksiyon ara..."
-                    placeholderTextColor={COLORS.textMuted}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                    returnKeyType="search"
-                    autoCorrect={false}
-                />
-                {searchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => setSearchQuery('')}>
-                        <Text style={styles.clearBtn}>✕</Text>
-                    </TouchableOpacity>
-                )}
-            </View>
-            <FilterBar />
-            <ResultsText />
+            {isSearchExpanded ? renderSearchBar() : <FilterBar />}
             <FlatList
                 data={visibleCarpets}
                 renderItem={({ item }) => renderCarpetCard(item)}
@@ -896,7 +894,7 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     searchIcon: { fontSize: 15, marginRight: SPACING.sm },
-    searchInput: { flex: 1, color: COLORS.text, fontSize: 14 },
+    searchInput: { flex: 1, color: COLORS.text, fontSize: isWeb ? 16 : 14 },
     searchInputWeb: {
         outlineStyle: 'none',
         outlineWidth: 0,
@@ -906,7 +904,7 @@ const styles = StyleSheet.create({
 
     filterArea: {
         marginHorizontal: SPACING.md,
-        marginBottom: SPACING.xs,
+        marginBottom: SPACING.sm,
         position: 'relative',
         zIndex: 120,
     },
@@ -1163,6 +1161,45 @@ const styles = StyleSheet.create({
     },
     placeBtnIcon: { fontSize: 15 },
     placeBtnText: { color: COLORS.white, fontSize: 13, fontWeight: '700' },
+
+    // Compact filter bar: shared icon button (search / camera / collapse)
+    filterBtn: {
+        alignSelf: 'stretch',
+        width: 44,
+        flexShrink: 0,
+        backgroundColor: COLORS.surface,
+        borderRadius: RADIUS.lg,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    filterBtnActive: {
+        borderColor: COLORS.primary,
+        backgroundColor: 'rgba(200, 134, 10, 0.10)',
+    },
+    filterBtnIcon: {
+        fontSize: 18,
+    },
+    searchInputInline: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.surface,
+        borderRadius: RADIUS.lg,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        paddingHorizontal: SPACING.sm,
+        alignSelf: 'stretch',
+    },
+    searchInputInlineFocused: {
+        borderColor: COLORS.primary,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 4,
+    },
 
     // Camera button in FilterBar
     cameraBtn: {
