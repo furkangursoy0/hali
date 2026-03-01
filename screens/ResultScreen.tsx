@@ -122,13 +122,11 @@ async function shareImage(uri: string, carpetName: string) {
 
 // ── RenderCard ─────────────────────────────────────────────────────────────
 // Defined OUTSIDE ResultScreen so React sees the same component type on every
-// parent re-render.  Previously defined inline, which caused unmount+remount
-// every 2.5 s (on loadingMsgIndex tick) → success-card image flicker.
+// parent re-render, preventing unmount+remount and image flicker.
 interface RenderCardProps {
     slot: RenderSlot;
     index: number;
     isSingle: boolean;
-    loadingMsgIndex: number;
     onRetry: (index: number, carpet: Carpet) => void;
     onOpenFullscreen: (index: number) => void;
     onSave: (uri: string, name: string) => void;
@@ -139,7 +137,6 @@ const RenderCard = React.memo(function RenderCard({
     slot,
     index,
     isSingle,
-    loadingMsgIndex,
     onRetry,
     onOpenFullscreen,
     onSave,
@@ -154,13 +151,13 @@ const RenderCard = React.memo(function RenderCard({
     if (slot.status === 'loading') {
         return (
             <View style={[styles.renderCard, styles.renderCardLoading, !isSingle && { width: cardWidth as any }]}>
-                <ActivityIndicator size="large" color={COLORS.primary} style={{ marginBottom: SPACING.sm }} />
-                <Text style={styles.cardLoadingMsg}>{LOADING_MESSAGES[loadingMsgIndex]}</Text>
                 {thumbUri ? (
-                    <Image source={{ uri: thumbUri }} style={styles.cardThumb} resizeMode="cover" />
+                    <Image source={{ uri: thumbUri }} style={styles.cardInfoThumb} resizeMode="cover" />
                 ) : null}
-                <Text style={styles.cardCarpetName} numberOfLines={1}>{slot.carpet.name}</Text>
-                <Text style={styles.cardSubtext}>20-70 saniye</Text>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={styles.cardInfoName} numberOfLines={1}>{slot.carpet.name}</Text>
+                </View>
+                <ActivityIndicator size="small" color={COLORS.primary} />
             </View>
         );
     }
@@ -355,17 +352,22 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                 <View style={{ width: 60 }} />
             </View>
 
-            {/* Progress bar */}
-            {totalCount > 1 && (
+            {/* Progress / Status area */}
+            {(totalCount > 1 || loadingCount > 0) && (
                 <View style={styles.progressBar}>
-                    <Text style={styles.progressText}>
-                        {completedCount}/{totalCount} tamamlandı
-                        {errorCount > 0 ? ` · ${errorCount} başarısız` : ''}
-                        {loadingCount > 0 ? ` · ${loadingCount} işleniyor` : ''}
-                    </Text>
+                    {loadingCount > 0 && (
+                        <Text style={styles.progressLoadingMsg}>{LOADING_MESSAGES[loadingMsgIndex]}</Text>
+                    )}
                     <View style={styles.progressTrack}>
                         <View style={[styles.progressFill, { width: `${(completedCount / totalCount) * 100}%` as any }]} />
                     </View>
+                    <Text style={styles.progressText}>
+                        {totalCount > 1
+                            ? `${completedCount}/${totalCount} tamamlandı${errorCount > 0 ? ` · ${errorCount} başarısız` : ''}${loadingCount > 0 ? ` · ${loadingCount} işleniyor` : ''}`
+                            : loadingCount > 0
+                                ? 'tahmini 20-70 saniye'
+                                : ''}
+                    </Text>
                 </View>
             )}
 
@@ -385,7 +387,6 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                             slot={slot}
                             index={index}
                             isSingle={isSingle}
-                            loadingMsgIndex={loadingMsgIndex}
                             onRetry={handleRetry}
                             onOpenFullscreen={setFullscreenIndex}
                             onSave={saveImage}
@@ -528,11 +529,18 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.md,
         paddingBottom: SPACING.sm,
     },
+    progressLoadingMsg: {
+        color: COLORS.primary,
+        fontSize: 13,
+        fontWeight: '600',
+        marginBottom: 6,
+        minHeight: 18,
+    },
     progressText: {
         color: COLORS.textSecondary,
         fontSize: 12,
         fontWeight: '600',
-        marginBottom: 6,
+        marginTop: 6,
     },
     progressTrack: {
         height: 4,
@@ -582,10 +590,10 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.sm,
     },
     renderCardLoading: {
-        padding: SPACING.lg,
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 220,
+        padding: SPACING.sm,
+        gap: SPACING.sm,
     },
     renderCardError: {
         padding: SPACING.lg,
