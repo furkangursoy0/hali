@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "npx expo export --platform web",
+  "buildCommand": "npx expo export --platform web && node scripts/postbuild-web.js",
   "outputDirectory": "dist",
   "headers": [
     {

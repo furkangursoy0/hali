@@ -36,7 +36,7 @@ function AppNavigator() {
           gestureEnabled: true,
         }}
       >
-        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Halı Dene | Giriş' }} />
+        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Halı Dene | Yapay Zeka ile Halı Deneme' }} />
         <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Halı Dene' }} />
         <Stack.Screen name="Contact" component={ContactScreen} />
         <Stack.Screen name="Admin" component={AdminScreen} />

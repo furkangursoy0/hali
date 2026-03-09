@@ -34,7 +34,13 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Halı Dene",
+      "shortName": "HaliDene",
+      "description": "AI destekli halı deneme platformu",
+      "lang": "tr",
+      "themeColor": "#0F0F0F",
+      "backgroundColor": "#0F0F0F"
     },
     "plugins": [
       "expo-image-picker",
