@@ -394,10 +394,23 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       {/* ─── Fullscreen Image Overlay ─── */}
       {fullscreenImage && (
         <Pressable
-          style={[s.fsOverlay, isWeb && ({ position: 'fixed', inset: 0, zIndex: 9999, cursor: 'zoom-out' } as any)]}
+          style={[s.fsOverlay, isWeb && ({ position: 'fixed', inset: 0, zIndex: 9999, cursor: 'zoom-out', touchAction: 'none' } as any)]}
           onPress={() => setFullscreenImage(null)}
         >
-          <Image source={{ uri: fullscreenImage }} style={s.fsImage} resizeMode="contain" />
+          {isWeb ? (
+            React.createElement('img', {
+              src: fullscreenImage,
+              style: {
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                touchAction: 'pinch-zoom',
+              },
+              onClick: (e: any) => e.stopPropagation(),
+            })
+          ) : (
+            <Image source={{ uri: fullscreenImage }} style={s.fsImage} resizeMode="contain" />
+          )}
           <Pressable style={s.fsCloseBtn} onPress={() => setFullscreenImage(null)}>
             <Text style={s.fsCloseBtnText}>✕</Text>
           </Pressable>
