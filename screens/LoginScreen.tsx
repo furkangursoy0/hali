@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Image,
   Linking,
+  Modal,
   useWindowDimensions,
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
@@ -93,6 +94,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [focused, setFocused] = useState<'email' | 'password' | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   const handleLogin = async () => {
     if (submitting) return;
@@ -167,13 +169,13 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     <View style={s.section}>
       <View style={s.baContainer}>
         {/* ─ Room Photo ─ */}
-        <View style={[s.baCard, !isWide && s.baCardMobile]}>
+        <Pressable style={[s.baCard, !isWide && s.baCardMobile]} onPress={() => beforeImageUri && setFullscreenImage(beforeImageUri)}>
           {beforeImageUri ? (
             <Image source={{ uri: beforeImageUri }} style={[s.baImage, !isWide && s.baImageMobile]} resizeMode="cover" />
           ) : (
             <View style={[s.baImage, !isWide && s.baImageMobile, s.baPlaceholder]} />
           )}
-        </View>
+        </Pressable>
 
         {/* ─ Arrow ─ */}
         <Text style={s.baArrow}>→</Text>
@@ -196,7 +198,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         <Text style={s.baArrow}>→</Text>
 
         {/* ─ AI Result ─ */}
-        <View style={[s.baCard, !isWide && s.baCardMobile]}>
+        <Pressable style={[s.baCard, !isWide && s.baCardMobile]} onPress={() => afterImageUri && setFullscreenImage(afterImageUri)}>
           {afterImageUri ? (
             <Image source={{ uri: afterImageUri }} style={[s.baImage, !isWide && s.baImageMobile]} resizeMode="cover" />
           ) : (
@@ -205,7 +207,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           <View style={s.baAiBadge}>
             <Text style={s.baAiBadgeText}>AI</Text>
           </View>
-        </View>
+        </Pressable>
       </View>
     </View>
   );
@@ -369,6 +371,19 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   return (
     <View style={[s.container, isWeb && ({ height: '100dvh', maxHeight: '100dvh' } as any)]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+
+      {/* ─── Fullscreen Image Modal ─── */}
+      {fullscreenImage && (
+        <Modal visible transparent animationType="fade" onRequestClose={() => setFullscreenImage(null)}>
+          <Pressable style={s.fsOverlay} onPress={() => setFullscreenImage(null)}>
+            <Image source={{ uri: fullscreenImage }} style={s.fsImage} resizeMode="contain" />
+            <View style={s.fsCloseBtn}>
+              <Text style={s.fsCloseBtnText}>✕</Text>
+            </View>
+          </Pressable>
+        </Modal>
+      )}
+
       <View pointerEvents="none" style={s.glowTop} />
       <View pointerEvents="none" style={s.glowBottom} />
       <ScrollView
@@ -935,5 +950,33 @@ const s = StyleSheet.create({
   footerCopy: {
     color: COLORS.textMuted,
     fontSize: 11,
+  },
+
+  /* ─── Fullscreen Image Modal ─── */
+  fsOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fsImage: {
+    width: '100%',
+    height: '100%',
+  },
+  fsCloseBtn: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fsCloseBtnText: {
+    color: COLORS.white,
+    fontSize: 20,
+    fontWeight: '300',
   },
 });
