@@ -273,7 +273,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             style={({ hovered }: any) => [s.whatsappBtn, hovered && s.whatsappBtnHover]}
             onPress={openWhatsApp}
           >
-            <Text style={s.whatsappBtnText}>WhatsApp ile Yazın</Text>
+            <Text style={s.whatsappBtnText}>WhatsApp ile Ulaşın</Text>
           </Pressable>
           <Pressable
             style={({ hovered }: any) => [s.contactGhostBtn, hovered && s.contactGhostBtnHover]}
@@ -567,16 +567,13 @@ const s = StyleSheet.create({
   },
   baCard: {
     flex: 1,
-    maxWidth: 360,
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.border,
     backgroundColor: COLORS.surface,
   },
-  baCardMobile: {
-    maxWidth: 160,
-  },
+  baCardMobile: {},
   baImage: {
     width: '100%',
     aspectRatio: 3 / 4,
