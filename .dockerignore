@@ -1,0 +1,39 @@
+# Frontend - Railway sadece backend'i deploy eder
+screens/
+components/
+constants/
+contexts/
+services/
+hooks/
+public/
+scripts/
+dist/
+web-build/
+
+# Halı görselleri (1.9GB) - jsDelivr CDN'den sunuluyor
+assets/
+carpets/
+carpets-thumbs/
+
+# Data
+data/
+
+# Root node_modules (frontend deps)
+node_modules/
+
+# Expo / React Native
+.expo/
+*.tsbuildinfo
+expo-env.d.ts
+index.ts
+app.json
+tsconfig.json
+babel.config.js
+metro.config.js
+
+# Git
+.git/
+
+# Misc
+.DS_Store
+*.md
