@@ -12,7 +12,8 @@
     "carpets:catalog": "node scripts/generate-catalog.js",
     "carpets:dolcevita": "node scripts/scrape-dolcevita.js",
     "carpets:dolcevita:download": "node scripts/download-dolcevita.js",
-    "carpets:kreasyon": "node scripts/add-kreasyon.js"
+    "carpets:kreasyon": "node scripts/add-kreasyon.js",
+    "carpets:landing": "node scripts/generate-landing-catalog.js"
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.28",

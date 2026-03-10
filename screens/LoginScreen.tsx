@@ -17,140 +17,12 @@ import {
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
 import { getCarpetThumbnailUrl } from '../services/carpet-image';
+import BRAND_CATALOG from '../data/landing-catalog.json';
 
 const isWeb = Platform.OS === 'web';
 
 const WHATSAPP_NUMBER = '905300947756';
 const WHATSAPP_MESSAGE = encodeURIComponent('Merhaba, Halı Dene hakkında bilgi almak istiyorum.');
-
-const BRAND_CATALOG: Record<string, { thumbPath: string; imagePath: string }[]> = {
-  Atlas: [
-    { thumbPath: 'carpets-thumbs/Atlas/Arbel/EI01A.webp', imagePath: 'carpets/Atlas/Arbel/EI01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Beykoz/ZY01A.webp', imagePath: 'carpets/Atlas/Beykoz/ZY01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Degrade/DG01A.webp', imagePath: 'carpets/Atlas/Degrade/DG01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Dore/DU01A.webp', imagePath: 'carpets/Atlas/Dore/DU01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Ecole/QF01A.webp', imagePath: 'carpets/Atlas/Ecole/QF01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Estefan/EU01A.webp', imagePath: 'carpets/Atlas/Estefan/EU01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Hermes/HU01A.webp', imagePath: 'carpets/Atlas/Hermes/HU01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Hisar/HZ01A.webp', imagePath: 'carpets/Atlas/Hisar/HZ01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Mira/QI01A.webp', imagePath: 'carpets/Atlas/Mira/QI01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Seren/NF01A.webp', imagePath: 'carpets/Atlas/Seren/NF01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Çınar/CY01A.webp', imagePath: 'carpets/Atlas/Çınar/CY01A.png' },
-    { thumbPath: 'carpets-thumbs/Atlas/Arbel/EI01B.webp', imagePath: 'carpets/Atlas/Arbel/EI01B.png' },
-  ],
-  'Dolce Vita': [
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Bohem/381_Ash.webp', imagePath: 'carpets/Dolce_Vita/Bohem/381_Ash.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Casablanca/682_Mocca.webp', imagePath: 'carpets/Dolce_Vita/Casablanca/682_Mocca.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Costa/771_Luz.webp', imagePath: 'carpets/Dolce_Vita/Costa/771_Luz.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Destiny/8602_Light_Grey.webp', imagePath: 'carpets/Dolce_Vita/Destiny/8602_Light_Grey.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Donna/8251_Pearl.webp', imagePath: 'carpets/Dolce_Vita/Donna/8251_Pearl.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/El_Hamra/El-Hamra_8451_Alabaster.webp', imagePath: 'carpets/Dolce_Vita/El_Hamra/El-Hamra_8451_Alabaster.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Bengal/El_Dokuma_Jüt.webp', imagePath: 'carpets/Dolce_Vita/Bengal/El_Dokuma_Jüt.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Cross/698_White_Black_Jüt.webp', imagePath: 'carpets/Dolce_Vita/Cross/698_White_Black_Jüt.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Agra/Kırmızı_El_Dokuma_Oval.webp', imagePath: 'carpets/Dolce_Vita/Agra/Kırmızı_El_Dokuma_Oval.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Albero/Gold_Yuvarlak_Jüt.webp', imagePath: 'carpets/Dolce_Vita/Albero/Gold_Yuvarlak_Jüt.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Dolce/Tavşan_Post_Serisi.webp', imagePath: 'carpets/Dolce_Vita/Dolce/Tavşan_Post_Serisi.webp' },
-    { thumbPath: 'carpets-thumbs/Dolce_Vita/Cross_Jut/Cross_694_Black_Jüt.webp', imagePath: 'carpets/Dolce_Vita/Cross_Jut/Cross_694_Black_Jüt.webp' },
-  ],
-  Empara: [
-    { thumbPath: 'carpets-thumbs/Empara/Agra/5005Papaya.webp', imagePath: 'carpets/Empara/Agra/5005Papaya.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Antik/AnadoluE0523.webp', imagePath: 'carpets/Empara/Antik/AnadoluE0523.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Aspendos/6731Calme.webp', imagePath: 'carpets/Empara/Aspendos/6731Calme.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Balenci/7000Dorıan.webp', imagePath: 'carpets/Empara/Balenci/7000Dorıan.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Bilbao/3402Shale.webp', imagePath: 'carpets/Empara/Bilbao/3402Shale.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Dulce/5760Feldgrau.webp', imagePath: 'carpets/Empara/Dulce/5760Feldgrau.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Edina/6650Pera.webp', imagePath: 'carpets/Empara/Edina/6650Pera.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Gemma/6030PureWhite.webp', imagePath: 'carpets/Empara/Gemma/6030PureWhite.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Globe/5700Beige.webp', imagePath: 'carpets/Empara/Globe/5700Beige.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Gordion/5400adel.webp', imagePath: 'carpets/Empara/Gordion/5400adel.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Heritage/5401Lisse.webp', imagePath: 'carpets/Empara/Heritage/5401Lisse.jpg' },
-    { thumbPath: 'carpets-thumbs/Empara/Harry Potter/1001QUIDDITCH.webp', imagePath: 'carpets/Empara/Harry Potter/1001QUIDDITCH.jpg' },
-  ],
-  Jusco: [
-    { thumbPath: 'carpets-thumbs/Jusco/ARVEN/ARVEN-0013.webp', imagePath: 'carpets/Jusco/ARVEN/ARVEN-0013.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/AVILLA/AVILLA-2006A-GRI.webp', imagePath: 'carpets/Jusco/AVILLA/AVILLA-2006A-GRI.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/BORNEO/BORNEO-1301.webp', imagePath: 'carpets/Jusco/BORNEO/BORNEO-1301.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/CARELL/CARELL-010B.webp', imagePath: 'carpets/Jusco/CARELL/CARELL-010B.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/EFNAN/EFNAN-1350.webp', imagePath: 'carpets/Jusco/EFNAN/EFNAN-1350.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/ELEGANT/ELEGANT-1375.webp', imagePath: 'carpets/Jusco/ELEGANT/ELEGANT-1375.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/ETNA/ETNA-5854A-BEYAZ-KREM.webp', imagePath: 'carpets/Jusco/ETNA/ETNA-5854A-BEYAZ-KREM.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/GLORIA/GLORIA-1501.webp', imagePath: 'carpets/Jusco/GLORIA/GLORIA-1501.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/HISTORY/HISTORIY-8001.webp', imagePath: 'carpets/Jusco/HISTORY/HISTORIY-8001.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/IKLIM/IKLIM-2300A.webp', imagePath: 'carpets/Jusco/IKLIM/IKLIM-2300A.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/LAPIS/LAPIS-2302.webp', imagePath: 'carpets/Jusco/LAPIS/LAPIS-2302.jpg' },
-    { thumbPath: 'carpets-thumbs/Jusco/MOTTO/MOTTO-0183A.webp', imagePath: 'carpets/Jusco/MOTTO/MOTTO-0183A.jpg' },
-  ],
-  Karmen: [
-    { thumbPath: 'carpets-thumbs/Karmen/ART/ART-AT001A.webp', imagePath: 'carpets/Karmen/ART/ART-AT001A.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/BEST/BEST-106.webp', imagePath: 'carpets/Karmen/BEST/BEST-106.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/COSMOS/COSMOS-CS001B.webp', imagePath: 'carpets/Karmen/COSMOS/COSMOS-CS001B.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/DARK/DARK-DK002A.webp', imagePath: 'carpets/Karmen/DARK/DARK-DK002A.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/DECOR/DECOR-DC001B.webp', imagePath: 'carpets/Karmen/DECOR/DECOR-DC001B.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/DIAMENTE/DIAMENTE-DM001R.webp', imagePath: 'carpets/Karmen/DIAMENTE/DIAMENTE-DM001R.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/ELEGANCE/ELEGANCE-EG001A.webp', imagePath: 'carpets/Karmen/ELEGANCE/ELEGANCE-EG001A.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/ELIT/ELIT-EL001S.webp', imagePath: 'carpets/Karmen/ELIT/ELIT-EL001S.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/ETRO/ETRO-ET001W.webp', imagePath: 'carpets/Karmen/ETRO/ETRO-ET001W.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/FRESCO/FRESCO-FC001G.webp', imagePath: 'carpets/Karmen/FRESCO/FRESCO-FC001G.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/ICON/ICON-IC001M.webp', imagePath: 'carpets/Karmen/ICON/ICON-IC001M.jpg' },
-    { thumbPath: 'carpets-thumbs/Karmen/ICON-KIDS/ICON-KIDS-IC010R.webp', imagePath: 'carpets/Karmen/ICON-KIDS/ICON-KIDS-IC010R.jpg' },
-  ],
-  Kreasyon: [
-    { thumbPath: 'carpets-thumbs/Kreasyon/Akasya/AK002_Krem.webp', imagePath: 'carpets/Kreasyon/Akasya/AK002_Krem.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Alin/AL001_Krem-Antrasit.webp', imagePath: 'carpets/Kreasyon/Alin/AL001_Krem-Antrasit.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Amorf/AR001_Krem.webp', imagePath: 'carpets/Kreasyon/Amorf/AR001_Krem.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Antıque/AN002_Çok_Renkli.webp', imagePath: 'carpets/Kreasyon/Antıque/AN002_Çok_Renkli.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Bereket/BE001_Krem-Kahve.webp', imagePath: 'carpets/Kreasyon/Bereket/BE001_Krem-Kahve.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Bohemia/BH001_Krem_Hav.webp', imagePath: 'carpets/Kreasyon/Bohemia/BH001_Krem_Hav.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Boyut/BY001_Krem-Kahve.webp', imagePath: 'carpets/Kreasyon/Boyut/BY001_Krem-Kahve.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Bravvo/BR001_Kahverengi_Hav.webp', imagePath: 'carpets/Kreasyon/Bravvo/BR001_Kahverengi_Hav.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Brıstol/BI001_Krem.webp', imagePath: 'carpets/Kreasyon/Brıstol/BI001_Krem.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Cess/CES01_Beyaz_Hav.webp', imagePath: 'carpets/Kreasyon/Cess/CES01_Beyaz_Hav.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Colorium/CO009_Çok_Renkli.webp', imagePath: 'carpets/Kreasyon/Colorium/CO009_Çok_Renkli.jpg' },
-    { thumbPath: 'carpets-thumbs/Kreasyon/Colorıum/CO001_Çok_Renkli.webp', imagePath: 'carpets/Kreasyon/Colorıum/CO001_Çok_Renkli.jpg' },
-  ],
-  Merinos: [
-    { thumbPath: 'carpets-thumbs/Merinos/Arden/72484-062.webp', imagePath: 'carpets/Merinos/Arden/72484-062.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Diyez/34929-030.webp', imagePath: 'carpets/Merinos/Diyez/34929-030.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Elegance/73941-060.webp', imagePath: 'carpets/Merinos/Elegance/73941-060.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Havana/73474-060.webp', imagePath: 'carpets/Merinos/Havana/73474-060.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Launge/54094-260.webp', imagePath: 'carpets/Merinos/Launge/54094-260.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Lion/62744-030.webp', imagePath: 'carpets/Merinos/Lion/62744-030.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Octavia/75478-096.webp', imagePath: 'carpets/Merinos/Octavia/75478-096.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Premium/69799-060.webp', imagePath: 'carpets/Merinos/Premium/69799-060.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Recycle/37406-061.webp', imagePath: 'carpets/Merinos/Recycle/37406-061.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Ritim/73338-060.webp', imagePath: 'carpets/Merinos/Ritim/73338-060.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Rodin/19770-071.webp', imagePath: 'carpets/Merinos/Rodin/19770-071.jpeg' },
-    { thumbPath: 'carpets-thumbs/Merinos/Therapy/19112-030.webp', imagePath: 'carpets/Merinos/Therapy/19112-030.jpeg' },
-  ],
-  'Pierre Cardin': [
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/Beverly/BF01A.webp', imagePath: 'carpets/Pierre_Cardin/Beverly/BF01A.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/Galenda/JH01A.webp', imagePath: 'carpets/Pierre_Cardin/Galenda/JH01A.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/History/HY01A.webp', imagePath: 'carpets/Pierre_Cardin/History/HY01A.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/Morina/LH01A.webp', imagePath: 'carpets/Pierre_Cardin/Morina/LH01A.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/PARLA/KP01A.webp', imagePath: 'carpets/Pierre_Cardin/PARLA/KP01A.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/PierZen/HG01A.webp', imagePath: 'carpets/Pierre_Cardin/PierZen/HG01A.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/Voyage/KJ01A.webp', imagePath: 'carpets/Pierre_Cardin/Voyage/KJ01A.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/azur/UZ01A.webp', imagePath: 'carpets/Pierre_Cardin/azur/UZ01A.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/suprise/ZC01E.webp', imagePath: 'carpets/Pierre_Cardin/suprise/ZC01E.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/Beverly/BF01B.webp', imagePath: 'carpets/Pierre_Cardin/Beverly/BF01B.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/Galenda/JH02A.webp', imagePath: 'carpets/Pierre_Cardin/Galenda/JH02A.jpg' },
-    { thumbPath: 'carpets-thumbs/Pierre_Cardin/History/HY02A.webp', imagePath: 'carpets/Pierre_Cardin/History/HY02A.jpg' },
-  ],
-  'Royal Halı': [
-    { thumbPath: 'carpets-thumbs/Royal_Hali/ARLES/FJ01A.webp', imagePath: 'carpets/Royal_Hali/ARLES/FJ01A.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/Bearny/TD01A.webp', imagePath: 'carpets/Royal_Hali/Bearny/TD01A.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/Diva/DZ01A.webp', imagePath: 'carpets/Royal_Hali/Diva/DZ01A.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/KimRoyal/KC01B.webp', imagePath: 'carpets/Royal_Hali/KimRoyal/KC01B.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/Marlow/QJ01A.webp', imagePath: 'carpets/Royal_Hali/Marlow/QJ01A.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/Momento/ZV01A.webp', imagePath: 'carpets/Royal_Hali/Momento/ZV01A.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/NIL/NB01A.webp', imagePath: 'carpets/Royal_Hali/NIL/NB01A.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/Bearny/TD01B.webp', imagePath: 'carpets/Royal_Hali/Bearny/TD01B.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/Diva/DZ02A.webp', imagePath: 'carpets/Royal_Hali/Diva/DZ02A.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/KimRoyal/KC02A.webp', imagePath: 'carpets/Royal_Hali/KimRoyal/KC02A.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/Momento/ZV07A.webp', imagePath: 'carpets/Royal_Hali/Momento/ZV07A.png' },
-    { thumbPath: 'carpets-thumbs/Royal_Hali/ARLES/FJ02A.webp', imagePath: 'carpets/Royal_Hali/ARLES/FJ02A.png' },
-  ],
-};
 
 const CATALOG_BRANDS = Object.keys(BRAND_CATALOG);
 
@@ -258,12 +130,14 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       <Text style={s.heroSubtitle}>
         Yapay zeka ile halılarınızı müşterinizin odasına yerleştirin.
       </Text>
-      <Pressable
-        style={({ hovered }: any) => [s.heroPrimaryBtn, hovered && s.heroPrimaryBtnHover]}
-        onPress={scrollToLogin}
-      >
-        <Text style={s.heroPrimaryBtnText}>Giriş Yap</Text>
-      </Pressable>
+      <View style={s.heroCTAWrap}>
+        <Pressable
+          style={({ hovered }: any) => [s.heroPrimaryBtn, hovered && s.heroPrimaryBtnHover]}
+          onPress={scrollToLogin}
+        >
+          <Text style={s.heroPrimaryBtnText}>Giriş Yap</Text>
+        </Pressable>
+      </View>
     </View>
   );
 
@@ -275,46 +149,44 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const renderBeforeAfter = () => (
     <View style={s.section}>
       <View style={s.baContainer}>
-        {/* ─ Room Photo ─ */}
-        <Pressable style={[s.baCard, !isWide && s.baCardMobile]} onPress={() => beforeImageUri && setFullscreenImage(beforeImageUri)}>
-          {beforeImageUri ? (
-            <Image source={{ uri: beforeImageUri }} style={[s.baImage, !isWide && s.baImageMobile]} resizeMode="cover" />
-          ) : (
-            <View style={[s.baImage, !isWide && s.baImageMobile, s.baPlaceholder]} />
-          )}
-        </Pressable>
+        {/* ─ Before ─ */}
+        <View style={s.baColumn}>
+          <Pressable style={s.baCard} onPress={() => beforeImageUri && setFullscreenImage(beforeImageUri)}>
+            {beforeImageUri ? (
+              <Image source={{ uri: beforeImageUri }} style={s.baImage} resizeMode="cover" />
+            ) : (
+              <View style={[s.baImage, s.baPlaceholder]} />
+            )}
+          </Pressable>
+          <Text style={s.baLabel}>Oda</Text>
+        </View>
 
-        {/* ─ Arrow ─ */}
-        <Text style={s.baArrow}>→</Text>
-
-        {/* ─ Carpet Selection ─ */}
-        <View style={s.baMiddle}>
+        {/* ─ Center: carpet badge ─ */}
+        <View style={s.baCenter}>
           <View style={[s.baCarpetWrap, !isWide && s.baCarpetWrapMobile]}>
             <Image source={{ uri: demoCarpetUrl }} style={s.baCarpetThumb} resizeMode="cover" />
             <View style={s.baCarpetCheck}>
               <View style={s.baCarpetCheckInner} />
             </View>
           </View>
-          <View style={s.baCarpetInfo}>
-            <Text style={s.baCarpetBrand}>{DEMO_CARPET.brand} · {DEMO_CARPET.collection}</Text>
-            <Text style={s.baCarpetModel}>{DEMO_CARPET.model}</Text>
-          </View>
+          <Text style={s.baCarpetModel}>{DEMO_CARPET.model}</Text>
         </View>
 
-        {/* ─ Arrow ─ */}
-        <Text style={s.baArrow}>→</Text>
-
-        {/* ─ AI Result ─ */}
-        <Pressable style={[s.baCard, !isWide && s.baCardMobile]} onPress={() => afterImageUri && setFullscreenImage(afterImageUri)}>
-          {afterImageUri ? (
-            <Image source={{ uri: afterImageUri }} style={[s.baImage, !isWide && s.baImageMobile]} resizeMode="cover" />
-          ) : (
-            <View style={[s.baImage, !isWide && s.baImageMobile, s.baPlaceholder, s.baPlaceholderAfter]} />
-          )}
-          <View style={s.baAiBadge}>
-            <Text style={s.baAiBadgeText}>AI</Text>
-          </View>
-        </Pressable>
+        {/* ─ After ─ */}
+        <View style={s.baColumn}>
+          <Pressable style={s.baCard} onPress={() => afterImageUri && setFullscreenImage(afterImageUri)}>
+            {afterImageUri ? (
+              <Image source={{ uri: afterImageUri }} style={s.baImage} resizeMode="cover" />
+            ) : (
+              <View style={[s.baImage, s.baPlaceholder]} />
+            )}
+            {/* ─ Sparkle badge ─ */}
+            <View style={s.baSparkleBadge}>
+              <Text style={s.baSparkleText}>{'✦'}</Text>
+            </View>
+          </Pressable>
+          <Text style={s.baLabel}>Sonuç</Text>
+        </View>
       </View>
     </View>
   );
@@ -322,8 +194,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   /* ────────────────── ÖZELLİKLER ────────────────── */
   const renderFeatures = () => {
     const features = [
-      { icon: 'target' as const, title: 'Gerçekçi Sonuçlar', desc: 'Perspektif ve ışık uyumlu AI yerleştirme' },
-      { icon: 'speed' as const, title: 'Anında Sonuç', desc: '30-60 saniyede hazır görüntü' },
+      { icon: 'target' as const, title: 'Gerçekçi Sonuçlar', desc: 'Perspektif ve ışık uyumlu' },
+      { icon: 'speed' as const, title: 'Anında Sonuç', desc: '20-30 saniyede hazır görüntü' },
       { icon: 'check' as const, title: 'Geniş Katalog', desc: '2000+ halı modeli, 9 marka' },
     ];
     return (
@@ -344,7 +216,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   };
 
   /* ────────────────── HALI KATALOĞU ────────────────── */
-  const catalogCarpets = BRAND_CATALOG[selectedBrand] || [];
+  const catalogCarpets = (BRAND_CATALOG as Record<string, { thumbPath: string; imagePath: string }[]>)[selectedBrand] || [];
 
   const renderCatalog = () => (
     <View style={s.section}>
@@ -693,24 +565,24 @@ const s = StyleSheet.create({
   /* ─── Before/After Showcase ─── */
   baContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
-    gap: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  baColumn: {
+    flex: 1,
+    alignItems: 'center',
   },
   baCard: {
-    flex: 1,
+    width: '100%',
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.border,
     backgroundColor: COLORS.surface,
   },
-  baCardMobile: {},
   baImage: {
     width: '100%',
-    aspectRatio: 3 / 4,
-  },
-  baImageMobile: {
     aspectRatio: 3 / 4,
   },
   baPlaceholder: {
@@ -718,39 +590,39 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  baPlaceholderAfter: {
-    backgroundColor: '#1c1a15',
+  baLabel: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 6,
+    letterSpacing: 0.3,
   },
-  baAiBadge: {
+  baSparkleBadge: {
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(200, 134, 10, 0.25)',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(200, 134, 10, 0.3)',
     borderWidth: 1,
-    borderColor: 'rgba(200, 134, 10, 0.45)',
-  },
-  baAiBadgeText: {
-    color: COLORS.primaryLight,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  baMiddle: {
+    borderColor: 'rgba(245, 200, 66, 0.5)',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: SPACING.xs,
+    justifyContent: 'center',
   },
-  baArrow: {
-    color: COLORS.textMuted,
-    fontSize: 18,
-    fontWeight: '300',
+  baSparkleText: {
+    color: COLORS.primaryLight,
+    fontSize: 14,
+  },
+  baCenter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: SPACING.xl,
+    gap: 6,
   },
   baCarpetWrap: {
-    width: 72,
-    height: 96,
+    width: 56,
+    height: 74,
     borderRadius: RADIUS.md,
     overflow: 'hidden',
     borderWidth: 2,
@@ -758,8 +630,8 @@ const s = StyleSheet.create({
     position: 'relative',
   },
   baCarpetWrapMobile: {
-    width: 56,
-    height: 74,
+    width: 48,
+    height: 64,
   },
   baCarpetThumb: {
     width: '100%',
@@ -769,36 +641,27 @@ const s = StyleSheet.create({
     position: 'absolute',
     top: -1,
     right: -1,
-    width: 20,
-    height: 20,
-    borderBottomLeftRadius: 8,
+    width: 18,
+    height: 18,
+    borderBottomLeftRadius: 7,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   baCarpetCheckInner: {
-    width: 8,
-    height: 5,
-    borderLeftWidth: 2,
-    borderBottomWidth: 2,
+    width: 7,
+    height: 4,
+    borderLeftWidth: 1.5,
+    borderBottomWidth: 1.5,
     borderColor: COLORS.white,
     transform: [{ rotate: '-45deg' }],
     marginTop: -2,
     marginLeft: 1,
   },
-  baCarpetInfo: {
-    alignItems: 'center',
-    gap: 1,
-  },
-  baCarpetBrand: {
+  baCarpetModel: {
     color: COLORS.textMuted,
     fontSize: 10,
-    fontWeight: '600',
-  },
-  baCarpetModel: {
-    color: COLORS.text,
-    fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
   },
 
   /* ─── Features ─── */
