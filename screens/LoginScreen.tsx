@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   Image,
   Linking,
-  Modal,
   useWindowDimensions,
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
@@ -372,18 +371,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     <View style={[s.container, isWeb && ({ height: '100dvh', maxHeight: '100dvh' } as any)]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
-      {/* ─── Fullscreen Image Modal ─── */}
-      {fullscreenImage && (
-        <Modal visible transparent animationType="fade" onRequestClose={() => setFullscreenImage(null)}>
-          <Pressable style={s.fsOverlay} onPress={() => setFullscreenImage(null)}>
-            <Image source={{ uri: fullscreenImage }} style={s.fsImage} resizeMode="contain" />
-            <View style={s.fsCloseBtn}>
-              <Text style={s.fsCloseBtnText}>✕</Text>
-            </View>
-          </Pressable>
-        </Modal>
-      )}
-
       <View pointerEvents="none" style={s.glowTop} />
       <View pointerEvents="none" style={s.glowBottom} />
       <ScrollView
@@ -403,6 +390,19 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           {renderFooter()}
         </View>
       </ScrollView>
+
+      {/* ─── Fullscreen Image Overlay ─── */}
+      {fullscreenImage && (
+        <Pressable
+          style={[s.fsOverlay, isWeb && ({ position: 'fixed', inset: 0, zIndex: 9999, cursor: 'zoom-out' } as any)]}
+          onPress={() => setFullscreenImage(null)}
+        >
+          <Image source={{ uri: fullscreenImage }} style={s.fsImage} resizeMode="contain" />
+          <Pressable style={s.fsCloseBtn} onPress={() => setFullscreenImage(null)}>
+            <Text style={s.fsCloseBtnText}>✕</Text>
+          </Pressable>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -952,12 +952,17 @@ const s = StyleSheet.create({
     fontSize: 11,
   },
 
-  /* ─── Fullscreen Image Modal ─── */
+  /* ─── Fullscreen Image Overlay ─── */
   fsOverlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.95)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 9999,
   },
   fsImage: {
     width: '100%',
