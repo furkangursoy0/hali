@@ -1,5 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   View,
   Text,
   StyleSheet,
@@ -12,6 +13,7 @@ import {
   ActivityIndicator,
   Image,
   Linking,
+  PanResponder,
   useWindowDimensions,
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
@@ -82,6 +84,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [submitting, setSubmitting] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [selectedBrand, setSelectedBrand] = useState('Atlas');
+  const [containerWidth, setContainerWidth] = useState(0);
 
   const handleLogin = async () => {
     if (submitting) return;
@@ -141,55 +144,162 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     </View>
   );
 
-  /* ────────────────── BEFORE / AFTER SHOWCASE ────────────────── */
+  /* ────────────────── BEFORE / AFTER SLIDER ────────────────── */
   const demoCarpetUrl = getCarpetThumbnailUrl(DEMO_CARPET.imagePath, DEMO_CARPET.thumbPath);
   const beforeImageUri = isWeb ? '/demo-before.jpg' : undefined;
   const afterImageUri = isWeb ? '/demo-after.jpg' : undefined;
 
-  const renderBeforeAfter = () => (
-    <View style={s.section}>
-      <View style={s.baContainer}>
-        {/* ─ Before ─ */}
-        <View style={s.baColumn}>
-          <Pressable style={s.baCard} onPress={() => beforeImageUri && setFullscreenImage(beforeImageUri)}>
-            {beforeImageUri ? (
-              <Image source={{ uri: beforeImageUri }} style={s.baImage} resizeMode="cover" />
-            ) : (
-              <View style={[s.baImage, s.baPlaceholder]} />
-            )}
-          </Pressable>
-          <Text style={s.baLabel}>Oda</Text>
-        </View>
+  const sliderPos = useRef(new Animated.Value(0)).current;
+  const sliderContainerRef = useRef<View>(null);
+  const sliderWidth = useRef(0);
+  const isDragging = useRef(false);
+  const hasAnimated = useRef(false);
 
-        {/* ─ Center: carpet badge ─ */}
-        <View style={s.baCenter}>
-          <View style={[s.baCarpetWrap, !isWide && s.baCarpetWrapMobile]}>
-            <Image source={{ uri: demoCarpetUrl }} style={s.baCarpetThumb} resizeMode="cover" />
-            <View style={s.baCarpetCheck}>
-              <View style={s.baCarpetCheckInner} />
+  // Auto-animate: sweep from full-after (0) to center (0.5) on first render
+  useEffect(() => {
+    if (!hasAnimated.current && beforeImageUri) {
+      hasAnimated.current = true;
+      const timeout = setTimeout(() => {
+        Animated.timing(sliderPos, {
+          toValue: 0.5,
+          duration: 1400,
+          useNativeDriver: false,
+        }).start();
+      }, 800);
+      return () => clearTimeout(timeout);
+    }
+  }, [beforeImageUri]);
+
+  // Web: native DOM event listeners for smooth drag
+  useEffect(() => {
+    if (!isWeb) return;
+    const el = sliderContainerRef.current as any;
+    if (!el || !containerWidth) return;
+
+    const getPos = (clientX: number) => {
+      const rect = el.getBoundingClientRect();
+      return Math.max(0.05, Math.min(0.95, (clientX - rect.left) / rect.width));
+    };
+    const onDown = (clientX: number) => { isDragging.current = true; sliderPos.setValue(getPos(clientX)); };
+    const onMove = (clientX: number) => { if (isDragging.current) sliderPos.setValue(getPos(clientX)); };
+    const onUp = () => { isDragging.current = false; };
+
+    const md = (e: MouseEvent) => onDown(e.clientX);
+    const ts = (e: TouchEvent) => onDown(e.touches[0].clientX);
+    const mm = (e: MouseEvent) => onMove(e.clientX);
+    const tm = (e: TouchEvent) => { if (isDragging.current) { e.preventDefault(); onMove(e.touches[0].clientX); } };
+
+    el.addEventListener('mousedown', md);
+    el.addEventListener('touchstart', ts, { passive: true });
+    document.addEventListener('mousemove', mm);
+    document.addEventListener('touchmove', tm, { passive: false });
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchend', onUp);
+
+    return () => {
+      el.removeEventListener('mousedown', md);
+      el.removeEventListener('touchstart', ts);
+      document.removeEventListener('mousemove', mm);
+      document.removeEventListener('touchmove', tm);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchend', onUp);
+    };
+  }, [containerWidth]);
+
+  // Native: PanResponder fallback
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > Math.abs(g.dy),
+      onPanResponderGrant: (e) => {
+        isDragging.current = true;
+        if (sliderWidth.current > 0 && sliderContainerRef.current) {
+          sliderContainerRef.current.measureInWindow((x: number) => {
+            const rel = e.nativeEvent.pageX - x;
+            sliderPos.setValue(Math.max(0.05, Math.min(0.95, rel / sliderWidth.current)));
+          });
+        }
+      },
+      onPanResponderMove: (e) => {
+        if (sliderWidth.current > 0 && sliderContainerRef.current) {
+          sliderContainerRef.current.measureInWindow((x: number) => {
+            const rel = e.nativeEvent.pageX - x;
+            sliderPos.setValue(Math.max(0.05, Math.min(0.95, rel / sliderWidth.current)));
+          });
+        }
+      },
+      onPanResponderRelease: () => { isDragging.current = false; },
+      onPanResponderTerminate: () => { isDragging.current = false; },
+    })
+  ).current;
+
+  const renderBeforeAfter = () => {
+    const clipWidth = sliderPos.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0%', '100%'],
+    });
+    const handleLeft = sliderPos.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0%', '100%'],
+    });
+
+    return (
+      <View style={s.section}>
+        <Text style={[s.sectionTitle, isWide && s.sectionTitleWide]}>AI ile Halı Deneme</Text>
+        <Text style={s.sectionSubtitle}>Kaydırarak öncesi ve sonrasını karşılaştırın</Text>
+        <View
+          ref={sliderContainerRef}
+          style={[s.sliderContainer, !isWide && s.sliderContainerMobile, isWeb && ({ cursor: 'ew-resize', userSelect: 'none', touchAction: 'pan-y' } as any)]}
+          onLayout={(e) => { const w = e.nativeEvent.layout.width; sliderWidth.current = w; setContainerWidth(w); }}
+          {...(!isWeb ? panResponder.panHandlers : {})}
+        >
+          {/* ─ After image (background, full) ─ */}
+          {afterImageUri && (
+            <Image source={{ uri: afterImageUri }} style={s.sliderImage} resizeMode="cover" />
+          )}
+
+          {/* ─ Before image (clipped overlay) ─ */}
+          {beforeImageUri && (
+            <Animated.View style={[s.sliderBeforeClip, { width: clipWidth }]}>
+              <Image source={{ uri: beforeImageUri }} style={[s.sliderImageAbsolute, containerWidth > 0 && { width: containerWidth }]} resizeMode="cover" />
+            </Animated.View>
+          )}
+
+          {/* ─ Divider line ─ */}
+          <Animated.View style={[s.sliderDivider, { left: handleLeft }]}>
+            <View style={s.sliderLine} />
+            <View style={s.sliderHandle}>
+              <Text style={s.sliderHandleArrows}>{'◂ ▸'}</Text>
             </View>
+          </Animated.View>
+
+          {/* ─ Labels ─ */}
+          <View style={s.sliderLabelLeft}>
+            <Text style={s.sliderLabelText}>Önce</Text>
           </View>
-          <Text style={s.baCarpetModel}>{DEMO_CARPET.model}</Text>
-        </View>
+          <View style={s.sliderLabelRight}>
+            <Text style={s.sliderLabelText}>{'✦ '}Sonra</Text>
+          </View>
 
-        {/* ─ After ─ */}
-        <View style={s.baColumn}>
-          <Pressable style={s.baCard} onPress={() => afterImageUri && setFullscreenImage(afterImageUri)}>
-            {afterImageUri ? (
-              <Image source={{ uri: afterImageUri }} style={s.baImage} resizeMode="cover" />
-            ) : (
-              <View style={[s.baImage, s.baPlaceholder]} />
-            )}
-            {/* ─ Sparkle badge ─ */}
-            <View style={s.baSparkleBadge}>
-              <Text style={s.baSparkleText}>{'✦'}</Text>
+          {/* ─ Bottom gradient for badge readability ─ */}
+          {isWeb && (
+            <View style={[s.sliderBottomGrad]} pointerEvents="none" />
+          )}
+
+          {/* ─ Carpet badge bottom center ─ */}
+          <View style={s.sliderCarpetBadge}>
+            <View style={[s.baCarpetWrap, !isWide && s.baCarpetWrapMobile]}>
+              <Image source={{ uri: demoCarpetUrl }} style={s.baCarpetThumb} resizeMode="cover" />
+              <View style={s.baCarpetCheck}>
+                <View style={s.baCarpetCheckInner} />
+              </View>
             </View>
-          </Pressable>
-          <Text style={s.baLabel}>Sonuç</Text>
+            <Text style={s.sliderCarpetLabel}>{DEMO_CARPET.brand} · {DEMO_CARPET.collection}</Text>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   /* ────────────────── ÖZELLİKLER ────────────────── */
   const renderFeatures = () => {
@@ -562,76 +672,140 @@ const s = StyleSheet.create({
     fontSize: 16,
   },
 
-  /* ─── Before/After Showcase ─── */
-  baContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-  },
-  baColumn: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  baCard: {
+  /* ─── Before/After Slider ─── */
+  sliderContainer: {
     width: '100%',
-    borderRadius: RADIUS.lg,
+    aspectRatio: 4 / 3,
+    borderRadius: RADIUS.xl,
     overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
   },
-  baImage: {
-    width: '100%',
+  sliderContainerMobile: {
     aspectRatio: 3 / 4,
+    borderRadius: RADIUS.lg,
   },
-  baPlaceholder: {
-    backgroundColor: '#1a1815',
+  sliderImage: {
+    width: '100%',
+    height: '100%',
+  },
+  sliderBeforeClip: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    overflow: 'hidden',
+  },
+  sliderImageAbsolute: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
+  sliderDivider: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
-  baLabel: {
-    color: COLORS.textMuted,
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 6,
+  sliderLine: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 2.5,
+    backgroundColor: '#fff',
+    marginLeft: -1.25,
+  },
+  sliderHandle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+  },
+  sliderHandleArrows: {
+    color: '#333',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+  },
+  sliderLabelLeft: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  sliderLabelRight: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(200, 134, 10, 0.7)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  sliderLabelText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
-  baSparkleBadge: {
+  sliderBottomGrad: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(200, 134, 10, 0.3)',
-    borderWidth: 1,
-    borderColor: 'rgba(245, 200, 66, 0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    ...(Platform.OS === 'web' ? { background: 'linear-gradient(transparent, rgba(0,0,0,0.35))' } as any : {}),
   },
-  baSparkleText: {
-    color: COLORS.primaryLight,
-    fontSize: 14,
-  },
-  baCenter: {
+  sliderCarpetBadge: {
+    position: 'absolute',
+    bottom: 12,
+    alignSelf: 'center',
+    left: 0,
+    right: 0,
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
-    paddingTop: SPACING.xl,
-    gap: 6,
+    gap: 8,
+  },
+  sliderCarpetLabel: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    overflow: 'hidden',
   },
   baCarpetWrap: {
-    width: 56,
-    height: 74,
-    borderRadius: RADIUS.md,
+    width: 44,
+    height: 58,
+    borderRadius: RADIUS.sm,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: COLORS.primary,
     position: 'relative',
   },
   baCarpetWrapMobile: {
-    width: 48,
-    height: 64,
+    width: 38,
+    height: 50,
   },
   baCarpetThumb: {
     width: '100%',
@@ -641,27 +815,22 @@ const s = StyleSheet.create({
     position: 'absolute',
     top: -1,
     right: -1,
-    width: 18,
-    height: 18,
-    borderBottomLeftRadius: 7,
+    width: 16,
+    height: 16,
+    borderBottomLeftRadius: 6,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   baCarpetCheckInner: {
-    width: 7,
+    width: 6,
     height: 4,
     borderLeftWidth: 1.5,
     borderBottomWidth: 1.5,
     borderColor: COLORS.white,
     transform: [{ rotate: '-45deg' }],
-    marginTop: -2,
+    marginTop: -1,
     marginLeft: 1,
-  },
-  baCarpetModel: {
-    color: COLORS.textMuted,
-    fontSize: 10,
-    fontWeight: '700',
   },
 
   /* ─── Features ─── */
