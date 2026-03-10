@@ -171,12 +171,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           {beforeImageUri ? (
             <Image source={{ uri: beforeImageUri }} style={[s.baImage, !isWide && s.baImageMobile]} resizeMode="cover" />
           ) : (
-            <View style={[s.baImage, !isWide && s.baImageMobile, s.baPlaceholder]}>
-              <View style={s.baCameraIcon}>
-                <View style={s.baCameraBody} />
-                <View style={s.baCameraLens} />
-              </View>
-            </View>
+            <View style={[s.baImage, !isWide && s.baImageMobile, s.baPlaceholder]} />
           )}
         </View>
 
@@ -205,12 +200,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           {afterImageUri ? (
             <Image source={{ uri: afterImageUri }} style={[s.baImage, !isWide && s.baImageMobile]} resizeMode="cover" />
           ) : (
-            <View style={[s.baImage, !isWide && s.baImageMobile, s.baPlaceholder, s.baPlaceholderAfter]}>
-              <View style={s.baSparkle}>
-                <View style={s.baSparkleH} />
-                <View style={s.baSparkleV} />
-              </View>
-            </View>
+            <View style={[s.baImage, !isWide && s.baImageMobile, s.baPlaceholder, s.baPlaceholderAfter]} />
           )}
           <View style={s.baAiBadge}>
             <Text style={s.baAiBadgeText}>AI</Text>
@@ -577,7 +567,7 @@ const s = StyleSheet.create({
   },
   baCard: {
     flex: 1,
-    maxWidth: 280,
+    maxWidth: 360,
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
@@ -585,7 +575,7 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.surface,
   },
   baCardMobile: {
-    maxWidth: 140,
+    maxWidth: 160,
   },
   baImage: {
     width: '100%',
@@ -601,47 +591,6 @@ const s = StyleSheet.create({
   },
   baPlaceholderAfter: {
     backgroundColor: '#1c1a15',
-  },
-  baCameraIcon: {
-    width: 40,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  baCameraBody: {
-    width: 36,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: 'rgba(200, 134, 10, 0.3)',
-  },
-  baCameraLens: {
-    position: 'absolute',
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: 'rgba(200, 134, 10, 0.3)',
-  },
-  baSparkle: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  baSparkleH: {
-    position: 'absolute',
-    width: 24,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: 'rgba(200, 134, 10, 0.4)',
-  },
-  baSparkleV: {
-    position: 'absolute',
-    width: 3,
-    height: 24,
-    borderRadius: 2,
-    backgroundColor: 'rgba(200, 134, 10, 0.4)',
   },
   baAiBadge: {
     position: 'absolute',
