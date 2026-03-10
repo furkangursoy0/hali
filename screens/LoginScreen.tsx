@@ -24,19 +24,27 @@ const WHATSAPP_NUMBER = '905300947756';
 const WHATSAPP_MESSAGE = encodeURIComponent('Merhaba, Halı Dene hakkında bilgi almak istiyorum.');
 
 const SHOWCASE_CARPETS = [
-  { thumbPath: 'carpets-thumbs/Atlas/Dore/DU01A.webp', imagePath: 'carpets/Atlas/Dore/DU01A.png' },
-  { thumbPath: 'carpets-thumbs/Dolce_Vita/Donna/8251_Pearl.webp', imagePath: 'carpets/Dolce_Vita/Donna/8251_Pearl.webp' },
-  { thumbPath: 'carpets-thumbs/Jusco/NORA/NORA-4314A.webp', imagePath: 'carpets/Jusco/NORA/NORA-4314A.jpg' },
-  { thumbPath: 'carpets-thumbs/Karmen/KAFTAN/KAFTAN-KF006G.webp', imagePath: 'carpets/Karmen/KAFTAN/KAFTAN-KF006G.jpg' },
-  { thumbPath: 'carpets-thumbs/Kreasyon/Akasya/AK002_Krem.webp', imagePath: 'carpets/Kreasyon/Akasya/AK002_Krem.jpg' },
+  { thumbPath: 'carpets-thumbs/Atlas/Beykoz/ZY01A.webp', imagePath: 'carpets/Atlas/Beykoz/ZY01A.png' },
   { thumbPath: 'carpets-thumbs/Merinos/Arden/72484-062.webp', imagePath: 'carpets/Merinos/Arden/72484-062.jpeg' },
   { thumbPath: 'carpets-thumbs/Pierre_Cardin/Beverly/BF01A.webp', imagePath: 'carpets/Pierre_Cardin/Beverly/BF01A.jpg' },
   { thumbPath: 'carpets-thumbs/Royal_Hali/Momento/ZV07A.webp', imagePath: 'carpets/Royal_Hali/Momento/ZV07A.png' },
-  { thumbPath: 'carpets-thumbs/Empara/Agra/5005Papaya.webp', imagePath: 'carpets/Empara/Agra/5005Papaya.jpg' },
-  { thumbPath: 'carpets-thumbs/Merinos/Launge/54094-260.webp', imagePath: 'carpets/Merinos/Launge/54094-260.jpeg' },
-  { thumbPath: 'carpets-thumbs/Atlas/Arbel/EI01A.webp', imagePath: 'carpets/Atlas/Arbel/EI01A.png' },
-  { thumbPath: 'carpets-thumbs/Karmen/ART/ART-AT001A.webp', imagePath: 'carpets/Karmen/ART/ART-AT001A.jpg' },
+  { thumbPath: 'carpets-thumbs/Empara/Agra/5009Cyan.webp', imagePath: 'carpets/Empara/Agra/5009Cyan.jpg' },
+  { thumbPath: 'carpets-thumbs/Dolce_Vita/Casablanca/682_Mocca.webp', imagePath: 'carpets/Dolce_Vita/Casablanca/682_Mocca.webp' },
+  { thumbPath: 'carpets-thumbs/Kreasyon/Akasya/AK003_Gri.webp', imagePath: 'carpets/Kreasyon/Akasya/AK003_Gri.jpg' },
+  { thumbPath: 'carpets-thumbs/Jusco/ELEGANT/ELEGANT-1375.webp', imagePath: 'carpets/Jusco/ELEGANT/ELEGANT-1375.jpg' },
+  { thumbPath: 'carpets-thumbs/Karmen/ELEGANCE/ELEGANCE-EG001A.webp', imagePath: 'carpets/Karmen/ELEGANCE/ELEGANCE-EG001A.jpg' },
+  { thumbPath: 'carpets-thumbs/Merinos/Elegance/73941-060.webp', imagePath: 'carpets/Merinos/Elegance/73941-060.jpeg' },
+  { thumbPath: 'carpets-thumbs/Pierre_Cardin/Morina/LH01A.webp', imagePath: 'carpets/Pierre_Cardin/Morina/LH01A.jpg' },
+  { thumbPath: 'carpets-thumbs/Dolce_Vita/Bengal/El_Dokuma_Jüt.webp', imagePath: 'carpets/Dolce_Vita/Bengal/El_Dokuma_Jüt.webp' },
 ];
+
+const DEMO_CARPET = {
+  thumbPath: 'carpets-thumbs/Atlas/Beykoz/ZY01A.webp',
+  imagePath: 'carpets/Atlas/Beykoz/ZY01A.png',
+  brand: 'Atlas',
+  collection: 'Beykoz',
+  model: 'ZY01A',
+};
 
 const BRAND_NAMES = ['Atlas', 'Dolce Vita', 'Empara', 'Jusco', 'Karmen', 'Kreasyon', 'Merinos', 'Pierre Cardin', 'Royal Halı'];
 
@@ -131,8 +139,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         Müşterilerinize Halıları{'\n'}Evlerinde Gösterin
       </Text>
       <Text style={s.heroSubtitle}>
-        Yapay zeka ile halılarınızı müşterinizin odasına yerleştirin.{'\n'}
-        Satışlarınızı artırın, iade oranlarınızı düşürün.
+        Yapay zeka ile halılarınızı müşterinizin odasına yerleştirin.
       </Text>
       <View style={[s.heroCTARow, !isWide && s.heroCTARowMobile]}>
         <Pressable
@@ -142,67 +149,94 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           <Text style={s.heroPrimaryBtnText}>Giriş Yap</Text>
         </Pressable>
         <Pressable
-          style={({ hovered }: any) => [s.heroSecondaryBtn, hovered && s.heroSecondaryBtnHover]}
-          onPress={() => navigation.navigate('Contact')}
+          style={({ hovered }: any) => [s.heroWhatsappBtn, hovered && s.heroWhatsappBtnHover]}
+          onPress={openWhatsApp}
         >
-          <Text style={s.heroSecondaryBtnText}>İletişime Geç</Text>
+          <Text style={s.heroWhatsappBtnText}>WhatsApp ile Ulaşın</Text>
         </Pressable>
       </View>
     </View>
   );
 
-  /* ────────────────── NASIL ÇALIŞIR ────────────────── */
-  const renderHowItWorks = () => {
-    const steps = [
-      { num: '1', label: isWide ? 'Oda Fotoğrafı Çekin' : 'Fotoğraf' },
-      { num: '2', label: isWide ? 'Halı Seçin' : 'Halı Seç' },
-      { num: '3', label: isWide ? 'AI Sonucu Görün' : 'Sonuç' },
-    ];
-    return (
-      <View style={s.section}>
-        <Text style={[s.sectionTitle, isWide && s.sectionTitleWide]}>Nasıl Çalışır?</Text>
-        <View style={[s.stepsRow, !isWide && s.stepsRowMobile]}>
-          {steps.map((step, i) => (
-            <React.Fragment key={step.num}>
-              <View style={[s.stepItem, !isWide && s.stepItemCompact]}>
-                <View style={[s.stepBadge, !isWide && s.stepBadgeCompact]}>
-                  <Text style={[s.stepNum, !isWide && s.stepNumCompact]}>{step.num}</Text>
-                </View>
-                <Text style={[s.stepText, !isWide && s.stepTextMobile]}>{step.label}</Text>
+  /* ────────────────── BEFORE / AFTER SHOWCASE ────────────────── */
+  const demoCarpetUrl = getCarpetThumbnailUrl(DEMO_CARPET.imagePath, DEMO_CARPET.thumbPath);
+  const beforeImageUri = isWeb ? '/demo-before.jpg' : undefined;
+  const afterImageUri = isWeb ? '/demo-after.jpg' : undefined;
+
+  const renderBeforeAfter = () => (
+    <View style={s.section}>
+      <View style={s.baContainer}>
+        {/* ─ Room Photo ─ */}
+        <View style={[s.baCard, !isWide && s.baCardMobile]}>
+          {beforeImageUri ? (
+            <Image source={{ uri: beforeImageUri }} style={[s.baImage, !isWide && s.baImageMobile]} resizeMode="cover" />
+          ) : (
+            <View style={[s.baImage, !isWide && s.baImageMobile, s.baPlaceholder]}>
+              <View style={s.baCameraIcon}>
+                <View style={s.baCameraBody} />
+                <View style={s.baCameraLens} />
               </View>
-              {isWide && i < steps.length - 1 && (
-                <View style={s.stepArrowWrap}>
-                  <Text style={s.stepArrowText}>→</Text>
-                </View>
-              )}
-            </React.Fragment>
-          ))}
+            </View>
+          )}
+        </View>
+
+        {/* ─ Arrow ─ */}
+        <Text style={s.baArrow}>→</Text>
+
+        {/* ─ Carpet Selection ─ */}
+        <View style={s.baMiddle}>
+          <View style={[s.baCarpetWrap, !isWide && s.baCarpetWrapMobile]}>
+            <Image source={{ uri: demoCarpetUrl }} style={s.baCarpetThumb} resizeMode="cover" />
+            <View style={s.baCarpetCheck}>
+              <View style={s.baCarpetCheckInner} />
+            </View>
+          </View>
+          <View style={s.baCarpetInfo}>
+            <Text style={s.baCarpetBrand}>{DEMO_CARPET.brand} · {DEMO_CARPET.collection}</Text>
+            <Text style={s.baCarpetModel}>{DEMO_CARPET.model}</Text>
+          </View>
+        </View>
+
+        {/* ─ Arrow ─ */}
+        <Text style={s.baArrow}>→</Text>
+
+        {/* ─ AI Result ─ */}
+        <View style={[s.baCard, !isWide && s.baCardMobile]}>
+          {afterImageUri ? (
+            <Image source={{ uri: afterImageUri }} style={[s.baImage, !isWide && s.baImageMobile]} resizeMode="cover" />
+          ) : (
+            <View style={[s.baImage, !isWide && s.baImageMobile, s.baPlaceholder, s.baPlaceholderAfter]}>
+              <View style={s.baSparkle}>
+                <View style={s.baSparkleH} />
+                <View style={s.baSparkleV} />
+              </View>
+            </View>
+          )}
+          <View style={s.baAiBadge}>
+            <Text style={s.baAiBadgeText}>AI</Text>
+          </View>
         </View>
       </View>
-    );
-  };
+    </View>
+  );
 
   /* ────────────────── ÖZELLİKLER ────────────────── */
   const renderFeatures = () => {
     const features = [
-      { icon: 'target' as const, title: 'Gerçekçi Sonuçlar', desc: 'Perspektif uyumlu yerleştirme' },
-      { icon: 'speed' as const, title: 'Hızlı', desc: '30-60 saniyede hazır' },
-      { icon: 'check' as const, title: 'Geniş Katalog', desc: '2000+ halı, 9 marka' },
+      { icon: 'target' as const, title: 'Gerçekçi Sonuçlar', desc: 'Perspektif ve ışık uyumlu AI yerleştirme' },
+      { icon: 'speed' as const, title: 'Anında Sonuç', desc: '30-60 saniyede hazır görüntü' },
+      { icon: 'check' as const, title: 'Geniş Katalog', desc: '2000+ halı modeli, 9 marka' },
     ];
     return (
       <View style={s.section}>
         <View style={[s.featuresGrid, !isWide && s.featuresGridMobile]}>
           {features.map((f) => (
             <View key={f.title} style={[s.featureCard, !isWide && s.featureCardMobile]}>
-              <View style={s.featureCardRow}>
-                <View style={s.featureIconWrap}>
-                  <FeatureIcon type={f.icon} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.featureTitle}>{f.title}</Text>
-                  <Text style={s.featureDesc}>{f.desc}</Text>
-                </View>
+              <View style={s.featureIconWrap}>
+                <FeatureIcon type={f.icon} />
               </View>
+              <Text style={s.featureTitle}>{f.title}</Text>
+              <Text style={s.featureDesc}>{f.desc}</Text>
             </View>
           ))}
         </View>
@@ -356,7 +390,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       >
         <View style={[s.content, isWide && s.contentWide]}>
           {renderHero()}
-          {renderHowItWorks()}
+          {renderBeforeAfter()}
           {renderFeatures()}
           {renderShowcase()}
           {renderContactCTA()}
@@ -519,128 +553,227 @@ const s = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
-  heroSecondaryBtn: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  heroWhatsappBtn: {
+    backgroundColor: '#25D366',
     borderRadius: RADIUS.lg,
     paddingHorizontal: 24,
     paddingVertical: 14,
   },
-  heroSecondaryBtnHover: {
-    backgroundColor: COLORS.surfaceElevated,
+  heroWhatsappBtnHover: {
+    backgroundColor: '#22C55E',
   },
-  heroSecondaryBtnText: {
-    color: COLORS.textSecondary,
-    fontWeight: '600',
+  heroWhatsappBtnText: {
+    color: COLORS.white,
+    fontWeight: '700',
     fontSize: 16,
   },
 
-  /* ─── Steps (How It Works) ─── */
-  stepsRow: {
+  /* ─── Before/After Showcase ─── */
+  baContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.xs,
+    gap: SPACING.sm,
   },
-  stepsRowMobile: {
-    justifyContent: 'space-between',
-    gap: 0,
-  },
-  stepItem: {
-    minWidth: 170,
-    alignItems: 'center',
-    gap: 6,
-  },
-  stepItemCompact: {
-    minWidth: 0,
+  baCard: {
     flex: 1,
-    gap: 4,
+    maxWidth: 280,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
-  stepBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  baCardMobile: {
+    maxWidth: 140,
+  },
+  baImage: {
+    width: '100%',
+    aspectRatio: 3 / 4,
+  },
+  baImageMobile: {
+    aspectRatio: 3 / 4,
+  },
+  baPlaceholder: {
+    backgroundColor: '#1a1815',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  baPlaceholderAfter: {
+    backgroundColor: '#1c1a15',
+  },
+  baCameraIcon: {
+    width: 40,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  baCameraBody: {
+    width: 36,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(200, 134, 10, 0.3)',
+  },
+  baCameraLens: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: 'rgba(200, 134, 10, 0.3)',
+  },
+  baSparkle: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  baSparkleH: {
+    position: 'absolute',
+    width: 24,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'rgba(200, 134, 10, 0.4)',
+  },
+  baSparkleV: {
+    position: 'absolute',
+    width: 3,
+    height: 24,
+    borderRadius: 2,
+    backgroundColor: 'rgba(200, 134, 10, 0.4)',
+  },
+  baAiBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(200, 134, 10, 0.25)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(200, 134, 10, 0.45)',
+  },
+  baAiBadgeText: {
+    color: COLORS.primaryLight,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  baMiddle: {
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: SPACING.xs,
+  },
+  baArrow: {
+    color: COLORS.textMuted,
+    fontSize: 18,
+    fontWeight: '300',
+  },
+  baCarpetWrap: {
+    width: 72,
+    height: 96,
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    position: 'relative',
+  },
+  baCarpetWrapMobile: {
+    width: 56,
+    height: 74,
+  },
+  baCarpetThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  baCarpetCheck: {
+    position: 'absolute',
+    top: -1,
+    right: -1,
+    width: 20,
+    height: 20,
+    borderBottomLeftRadius: 8,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepBadgeCompact: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  baCarpetCheckInner: {
+    width: 8,
+    height: 5,
+    borderLeftWidth: 2,
+    borderBottomWidth: 2,
+    borderColor: COLORS.white,
+    transform: [{ rotate: '-45deg' }],
+    marginTop: -2,
+    marginLeft: 1,
   },
-  stepNum: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  stepNumCompact: {
-    fontSize: 11,
-  },
-  stepText: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  stepTextMobile: {
-    fontSize: 11,
-    lineHeight: 14,
-  },
-  stepArrowWrap: {
-    width: 40,
+  baCarpetInfo: {
     alignItems: 'center',
+    gap: 1,
   },
-  stepArrowText: {
+  baCarpetBrand: {
     color: COLORS.textMuted,
-    fontSize: 16,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  baCarpetModel: {
+    color: COLORS.text,
+    fontSize: 13,
+    fontWeight: '800',
   },
 
   /* ─── Features ─── */
   featuresGrid: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    gap: SPACING.md,
   },
   featuresGridMobile: {
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   featureCard: {
     flex: 1,
+    minWidth: 140,
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    alignItems: 'center',
   },
   featureCardMobile: {
     flex: 0,
-  },
-  featureCardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
+    width: '30%',
+    minWidth: 100,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
   },
   featureIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(200, 134, 10, 0.18)',
     borderWidth: 1,
     borderColor: 'rgba(200, 134, 10, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
+    marginBottom: SPACING.sm,
   },
   featureTitle: {
     color: COLORS.text,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
-    marginBottom: 2,
+    textAlign: 'center',
+    marginBottom: 4,
   },
   featureDesc: {
     color: COLORS.textSecondary,
     fontSize: 11,
+    textAlign: 'center',
+    lineHeight: 15,
   },
 
   /* ─── Feature Icons ─── */
