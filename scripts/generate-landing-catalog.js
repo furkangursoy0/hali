@@ -69,3 +69,13 @@ fs.writeFileSync(outPath, JSON.stringify(catalog, null, 2), 'utf8');
 const brandCount = Object.keys(catalog).length;
 const totalCarpets = Object.values(catalog).reduce((sum, arr) => sum + arr.length, 0);
 console.log(`✅ landing-catalog.json: ${brandCount} brands, ${totalCarpets} carpets`);
+
+// Also write catalog-stats.json with real totals from carpets.json
+const statsPath = path.join(__dirname, '..', 'data', 'catalog-stats.json');
+const stats = {
+  totalCarpets: carpets.length,
+  totalBrands: brandCount,
+  brands: Object.keys(catalog),
+};
+fs.writeFileSync(statsPath, JSON.stringify(stats, null, 2), 'utf8');
+console.log(`✅ catalog-stats.json: ${carpets.length} total carpets, ${brandCount} brands`);
