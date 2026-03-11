@@ -287,7 +287,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
           {/* ─ Bottom gradient for badge readability ─ */}
           {isWeb && (
-            <View style={[s.sliderBottomGrad]} pointerEvents="none" />
+            <View style={[s.sliderBottomGrad, { backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.35))', pointerEvents: 'none' } as any]} />
           )}
 
           {/* ─ Carpet badge bottom center ─ */}
@@ -480,8 +480,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     <View style={[s.container, isWeb && ({ height: '100dvh', maxHeight: '100dvh' } as any)]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
-      <View pointerEvents="none" style={s.glowTop} />
-      <View pointerEvents="none" style={s.glowBottom} />
+      <View style={[s.glowTop, { pointerEvents: 'none' } as any]} />
+      <View style={[s.glowBottom, { pointerEvents: 'none' } as any]} />
       <ScrollView
         ref={scrollViewRef}
         style={[s.scroll, isWeb && ({ overflowY: 'auto' } as any)]}
@@ -775,7 +775,6 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     height: 80,
-    ...(Platform.OS === 'web' ? { background: 'linear-gradient(transparent, rgba(0,0,0,0.35))' } as any : {}),
   },
   sliderCarpetBadge: {
     position: 'absolute',

@@ -1,8 +1,10 @@
 const DEFAULT_CARPET_CDN_BASE = 'https://cdn.jsdelivr.net/gh/furkangursoy0/hali@main/assets';
+// Thumbnails (WebP, 420px) are always served from jsDelivr — all thumbs are committed to git
+const DEFAULT_CARPET_THUMB_CDN_BASE = 'https://cdn.jsdelivr.net/gh/furkangursoy0/hali@main/assets';
 
 const rawBase = (process.env.EXPO_PUBLIC_CARPET_CDN_BASE || DEFAULT_CARPET_CDN_BASE).trim();
 const CARPET_CDN_BASE = rawBase.replace(/\/+$/, '');
-const rawThumbBase = (process.env.EXPO_PUBLIC_CARPET_THUMB_CDN_BASE || '').trim();
+const rawThumbBase = (process.env.EXPO_PUBLIC_CARPET_THUMB_CDN_BASE || DEFAULT_CARPET_THUMB_CDN_BASE).trim();
 const CARPET_THUMB_CDN_BASE = rawThumbBase.replace(/\/+$/, '');
 
 function encodePath(path: string): string {
