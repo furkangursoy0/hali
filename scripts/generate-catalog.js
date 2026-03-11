@@ -33,6 +33,16 @@ const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'];
 const BRAND_OVERRIDES = {
     'Royal_Hali': 'Royal Halı',
     'empara': 'Empara',
+    // Türkçe karakter içeren markalar (klasör ASCII, display Türkçe)
+    'Padisah': 'Padişah',
+    'padisah': 'Padişah',
+    'Ipek': 'İpek',
+    'ipek': 'İpek',
+    'Bahariye': 'Bahariye',
+    'Seyran': 'Seyran',
+    'Artemis': 'Artemis',
+    'Elexus': 'Elexus',
+    'Diora': 'Diora',
 };
 
 // Klasör adı disk'te farklı case'de olabilir ama Git'te farklı kayıtlı

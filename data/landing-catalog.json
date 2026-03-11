@@ -1,4 +1,54 @@
 {
+  "Artemis": [
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Anetta/ArtemisHalAnetta-03318D-KremBejHal.webp",
+      "imagePath": "carpets/Artemis/Anetta/ArtemisHalAnetta-03318D-KremBejHal.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Anka(yeni)/ArtemisHalAnka-00782B-VizonBejHal.webp",
+      "imagePath": "carpets/Artemis/Anka(yeni)/ArtemisHalAnka-00782B-VizonBejHal.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Art Shape(yeni)/ArtemisHalArtShape-Y1023d-KremBejHal.webp",
+      "imagePath": "carpets/Artemis/Art Shape(yeni)/ArtemisHalArtShape-Y1023d-KremBejHal.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Art Sti̇l(yeni)/ArtemisHalArtStil-Y1062a-KremGriHal.webp",
+      "imagePath": "carpets/Artemis/Art Sti̇l(yeni)/ArtemisHalArtStil-Y1062a-KremGriHal.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Davina/ArtemisHalDavina-09752A-KremGriHal.webp",
+      "imagePath": "carpets/Artemis/Davina/ArtemisHalDavina-09752A-KremGriHal.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Emma/ArtemisHalEmma-09763A-KremBejHal.webp",
+      "imagePath": "carpets/Artemis/Emma/ArtemisHalEmma-09763A-KremBejHal.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Eva/ArtemisHalEva-01100E-GriKremHal.webp",
+      "imagePath": "carpets/Artemis/Eva/ArtemisHalEva-01100E-GriKremHal.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Hermes Color(yeni)/ArtemisHalHermesColor-B100ba.webp",
+      "imagePath": "carpets/Artemis/Hermes Color(yeni)/ArtemisHalHermesColor-B100ba.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Hermes Sti̇l(yeni)/ArtemisHalHermesStil-B115ba.webp",
+      "imagePath": "carpets/Artemis/Hermes Sti̇l(yeni)/ArtemisHalHermesStil-B115ba.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Kari̇zma/ArtemisHalKarizma-02798A-KremBejHal.webp",
+      "imagePath": "carpets/Artemis/Kari̇zma/ArtemisHalKarizma-02798A-KremBejHal.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Lia/ArtemisHalLia-01128C-BejKremHal.webp",
+      "imagePath": "carpets/Artemis/Lia/ArtemisHalLia-01128C-BejKremHal.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Artemis/Murano/ArtemisHalMurano-01359A-KremGriHal.webp",
+      "imagePath": "carpets/Artemis/Murano/ArtemisHalMurano-01359A-KremGriHal.jpg"
+    }
+  ],
   "Atlas": [
     {
       "thumbPath": "carpets-thumbs/Atlas/Arbel/EI01A.webp",
@@ -47,6 +97,106 @@
     {
       "thumbPath": "carpets-thumbs/Atlas/Arbel/EI01B.webp",
       "imagePath": "carpets/Atlas/Arbel/EI01B.png"
+    }
+  ],
+  "Bahariye": [
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Alize/BahariyeAlize-Al01Bej.webp",
+      "imagePath": "carpets/Bahariye/Alize/BahariyeAlize-Al01Bej.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Alora/BahariyeAlora-Alr01aAntrasit.webp",
+      "imagePath": "carpets/Bahariye/Alora/BahariyeAlora-Alr01aAntrasit.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Beste/BahariyeBeste-Bs01Bej.webp",
+      "imagePath": "carpets/Bahariye/Beste/BahariyeBeste-Bs01Bej.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Cevher/BahariyeCevher-Cv01aBordo.webp",
+      "imagePath": "carpets/Bahariye/Cevher/BahariyeCevher-Cv01aBordo.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Craft/BahariyeCraft-Cr01Antrasit.webp",
+      "imagePath": "carpets/Bahariye/Craft/BahariyeCraft-Cr01Antrasit.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Deep/BahariyeDeep-Dp01aBeyaz.webp",
+      "imagePath": "carpets/Bahariye/Deep/BahariyeDeep-Dp01aBeyaz.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Deniz/BahariyeDeniz-DenizDn01aBej.webp",
+      "imagePath": "carpets/Bahariye/Deniz/BahariyeDeniz-DenizDn01aBej.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Ezgi/BahariyeEzgi-Ez01Krem.webp",
+      "imagePath": "carpets/Bahariye/Ezgi/BahariyeEzgi-Ez01Krem.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/İnci/BahariyeInci-In01.webp",
+      "imagePath": "carpets/Bahariye/İnci/BahariyeInci-In01.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Loda/BahariyeLoda-Ld01aAntrasit.webp",
+      "imagePath": "carpets/Bahariye/Loda/BahariyeLoda-Ld01aAntrasit.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Luvina/BahariyeLuvina-Lv04aGri.webp",
+      "imagePath": "carpets/Bahariye/Luvina/BahariyeLuvina-Lv04aGri.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Bahariye/Mihra/BahariyeMihra-MihraMr02Bej.webp",
+      "imagePath": "carpets/Bahariye/Mihra/BahariyeMihra-MihraMr02Bej.jpg"
+    }
+  ],
+  "Diora": [
+    {
+      "thumbPath": "carpets-thumbs/Diora/Babil/3816-Z.webp",
+      "imagePath": "carpets/Diora/Babil/3816-Z.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/Estella/1034-A.webp",
+      "imagePath": "carpets/Diora/Estella/1034-A.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/Ethno Caliente/2087-A.webp",
+      "imagePath": "carpets/Diora/Ethno Caliente/2087-A.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/Ethno Zen/2083-A.webp",
+      "imagePath": "carpets/Diora/Ethno Zen/2083-A.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/Godiva/2093-A.webp",
+      "imagePath": "carpets/Diora/Godiva/2093-A.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/Kumkapi/8053A.webp",
+      "imagePath": "carpets/Diora/Kumkapi/8053A.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/London/2039-A.webp",
+      "imagePath": "carpets/Diora/London/2039-A.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/Mia/6660-A.webp",
+      "imagePath": "carpets/Diora/Mia/6660-A.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/Moda/6929-A.webp",
+      "imagePath": "carpets/Diora/Moda/6929-A.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/Otantik/3954-A.webp",
+      "imagePath": "carpets/Diora/Otantik/3954-A.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/Valerian/2080-B.webp",
+      "imagePath": "carpets/Diora/Valerian/2080-B.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Diora/Babil/3827-Z.webp",
+      "imagePath": "carpets/Diora/Babil/3827-Z.jpg"
     }
   ],
   "Dolce Vita": [
@@ -99,6 +249,56 @@
       "imagePath": "carpets/Dolce_Vita/El_Hamra/El-Hamra_8451_Alabaster.webp"
     }
   ],
+  "Elexus": [
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Amor/4024.webp",
+      "imagePath": "carpets/Elexus/Amor/4024.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Azur/4116.webp",
+      "imagePath": "carpets/Elexus/Azur/4116.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Diamond/3774.webp",
+      "imagePath": "carpets/Elexus/Diamond/3774.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Lagos/3762.webp",
+      "imagePath": "carpets/Elexus/Lagos/3762.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Olimpos/1928.webp",
+      "imagePath": "carpets/Elexus/Olimpos/1928.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Regi̇na/4103.webp",
+      "imagePath": "carpets/Elexus/Regi̇na/4103.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Valesco/3934.webp",
+      "imagePath": "carpets/Elexus/Valesco/3934.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Woolly/4122.webp",
+      "imagePath": "carpets/Elexus/Woolly/4122.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Amor/4025.webp",
+      "imagePath": "carpets/Elexus/Amor/4025.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Azur/4117.webp",
+      "imagePath": "carpets/Elexus/Azur/4117.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Diamond/3775.webp",
+      "imagePath": "carpets/Elexus/Diamond/3775.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Elexus/Lagos/3764.webp",
+      "imagePath": "carpets/Elexus/Lagos/3764.jpg"
+    }
+  ],
   "Empara": [
     {
       "thumbPath": "carpets-thumbs/Empara/Agra/5005Papaya.webp",
@@ -147,6 +347,56 @@
     {
       "thumbPath": "carpets-thumbs/Empara/Heritage/5401Lisse.webp",
       "imagePath": "carpets/Empara/Heritage/5401Lisse.jpg"
+    }
+  ],
+  "İpek": [
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Almond/11400_1666009930.webp",
+      "imagePath": "carpets/Ipek/Almond/11400_1666009930.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Anisa/15532_1662379623.webp",
+      "imagePath": "carpets/Ipek/Anisa/15532_1662379623.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Blossom/13350_1752740764.webp",
+      "imagePath": "carpets/Ipek/Blossom/13350_1752740764.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Dalida/3200A_1741854337.webp",
+      "imagePath": "carpets/Ipek/Dalida/3200A_1741854337.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Filiya/Filiya-11250-Acik-Gri-150X233_1681200920.webp",
+      "imagePath": "carpets/Ipek/Filiya/Filiya-11250-Acik-Gri-150X233_1681200920.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Gaspara/14501_1662377219.webp",
+      "imagePath": "carpets/Ipek/Gaspara/14501_1662377219.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Gordion/16100_1666012803.webp",
+      "imagePath": "carpets/Ipek/Gordion/16100_1666012803.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/İpek Lux/11700_1680767190.webp",
+      "imagePath": "carpets/Ipek/İpek Lux/11700_1680767190.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Kazaz/2300A_1701950433.webp",
+      "imagePath": "carpets/Ipek/Kazaz/2300A_1701950433.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Lapena/11501_1666011201.webp",
+      "imagePath": "carpets/Ipek/Lapena/11501_1666011201.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Lavida/8400_1671773571.webp",
+      "imagePath": "carpets/Ipek/Lavida/8400_1671773571.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Ipek/Lucas/4000A_1765784192.webp",
+      "imagePath": "carpets/Ipek/Lucas/4000A_1765784192.jpg"
     }
   ],
   "Jusco": [
@@ -349,6 +599,56 @@
       "imagePath": "carpets/Merinos/Therapy/19112-030.jpeg"
     }
   ],
+  "Padişah": [
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Aspen/62746095.webp",
+      "imagePath": "carpets/Padisah/Aspen/62746095.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Assos/69607060.webp",
+      "imagePath": "carpets/Padisah/Assos/69607060.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Dekor/54085260.webp",
+      "imagePath": "carpets/Padisah/Dekor/54085260.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Diana/73471060.webp",
+      "imagePath": "carpets/Padisah/Diana/73471060.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Dubai/56271010.webp",
+      "imagePath": "carpets/Padisah/Dubai/56271010.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Essence/73398095.webp",
+      "imagePath": "carpets/Padisah/Essence/73398095.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Eternity/78675070.webp",
+      "imagePath": "carpets/Padisah/Eternity/78675070.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Evi̇dence/62862020.webp",
+      "imagePath": "carpets/Padisah/Evi̇dence/62862020.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Lara/67878060.webp",
+      "imagePath": "carpets/Padisah/Lara/67878060.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Polo/74775070.webp",
+      "imagePath": "carpets/Padisah/Polo/74775070.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Prime/69392095.webp",
+      "imagePath": "carpets/Padisah/Prime/69392095.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Padisah/Safi̇r/73942099.webp",
+      "imagePath": "carpets/Padisah/Safi̇r/73942099.jpg"
+    }
+  ],
   "Pierre Cardin": [
     {
       "thumbPath": "carpets-thumbs/Pierre_Cardin/Beverly/BF01A.webp",
@@ -447,6 +747,56 @@
     {
       "thumbPath": "carpets-thumbs/Royal_Hali/ARLES/FJ01B.webp",
       "imagePath": "carpets/Royal_Hali/ARLES/FJ01B.png"
+    }
+  ],
+  "Seyran": [
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Ahlat/Ahlat-Antrasit-Hali-Yumusak-Dokulu-Akrilik-Hali-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-7052-723.webp",
+      "imagePath": "carpets/Seyran/Ahlat/Ahlat-Antrasit-Hali-Yumusak-Dokulu-Akrilik-Hali-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-7052-723.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Asir/Asir-Bej-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-0250-59.webp",
+      "imagePath": "carpets/Seyran/Asir/Asir-Bej-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-0250-59.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Asya/Asya-Bej-Hali-Akrilik-Hali-Yumusak-Dokulu-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-522-1090.webp",
+      "imagePath": "carpets/Seyran/Asya/Asya-Bej-Hali-Akrilik-Hali-Yumusak-Dokulu-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-522-1090.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Avangard 2/Avangard-Bej-Hali-Akrilik-Hali-Yumusak-Dokulu-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-2036-749.webp",
+      "imagePath": "carpets/Seyran/Avangard 2/Avangard-Bej-Hali-Akrilik-Hali-Yumusak-Dokulu-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-2036-749.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Bali/Bali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-4500-080-X-150-1912.webp",
+      "imagePath": "carpets/Seyran/Bali/Bali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-4500-080-X-150-1912.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Bombay/Bombay-Antrasit-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-662-82.webp",
+      "imagePath": "carpets/Seyran/Bombay/Bombay-Antrasit-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-662-82.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Cozy Wool/Cozy-Wool-Beyaz-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-710-461.webp",
+      "imagePath": "carpets/Seyran/Cozy Wool/Cozy-Wool-Beyaz-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-710-461.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Diva/Diva-Bej-Hali-Akrilik-Hali-Yumusak-Dokulu-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-0271-794.webp",
+      "imagePath": "carpets/Seyran/Diva/Diva-Bej-Hali-Akrilik-Hali-Yumusak-Dokulu-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-0271-794.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Etnik/Etnik-Antrasit-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-2552-915.webp",
+      "imagePath": "carpets/Seyran/Etnik/Etnik-Antrasit-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-2552-915.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Evita/Evita-Antrasit-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-6001-707.webp",
+      "imagePath": "carpets/Seyran/Evita/Evita-Antrasit-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-6001-707.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Gusto/Gusto-Antrasit-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-902-1180.webp",
+      "imagePath": "carpets/Seyran/Gusto/Gusto-Antrasit-Hali-Salon-Oturma-Odasi-Cocuk-Odasi-Yatak-Odasi-Halisi-902-1180.webp"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Seyran/Ibiza/Ibiza-Gri-Hali-Yumusak-Dokulu-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-151-795.webp",
+      "imagePath": "carpets/Seyran/Ibiza/Ibiza-Gri-Hali-Yumusak-Dokulu-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-151-795.webp"
     }
   ]
 }

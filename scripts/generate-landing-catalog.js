@@ -13,14 +13,21 @@ const outPath = path.join(__dirname, '..', 'data', 'landing-catalog.json');
 
 const BRAND_DISPLAY = {
   Atlas: 'Atlas',
+  Bahariye: 'Bahariye',
+  Diora: 'Diora',
   Dolce_Vita: 'Dolce Vita',
+  Elexus: 'Elexus',
   Empara: 'Empara',
+  Ipek: 'İpek',
+  Artemis: 'Artemis',
   Jusco: 'Jusco',
   Karmen: 'Karmen',
   Kreasyon: 'Kreasyon',
   Merinos: 'Merinos',
+  Padisah: 'Padişah',
   Pierre_Cardin: 'Pierre Cardin',
   Royal_Hali: 'Royal Halı',
+  Seyran: 'Seyran',
 };
 
 const carpets = JSON.parse(fs.readFileSync(carpetsPath, 'utf8'));
