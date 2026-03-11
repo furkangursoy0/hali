@@ -249,7 +249,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
     return (
       <View style={s.section}>
-        <Text style={[s.sectionTitle, isWide && s.sectionTitleWide]}>AI ile Halı Deneme</Text>
+        <Text style={[s.sectionTitle, isWide && s.sectionTitleWide]}>Yapay Zeka ile Halı Deneme</Text>
         <Text style={s.sectionSubtitle}>Kaydırarak öncesi ve sonrasını karşılaştırın</Text>
         <View
           ref={sliderContainerRef}

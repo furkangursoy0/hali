@@ -15,7 +15,7 @@ html = html.replace('<html lang="en">', '<html lang="tr">');
 // Replace title
 html = html.replace(
   /<title>[^<]*<\/title>/,
-  '<title>Halı Dene | Yapay Zeka ile Halı Deneme</title>'
+  '<title>Halı Dene | Odanda Yapay Zeka ile Halıyı Gör!</title>'
 );
 
 // Remove Expo-generated duplicate meta tags (theme-color, description)
@@ -27,12 +27,12 @@ html = html.replace(/<link rel="icon" href="\/favicon\.ico"\s*\/?\s*>/g, '');
 
 // Meta tags to inject before </head>
 const metaTags = `
-  <meta name="description" content="Müşterilerinize halıları evlerinde gösterin. AI destekli halı deneme platformu. 2000+ halı, 9 marka, 30 saniyede sonuç." />
+  <meta name="description" content="Müşterilerinize halıları evlerinde gösterin. Yapay zeka destekli halı deneme platformu. 3600+ halı, 16 marka, 20 saniyede sonuç." />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Halı Dene | Yapay Zeka ile Halı Deneme" />
-  <meta property="og:description" content="Müşterilerinize halıları evlerinde gösterin. AI destekli halı deneme platformu." />
+  <meta property="og:title" content="Halı Dene | Odanda Yapay Zeka ile Halıyı Gör!" />
+  <meta property="og:description" content="Müşterilerinize halıları evlerinde gösterin. Yapay zeka destekli halı deneme platformu." />
   <meta property="og:url" content="https://halidene.com" />
   <meta property="og:image" content="https://halidene.com/og-image.png" />
   <meta property="og:locale" content="tr_TR" />
@@ -40,8 +40,8 @@ const metaTags = `
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Halı Dene | Yapay Zeka ile Halı Deneme" />
-  <meta name="twitter:description" content="Müşterilerinize halıları evlerinde gösterin. AI destekli halı deneme platformu." />
+  <meta name="twitter:title" content="Halı Dene | Odanda Yapay Zeka ile Halıyı Gör!" />
+  <meta name="twitter:description" content="Müşterilerinize halıları evlerinde gösterin. Yapay zeka destekli halı deneme platformu." />
   <meta name="twitter:image" content="https://halidene.com/og-image.png" />
 
   <!-- Theme -->

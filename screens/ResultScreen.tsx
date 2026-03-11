@@ -50,7 +50,7 @@ interface ResultScreenProps {
 const LOADING_MESSAGES = [
     '🎨 Halı deseni analiz ediliyor...',
     '📐 Oda perspektifi hesaplanıyor...',
-    '✨ AI halı deneme yapılıyor...',
+    '✨ Yapay zeka halı deneme yapılıyor...',
     '🖼️ Görsel oluşturuluyor...',
     '🔍 Son rötuşlar yapılıyor...',
 ];
