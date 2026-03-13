@@ -749,6 +749,56 @@
       "imagePath": "carpets/Royal_Hali/ARLES/FJ01B.png"
     }
   ],
+  "Sanat": [
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Alya/150958.webp",
+      "imagePath": "carpets/Sanat/Alya/150958.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Cover/106033.webp",
+      "imagePath": "carpets/Sanat/Cover/106033.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Deluks/122342.webp",
+      "imagePath": "carpets/Sanat/Deluks/122342.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Gravita/100120.webp",
+      "imagePath": "carpets/Sanat/Gravita/100120.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Gusto/262651.webp",
+      "imagePath": "carpets/Sanat/Gusto/262651.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Hera/110620.webp",
+      "imagePath": "carpets/Sanat/Hera/110620.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Lora Plus/20618.webp",
+      "imagePath": "carpets/Sanat/Lora Plus/20618.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Mira/124220.webp",
+      "imagePath": "carpets/Sanat/Mira/124220.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Misra/161721.webp",
+      "imagePath": "carpets/Sanat/Misra/161721.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Penta/167724.webp",
+      "imagePath": "carpets/Sanat/Penta/167724.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Porte/273910.webp",
+      "imagePath": "carpets/Sanat/Porte/273910.jpg"
+    },
+    {
+      "thumbPath": "carpets-thumbs/Sanat/Alya/171997.webp",
+      "imagePath": "carpets/Sanat/Alya/171997.jpg"
+    }
+  ],
   "Seyran": [
     {
       "thumbPath": "carpets-thumbs/Seyran/Ahlat/Ahlat-Antrasit-Hali-Yumusak-Dokulu-Akrilik-Hali-Salon-Oturma-Odasi-Yatak-Odasi-Halisi-7052-723.webp",
