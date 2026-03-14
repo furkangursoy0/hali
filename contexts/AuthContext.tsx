@@ -103,6 +103,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  /* ── Global 401 interceptor: expired/invalid token → auto-logout ── */
+  useEffect(() => {
+    const id = axios.interceptors.response.use(
+      (res) => res,
+      (error) => {
+        if (error?.response?.status === 401) {
+          setUser(null);
+          setUsers([]);
+          delete axios.defaults.headers.common.Authorization;
+          clearSession();
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => { axios.interceptors.response.eject(id); };
+  }, []);
+
   const loadAdminUsers = async () => {
     try {
       if (!axios.defaults.headers.common.Authorization) return;
@@ -129,8 +146,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: apiUser?.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
         credit: Number(apiUser?.credit || 0),
       });
-    } catch {
-      // session invalid or backend unavailable; keep current state.
+    } catch (err: any) {
+      // Token expired or invalid → clear session so user sees login screen
+      if (err?.response?.status === 401) {
+        setUser(null);
+        setUsers([]);
+        delete axios.defaults.headers.common.Authorization;
+        clearSession();
+      }
+      // Other errors (network, 500, etc.) → keep current state
     }
   };
 
