@@ -2,9 +2,12 @@ export const COLORS = {
     primary: '#C8860A',
     primaryDark: '#9A6508',
     primaryLight: '#F5C842',
+    primaryGlow: 'rgba(200, 134, 10, 0.12)',
+    primaryGlowStrong: 'rgba(200, 134, 10, 0.25)',
     background: '#0F0F0F',
     surface: '#1A1A1A',
     surfaceElevated: '#242424',
+    surfaceGlass: 'rgba(26, 26, 26, 0.7)',
     border: '#2E2E2E',
     text: '#FFFFFF',
     textSecondary: '#A0A0A0',
@@ -28,6 +31,7 @@ export const SPACING = {
     lg: 24,
     xl: 32,
     xxl: 48,
+    xxxl: 64,
 };
 
 export const RADIUS = {
@@ -35,5 +39,6 @@ export const RADIUS = {
     md: 8,
     lg: 10,
     xl: 14,
+    xxl: 20,
     full: 999,
 };
