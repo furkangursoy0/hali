@@ -75,6 +75,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
       return;
     }
 
+    setCreditDrafts((prev) => { const next = { ...prev }; delete next[userId]; return next; });
     setFeedbackMessage('Kredi güncellendi.');
     Alert.alert('Başarılı', 'Kredi güncellendi.');
   };

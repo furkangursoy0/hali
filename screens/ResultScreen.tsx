@@ -305,7 +305,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
         allCarpets.forEach((carpetItem, index) => {
             setTimeout(() => fireRender(carpetItem, index), index * 2000);
         });
-    }, [renderSlots.length]);
+    }, [renderSlots.length, fireRender]);
 
     // "Tekrar Dene" handler — free retry (credits already deducted, creditsPreDeducted: true)
     const handleRetry = useCallback((index: number, carpetItem: Carpet) => {

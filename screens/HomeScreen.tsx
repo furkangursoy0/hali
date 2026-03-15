@@ -46,6 +46,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     };
 
     const takePhoto = async () => {
+        if (loading) return;
         const hasPermission = await requestCameraPermission();
         if (!hasPermission) {
             Alert.alert('İzin Gerekli', 'Kamera erişimine izin vermeniz gerekiyor.');
@@ -66,6 +67,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     };
 
     const pickFromGallery = async () => {
+        if (loading) return;
         const hasPermission = await requestGalleryPermission();
         if (!hasPermission) {
             Alert.alert('İzin Gerekli', 'Galeri erişimine izin vermeniz gerekiyor.');

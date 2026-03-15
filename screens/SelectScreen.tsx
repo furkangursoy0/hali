@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -95,6 +95,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     const [showLimitModal, setShowLimitModal] = useState(false);
     const [visibleCount, setVisibleCount] = useState(isWeb ? WEB_PAGE_SIZE : MOBILE_PAGE_SIZE);
     const [isPlacing, setIsPlacing] = useState(false);
+    const isPlacingRef = useRef(false);
     const [customCarpetUri, setCustomCarpetUri] = useState<string | null>(null);
     const [mobileWebBottomOffset, setMobileWebBottomOffset] = useState(0);
     const [customerNote, setCustomerNote] = useState('');
@@ -302,17 +303,22 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     };
 
     const handlePlace = async (mode: 'preview' | 'normal') => {
-        if (isPlacing) return;
+        // useRef ile senkron mutex — React state async olduğundan hızlı çift tap'ta race condition olur
+        if (isPlacingRef.current) return;
+        isPlacingRef.current = true;
         if (!isLoggedIn) {
+            isPlacingRef.current = false;
             navigation.navigate('Login');
             return;
         }
         const count = selectedCarpets.length;
         if (count === 0) {
+            isPlacingRef.current = false;
             Alert.alert('Halı Seçin', 'Lütfen en az bir halı seçin.');
             return;
         }
         if (remaining < count) {
+            isPlacingRef.current = false;
             setShowLimitModal(true);
             return;
         }
@@ -345,6 +351,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         } catch (error: any) {
             Alert.alert('İşlem Başarısız', error?.message || 'Render başlatılamadı. Lütfen tekrar deneyin.');
         } finally {
+            isPlacingRef.current = false;
             setIsPlacing(false);
         }
     };
