@@ -369,7 +369,7 @@ function BlogList({ posts, isCompactWeb, onNew, onEdit, onDelete }: {
   );
 }
 
-/* ─── Blog Editor Component ─── */
+/* ─── Gutenberg-Style Blog Editor ─── */
 function BlogEditor({ post, isCompactWeb, onUpdate, onUpdateSection, onRemoveSection, onMoveSection, onAddSection, onSave, onCancel }: {
   post: BlogPost;
   isCompactWeb: boolean;
@@ -381,17 +381,39 @@ function BlogEditor({ post, isCompactWeb, onUpdate, onUpdateSection, onRemoveSec
   onSave: (published: boolean) => void;
   onCancel: () => void;
 }) {
-  const [showSectionPicker, setShowSectionPicker] = useState(false);
+  const [showMeta, setShowMeta] = useState(false);
+  const [activeBlockMenu, setActiveBlockMenu] = useState<number | null>(null);
+  const [focusedBlock, setFocusedBlock] = useState<number | null>(null);
+
+  const blockTypes: { type: BlogSection['type']; icon: string; label: string }[] = [
+    { type: 'paragraph', icon: '¶', label: 'Paragraf' },
+    { type: 'heading', icon: 'H', label: 'Başlık' },
+    { type: 'image', icon: '🖼', label: 'Görsel' },
+    { type: 'list', icon: '☰', label: 'Liste' },
+    { type: 'table', icon: '▦', label: 'Tablo' },
+  ];
 
   return (
     <View style={styles.formCard}>
-      <Text style={styles.sectionTitle}>{post.slug ? 'Yazıyı Düzenle' : 'Yeni Yazı'}</Text>
+      {/* ── Top Action Bar ── */}
+      <View style={styles.gutTopBar}>
+        <Pressable style={styles.gutBackBtn} onPress={onCancel}>
+          <Text style={styles.gutBackBtnText}>← Geri</Text>
+        </Pressable>
+        <View style={styles.gutTopBarRight}>
+          <Pressable style={styles.gutDraftBtn} onPress={() => onSave(false)}>
+            <Text style={styles.gutDraftBtnText}>Taslak Kaydet</Text>
+          </Pressable>
+          <Pressable style={styles.gutPublishBtn} onPress={() => onSave(true)}>
+            <Text style={styles.gutPublishBtnText}>Yayınla</Text>
+          </Pressable>
+        </View>
+      </View>
 
-      {/* Title */}
-      <Text style={styles.fieldLabel}>Başlık</Text>
+      {/* ── Title (Gutenberg-style large input) ── */}
       <TextInput
-        style={[styles.input, isWeb && styles.inputWeb]}
-        placeholder="Blog yazısı başlığı"
+        style={[styles.gutTitleInput, isWeb && styles.inputWeb]}
+        placeholder="Başlık ekleyin..."
         placeholderTextColor={COLORS.textMuted}
         value={post.title}
         onChangeText={(title) => {
@@ -402,371 +424,454 @@ function BlogEditor({ post, isCompactWeb, onUpdate, onUpdateSection, onRemoveSec
           onUpdate(updates);
         }}
       />
-
-      {/* Slug */}
-      <Text style={styles.fieldLabel}>Slug (URL)</Text>
-      <TextInput
-        style={[styles.input, isWeb && styles.inputWeb]}
-        placeholder="yazi-url-adresi"
-        placeholderTextColor={COLORS.textMuted}
-        value={post.slug}
-        onChangeText={(slug) => onUpdate({ slug })}
-        autoCapitalize="none"
-      />
-      <Text style={styles.fieldHint}>halidene.com/blog/{post.slug || '...'}</Text>
-
-      {/* Meta Description */}
-      <Text style={styles.fieldLabel}>Meta Açıklama (SEO)</Text>
-      <TextInput
-        style={[styles.input, styles.textArea, isWeb && styles.inputWeb]}
-        placeholder="Google arama sonuçlarında görünecek açıklama (max 160 karakter)"
-        placeholderTextColor={COLORS.textMuted}
-        value={post.metaDescription}
-        onChangeText={(metaDescription) => onUpdate({ metaDescription })}
-        multiline
-        numberOfLines={3}
-      />
-
-      {/* Summary */}
-      <Text style={styles.fieldLabel}>Özet</Text>
-      <TextInput
-        style={[styles.input, styles.textArea, isWeb && styles.inputWeb]}
-        placeholder="Blog listesinde görünecek kısa özet"
-        placeholderTextColor={COLORS.textMuted}
-        value={post.summary}
-        onChangeText={(summary) => onUpdate({ summary })}
-        multiline
-        numberOfLines={2}
-      />
-
-      {/* Author */}
-      <Text style={styles.fieldLabel}>Yazar</Text>
-      <TextInput
-        style={[styles.input, isWeb && styles.inputWeb]}
-        placeholder="Yazar adı"
-        placeholderTextColor={COLORS.textMuted}
-        value={post.author.name}
-        onChangeText={(name) => onUpdate({ author: { ...post.author, name } })}
-      />
-      <TextInput
-        style={[styles.input, isWeb && styles.inputWeb]}
-        placeholder="Yazar fotoğraf URL (opsiyonel)"
-        placeholderTextColor={COLORS.textMuted}
-        value={post.author.avatar || ''}
-        onChangeText={(avatar) => onUpdate({ author: { ...post.author, avatar: avatar || undefined } })}
-        autoCapitalize="none"
-      />
-
-      {/* Featured Image */}
-      <Text style={styles.fieldLabel}>Ana Görsel</Text>
-      <TextInput
-        style={[styles.input, isWeb && styles.inputWeb]}
-        placeholder="Görsel URL"
-        placeholderTextColor={COLORS.textMuted}
-        value={post.featuredImage || ''}
-        onChangeText={(featuredImage) => onUpdate({ featuredImage: featuredImage || undefined })}
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={[styles.input, isWeb && styles.inputWeb]}
-        placeholder="Görsel alt metni (SEO)"
-        placeholderTextColor={COLORS.textMuted}
-        value={post.featuredImageAlt || ''}
-        onChangeText={(featuredImageAlt) => onUpdate({ featuredImageAlt: featuredImageAlt || undefined })}
-      />
-      {post.featuredImage ? (
-        <View style={styles.imagePreview}>
-          <Image source={{ uri: post.featuredImage }} style={styles.imagePreviewImg} resizeMode="cover" />
-        </View>
+      {post.slug ? (
+        <Text style={styles.gutSlugPreview}>halidene.com/blog/{post.slug}</Text>
       ) : null}
 
-      {/* Date */}
-      <Text style={styles.fieldLabel}>Tarih</Text>
-      <TextInput
-        style={[styles.input, isWeb && styles.inputWeb]}
-        placeholder="YYYY-MM-DD"
-        placeholderTextColor={COLORS.textMuted}
-        value={post.date}
-        onChangeText={(date) => onUpdate({ date })}
-      />
-
-      {/* Sections */}
-      <View style={styles.sectionsDivider}>
-        <Text style={styles.sectionTitle}>İçerik Bölümleri</Text>
-      </View>
-
-      {post.sections.map((section, index) => (
-        <SectionEditor
-          key={index}
-          section={section}
-          index={index}
-          total={post.sections.length}
-          onUpdate={(s) => onUpdateSection(index, s)}
-          onRemove={() => onRemoveSection(index)}
-          onMove={(dir) => onMoveSection(index, dir)}
+      {/* ── Featured Image (Ana Görsel) ── */}
+      <View style={styles.gutFeaturedImageArea}>
+        {post.featuredImage ? (
+          <View style={styles.gutFeaturedImageWrap}>
+            <Image source={{ uri: post.featuredImage }} style={styles.gutFeaturedImageImg} resizeMode="cover" />
+            <View style={styles.gutFeaturedImageOverlay}>
+              <Pressable
+                style={styles.gutFeaturedImageRemoveBtn}
+                onPress={() => onUpdate({ featuredImage: undefined, featuredImageAlt: undefined })}
+              >
+                <Text style={styles.gutFeaturedImageRemoveText}>×</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.gutFeaturedImageEmpty}>
+            <Text style={styles.gutFeaturedImageIcon}>🖼</Text>
+            <Text style={styles.gutFeaturedImageLabel}>Ana Görsel Ekle</Text>
+            <Text style={styles.gutFeaturedImageHint}>Önerilen boyut: 1200 × 630 px (16:9)</Text>
+          </View>
+        )}
+        <TextInput
+          style={[styles.input, isWeb && styles.inputWeb, { marginTop: 8 }]}
+          placeholder="Görsel URL yapıştırın..."
+          placeholderTextColor={COLORS.textMuted}
+          value={post.featuredImage || ''}
+          onChangeText={(featuredImage) => onUpdate({ featuredImage: featuredImage || undefined })}
+          autoCapitalize="none"
         />
-      ))}
-
-      {/* Add section */}
-      {showSectionPicker ? (
-        <View style={styles.sectionPickerRow}>
-          {([
-            ['paragraph', 'Paragraf'],
-            ['heading', 'Başlık'],
-            ['image', 'Görsel'],
-            ['list', 'Liste'],
-            ['table', 'Tablo'],
-          ] as [BlogSection['type'], string][]).map(([type, label]) => (
-            <Pressable
-              key={type}
-              style={styles.sectionPickerBtn}
-              onPress={() => { onAddSection(type); setShowSectionPicker(false); }}
-            >
-              <Text style={styles.sectionPickerBtnText}>{label}</Text>
-            </Pressable>
-          ))}
-          <Pressable style={[styles.sectionPickerBtn, { borderColor: COLORS.textMuted }]} onPress={() => setShowSectionPicker(false)}>
-            <Text style={[styles.sectionPickerBtnText, { color: COLORS.textMuted }]}>İptal</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <Pressable style={styles.addSectionBtn} onPress={() => setShowSectionPicker(true)}>
-          <Text style={styles.addSectionBtnText}>+ Bölüm Ekle</Text>
-        </Pressable>
-      )}
-
-      {/* Action buttons */}
-      <View style={[styles.editorActions, isCompactWeb && styles.compactStack]}>
-        <Pressable style={styles.primaryBtn} onPress={() => onSave(true)}>
-          <Text style={styles.primaryBtnText}>Yayınla</Text>
-        </Pressable>
-        <Pressable style={[styles.inlineBtn, { paddingVertical: 12 }]} onPress={() => onSave(false)}>
-          <Text style={styles.inlineBtnText}>Taslak Kaydet</Text>
-        </Pressable>
-        <Pressable style={[styles.inlineBtn, styles.deleteBtn, { paddingVertical: 12 }]} onPress={onCancel}>
-          <Text style={styles.inlineBtnText}>İptal</Text>
-        </Pressable>
+        {post.featuredImage ? (
+          <TextInput
+            style={[styles.input, isWeb && styles.inputWeb, { marginTop: 4 }]}
+            placeholder="Görsel alt metni (SEO için)"
+            placeholderTextColor={COLORS.textMuted}
+            value={post.featuredImageAlt || ''}
+            onChangeText={(featuredImageAlt) => onUpdate({ featuredImageAlt: featuredImageAlt || undefined })}
+          />
+        ) : null}
       </View>
+
+      {/* ── Content Blocks (Gutenberg-style) ── */}
+      <View style={styles.gutBlocksArea}>
+        {post.sections.length === 0 && (
+          <View style={styles.gutEmptyContent}>
+            <Text style={styles.gutEmptyContentText}>İçerik eklemek için aşağıdaki + butonuna tıklayın</Text>
+          </View>
+        )}
+
+        {post.sections.map((section, index) => (
+          <View key={index} style={styles.gutBlockWrapper}>
+            {/* Block */}
+            <Pressable
+              style={[
+                styles.gutBlock,
+                focusedBlock === index && styles.gutBlockFocused,
+              ]}
+              onPress={() => setFocusedBlock(focusedBlock === index ? null : index)}
+            >
+              {/* Block toolbar (visible when focused) */}
+              {focusedBlock === index && (
+                <View style={styles.gutBlockToolbar}>
+                  <Text style={styles.gutBlockTypeLabel}>
+                    {section.type === 'paragraph' ? '¶ Paragraf' :
+                     section.type === 'heading' ? `H${(section as any).level || 2} Başlık` :
+                     section.type === 'image' ? '🖼 Görsel' :
+                     section.type === 'list' ? '☰ Liste' :
+                     section.type === 'table' ? '▦ Tablo' : section.type}
+                  </Text>
+                  <View style={styles.gutBlockToolbarActions}>
+                    {index > 0 && (
+                      <Pressable onPress={() => onMoveSection(index, -1)} style={styles.gutToolbarBtn}>
+                        <Text style={styles.gutToolbarBtnText}>↑</Text>
+                      </Pressable>
+                    )}
+                    {index < post.sections.length - 1 && (
+                      <Pressable onPress={() => onMoveSection(index, 1)} style={styles.gutToolbarBtn}>
+                        <Text style={styles.gutToolbarBtnText}>↓</Text>
+                      </Pressable>
+                    )}
+                    <Pressable onPress={() => { onRemoveSection(index); setFocusedBlock(null); }} style={[styles.gutToolbarBtn, styles.gutToolbarBtnDanger]}>
+                      <Text style={[styles.gutToolbarBtnText, { color: '#F44336' }]}>🗑</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              )}
+
+              {/* Block content */}
+              <GutenbergBlock
+                section={section}
+                onUpdate={(s) => onUpdateSection(index, s)}
+              />
+            </Pressable>
+
+            {/* Inline add button between blocks */}
+            <View style={styles.gutAddBetween}>
+              <View style={styles.gutAddBetweenLine} />
+              <Pressable
+                style={[styles.gutAddBtn, activeBlockMenu === index && styles.gutAddBtnActive]}
+                onPress={() => setActiveBlockMenu(activeBlockMenu === index ? null : index)}
+              >
+                <Text style={[styles.gutAddBtnText, activeBlockMenu === index && styles.gutAddBtnTextActive]}>+</Text>
+              </Pressable>
+              <View style={styles.gutAddBetweenLine} />
+            </View>
+
+            {/* Block type picker */}
+            {activeBlockMenu === index && (
+              <View style={styles.gutBlockPicker}>
+                {blockTypes.map(({ type, icon, label }) => (
+                  <Pressable
+                    key={type}
+                    style={({ hovered }: any) => [styles.gutBlockPickerItem, hovered && styles.gutBlockPickerItemHover]}
+                    onPress={() => { onAddSection(type); setActiveBlockMenu(null); }}
+                  >
+                    <Text style={styles.gutBlockPickerIcon}>{icon}</Text>
+                    <Text style={styles.gutBlockPickerLabel}>{label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        ))}
+
+        {/* Add first/last block button */}
+        {post.sections.length === 0 || activeBlockMenu === -1 ? null : (
+          <View style={styles.gutAddBetween}>
+            <View style={styles.gutAddBetweenLine} />
+            <Pressable
+              style={[styles.gutAddBtn, activeBlockMenu === -1 && styles.gutAddBtnActive]}
+              onPress={() => setActiveBlockMenu(activeBlockMenu === -1 ? null : -1)}
+            >
+              <Text style={styles.gutAddBtnText}>+</Text>
+            </Pressable>
+            <View style={styles.gutAddBetweenLine} />
+          </View>
+        )}
+
+        {/* Bottom block picker (for adding first block or at end) */}
+        {(activeBlockMenu === -1 || post.sections.length === 0) && (
+          <View style={styles.gutBlockPicker}>
+            {blockTypes.map(({ type, icon, label }) => (
+              <Pressable
+                key={type}
+                style={({ hovered }: any) => [styles.gutBlockPickerItem, hovered && styles.gutBlockPickerItemHover]}
+                onPress={() => { onAddSection(type); setActiveBlockMenu(null); }}
+              >
+                <Text style={styles.gutBlockPickerIcon}>{icon}</Text>
+                <Text style={styles.gutBlockPickerLabel}>{label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* ── Meta / SEO Panel (collapsible) ── */}
+      <Pressable
+        style={styles.gutMetaToggle}
+        onPress={() => setShowMeta(!showMeta)}
+      >
+        <Text style={styles.gutMetaToggleText}>⚙ Yazı Ayarları (SEO, Yazar, Tarih)</Text>
+        <Text style={styles.gutMetaToggleArrow}>{showMeta ? '▲' : '▼'}</Text>
+      </Pressable>
+
+      {showMeta && (
+        <View style={styles.gutMetaPanel}>
+          {/* Slug */}
+          <Text style={styles.fieldLabel}>Slug (URL)</Text>
+          <TextInput
+            style={[styles.input, isWeb && styles.inputWeb]}
+            placeholder="yazi-url-adresi"
+            placeholderTextColor={COLORS.textMuted}
+            value={post.slug}
+            onChangeText={(slug) => onUpdate({ slug })}
+            autoCapitalize="none"
+          />
+
+          {/* Meta Description */}
+          <Text style={styles.fieldLabel}>Meta Açıklama (SEO)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea, isWeb && styles.inputWeb]}
+            placeholder="Google arama sonuçlarında görünecek açıklama (max 160 karakter)"
+            placeholderTextColor={COLORS.textMuted}
+            value={post.metaDescription}
+            onChangeText={(metaDescription) => onUpdate({ metaDescription })}
+            multiline
+            numberOfLines={3}
+          />
+          <Text style={styles.fieldHint}>{(post.metaDescription || '').length}/160 karakter</Text>
+
+          {/* Summary */}
+          <Text style={styles.fieldLabel}>Özet</Text>
+          <TextInput
+            style={[styles.input, styles.textArea, isWeb && styles.inputWeb]}
+            placeholder="Blog listesinde görünecek kısa özet"
+            placeholderTextColor={COLORS.textMuted}
+            value={post.summary}
+            onChangeText={(summary) => onUpdate({ summary })}
+            multiline
+            numberOfLines={2}
+          />
+
+          {/* Author */}
+          <Text style={styles.fieldLabel}>Yazar</Text>
+          <TextInput
+            style={[styles.input, isWeb && styles.inputWeb]}
+            placeholder="Yazar adı"
+            placeholderTextColor={COLORS.textMuted}
+            value={post.author.name}
+            onChangeText={(name) => onUpdate({ author: { ...post.author, name } })}
+          />
+          <TextInput
+            style={[styles.input, isWeb && styles.inputWeb]}
+            placeholder="Yazar fotoğraf URL (opsiyonel)"
+            placeholderTextColor={COLORS.textMuted}
+            value={post.author.avatar || ''}
+            onChangeText={(avatar) => onUpdate({ author: { ...post.author, avatar: avatar || undefined } })}
+            autoCapitalize="none"
+          />
+
+          {/* Date */}
+          <Text style={styles.fieldLabel}>Tarih</Text>
+          <TextInput
+            style={[styles.input, isWeb && styles.inputWeb]}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor={COLORS.textMuted}
+            value={post.date}
+            onChangeText={(date) => onUpdate({ date })}
+          />
+        </View>
+      )}
     </View>
   );
 }
 
-/* ─── Section Editor Component ─── */
-function SectionEditor({ section, index, total, onUpdate, onRemove, onMove }: {
+/* ─── Gutenberg Block Renderer (inline editing) ─── */
+function GutenbergBlock({ section, onUpdate }: {
   section: BlogSection;
-  index: number;
-  total: number;
   onUpdate: (section: BlogSection) => void;
-  onRemove: () => void;
-  onMove: (direction: -1 | 1) => void;
 }) {
-  const typeLabels: Record<string, string> = {
-    paragraph: 'Paragraf',
-    heading: 'Başlık',
-    image: 'Görsel',
-    list: 'Liste',
-    table: 'Tablo',
-  };
+  if (section.type === 'paragraph') {
+    return (
+      <TextInput
+        style={[styles.gutParagraphInput, isWeb && styles.inputWeb]}
+        placeholder="Yazmaya başlayın... (**kalın**, [link](url) desteklenir)"
+        placeholderTextColor={COLORS.textMuted}
+        value={section.text}
+        onChangeText={(text) => onUpdate({ ...section, text })}
+        multiline
+      />
+    );
+  }
 
-  return (
-    <View style={styles.sectionEditorCard}>
-      <View style={styles.sectionEditorHeader}>
-        <Text style={styles.sectionEditorType}>{typeLabels[section.type] || section.type}</Text>
-        <View style={styles.sectionEditorActions}>
-          {index > 0 && (
-            <Pressable onPress={() => onMove(-1)} style={styles.sectionMoveBtn}>
-              <Text style={styles.sectionMoveBtnText}>↑</Text>
-            </Pressable>
-          )}
-          {index < total - 1 && (
-            <Pressable onPress={() => onMove(1)} style={styles.sectionMoveBtn}>
-              <Text style={styles.sectionMoveBtnText}>↓</Text>
-            </Pressable>
-          )}
-          <Pressable onPress={onRemove} style={[styles.sectionMoveBtn, { borderColor: '#6A2A2A' }]}>
-            <Text style={[styles.sectionMoveBtnText, { color: '#F44336' }]}>×</Text>
+  if (section.type === 'heading') {
+    return (
+      <View>
+        <View style={styles.gutHeadingLevelRow}>
+          <Pressable
+            style={[styles.gutHeadingLevelBtn, section.level !== 3 && styles.gutHeadingLevelBtnActive]}
+            onPress={() => onUpdate({ ...section, level: 2 })}
+          >
+            <Text style={[styles.gutHeadingLevelText, section.level !== 3 && styles.gutHeadingLevelTextActive]}>H2</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.gutHeadingLevelBtn, section.level === 3 && styles.gutHeadingLevelBtnActive]}
+            onPress={() => onUpdate({ ...section, level: 3 })}
+          >
+            <Text style={[styles.gutHeadingLevelText, section.level === 3 && styles.gutHeadingLevelTextActive]}>H3</Text>
           </Pressable>
         </View>
-      </View>
-
-      {section.type === 'paragraph' && (
         <TextInput
-          style={[styles.input, styles.textArea, isWeb && styles.inputWeb]}
-          placeholder="Paragraf metni... **kalın** ve [link](url) desteklenir"
+          style={[
+            section.level === 3 ? styles.gutH3Input : styles.gutH2Input,
+            isWeb && styles.inputWeb,
+          ]}
+          placeholder={section.level === 3 ? 'Alt başlık...' : 'Başlık...'}
           placeholderTextColor={COLORS.textMuted}
           value={section.text}
           onChangeText={(text) => onUpdate({ ...section, text })}
-          multiline
-          numberOfLines={4}
         />
-      )}
+      </View>
+    );
+  }
 
-      {section.type === 'heading' && (
-        <>
-          <View style={styles.headingLevelRow}>
-            <Pressable
-              style={[styles.headingLevelBtn, section.level !== 3 && styles.headingLevelBtnActive]}
-              onPress={() => onUpdate({ ...section, level: 2 })}
-            >
-              <Text style={[styles.headingLevelBtnText, section.level !== 3 && styles.headingLevelBtnTextActive]}>H2</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.headingLevelBtn, section.level === 3 && styles.headingLevelBtnActive]}
-              onPress={() => onUpdate({ ...section, level: 3 })}
-            >
-              <Text style={[styles.headingLevelBtnText, section.level === 3 && styles.headingLevelBtnTextActive]}>H3</Text>
-            </Pressable>
+  if (section.type === 'image') {
+    return (
+      <View style={styles.gutImageBlock}>
+        {section.url ? (
+          <View style={styles.gutImagePreview}>
+            <Image source={{ uri: section.url }} style={styles.gutImagePreviewImg} resizeMode="cover" />
           </View>
-          <TextInput
-            style={[styles.input, isWeb && styles.inputWeb]}
-            placeholder="Başlık metni"
-            placeholderTextColor={COLORS.textMuted}
-            value={section.text}
-            onChangeText={(text) => onUpdate({ ...section, text })}
-          />
-        </>
-      )}
-
-      {section.type === 'image' && (
-        <>
-          <TextInput
-            style={[styles.input, isWeb && styles.inputWeb]}
-            placeholder="Görsel URL"
-            placeholderTextColor={COLORS.textMuted}
-            value={section.url}
-            onChangeText={(url) => onUpdate({ ...section, url })}
-            autoCapitalize="none"
-          />
-          <TextInput
-            style={[styles.input, isWeb && styles.inputWeb]}
-            placeholder="Alt metin (SEO için önemli)"
-            placeholderTextColor={COLORS.textMuted}
-            value={section.alt}
-            onChangeText={(alt) => onUpdate({ ...section, alt })}
-          />
-          <TextInput
-            style={[styles.input, isWeb && styles.inputWeb]}
-            placeholder="Açıklama (opsiyonel)"
-            placeholderTextColor={COLORS.textMuted}
-            value={section.caption || ''}
-            onChangeText={(caption) => onUpdate({ ...section, caption: caption || undefined })}
-          />
-          {section.url ? (
-            <View style={styles.imagePreview}>
-              <Image source={{ uri: section.url }} style={styles.imagePreviewImg} resizeMode="cover" />
-            </View>
-          ) : null}
-        </>
-      )}
-
-      {section.type === 'list' && (
-        <>
-          <View style={styles.headingLevelRow}>
-            <Pressable
-              style={[styles.headingLevelBtn, !section.ordered && styles.headingLevelBtnActive]}
-              onPress={() => onUpdate({ ...section, ordered: false })}
-            >
-              <Text style={[styles.headingLevelBtnText, !section.ordered && styles.headingLevelBtnTextActive]}>Madde</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.headingLevelBtn, section.ordered && styles.headingLevelBtnActive]}
-              onPress={() => onUpdate({ ...section, ordered: true })}
-            >
-              <Text style={[styles.headingLevelBtnText, section.ordered && styles.headingLevelBtnTextActive]}>Numaralı</Text>
-            </Pressable>
+        ) : (
+          <View style={styles.gutImageEmpty}>
+            <Text style={styles.gutImageEmptyIcon}>🖼</Text>
+            <Text style={styles.gutImageEmptyText}>Görsel URL girin</Text>
+            <Text style={styles.gutImageEmptyHint}>Önerilen: 800 × 450 px</Text>
           </View>
-          {section.items.map((item, li) => (
-            <View key={li} style={styles.listEditorRow}>
-              <Text style={styles.listEditorBullet}>{section.ordered ? `${li + 1}.` : '•'}</Text>
-              <TextInput
-                style={[styles.input, { flex: 1 }, isWeb && styles.inputWeb]}
-                placeholder={`Madde ${li + 1}`}
-                placeholderTextColor={COLORS.textMuted}
-                value={item}
-                onChangeText={(text) => {
-                  const items = [...section.items];
-                  items[li] = text;
-                  onUpdate({ ...section, items });
-                }}
-              />
-              <Pressable
-                style={styles.listEditorRemove}
-                onPress={() => {
-                  const items = section.items.filter((_, i) => i !== li);
-                  if (items.length === 0) items.push('');
-                  onUpdate({ ...section, items });
-                }}
-              >
-                <Text style={{ color: '#F44336', fontSize: 16, fontWeight: '700' }}>×</Text>
-              </Pressable>
-            </View>
-          ))}
+        )}
+        <TextInput
+          style={[styles.input, isWeb && styles.inputWeb, { marginTop: 6 }]}
+          placeholder="Görsel URL..."
+          placeholderTextColor={COLORS.textMuted}
+          value={section.url}
+          onChangeText={(url) => onUpdate({ ...section, url })}
+          autoCapitalize="none"
+        />
+        <TextInput
+          style={[styles.input, isWeb && styles.inputWeb, { marginTop: 4 }]}
+          placeholder="Alt metin (SEO)"
+          placeholderTextColor={COLORS.textMuted}
+          value={section.alt}
+          onChangeText={(alt) => onUpdate({ ...section, alt })}
+        />
+        <TextInput
+          style={[styles.input, isWeb && styles.inputWeb, { marginTop: 4 }]}
+          placeholder="Açıklama (opsiyonel)"
+          placeholderTextColor={COLORS.textMuted}
+          value={section.caption || ''}
+          onChangeText={(caption) => onUpdate({ ...section, caption: caption || undefined })}
+        />
+      </View>
+    );
+  }
+
+  if (section.type === 'list') {
+    return (
+      <View>
+        <View style={styles.gutHeadingLevelRow}>
           <Pressable
-            style={styles.addListItemBtn}
-            onPress={() => onUpdate({ ...section, items: [...section.items, ''] })}
+            style={[styles.gutHeadingLevelBtn, !section.ordered && styles.gutHeadingLevelBtnActive]}
+            onPress={() => onUpdate({ ...section, ordered: false })}
           >
-            <Text style={styles.addListItemBtnText}>+ Madde Ekle</Text>
+            <Text style={[styles.gutHeadingLevelText, !section.ordered && styles.gutHeadingLevelTextActive]}>• Madde</Text>
           </Pressable>
-        </>
-      )}
-
-      {section.type === 'table' && (
-        <>
-          {section.rows.map((row, ri) => (
-            <View key={ri} style={styles.tableEditorRow}>
-              <Text style={styles.tableEditorRowLabel}>{ri === 0 ? 'Başlık' : `Satır ${ri}`}</Text>
-              {row.map((cell, ci) => (
-                <TextInput
-                  key={ci}
-                  style={[styles.input, { flex: 1, minWidth: 80 }, isWeb && styles.inputWeb]}
-                  placeholder={ri === 0 ? `Sütun ${ci + 1}` : ''}
-                  placeholderTextColor={COLORS.textMuted}
-                  value={cell}
-                  onChangeText={(text) => {
-                    const rows = section.rows.map(r => [...r]);
-                    rows[ri][ci] = text;
-                    onUpdate({ ...section, rows });
-                  }}
-                />
-              ))}
-              {ri > 0 && (
-                <Pressable
-                  style={styles.listEditorRemove}
-                  onPress={() => {
-                    const rows = section.rows.filter((_, i) => i !== ri);
-                    onUpdate({ ...section, rows });
-                  }}
-                >
-                  <Text style={{ color: '#F44336', fontSize: 16, fontWeight: '700' }}>×</Text>
-                </Pressable>
-              )}
-            </View>
-          ))}
-          <View style={styles.tableEditorActions}>
+          <Pressable
+            style={[styles.gutHeadingLevelBtn, section.ordered && styles.gutHeadingLevelBtnActive]}
+            onPress={() => onUpdate({ ...section, ordered: true })}
+          >
+            <Text style={[styles.gutHeadingLevelText, section.ordered && styles.gutHeadingLevelTextActive]}>1. Numaralı</Text>
+          </Pressable>
+        </View>
+        {section.items.map((item, li) => (
+          <View key={li} style={styles.gutListRow}>
+            <Text style={styles.gutListBullet}>{section.ordered ? `${li + 1}.` : '•'}</Text>
+            <TextInput
+              style={[styles.gutListInput, isWeb && styles.inputWeb]}
+              placeholder={`Madde ${li + 1}`}
+              placeholderTextColor={COLORS.textMuted}
+              value={item}
+              onChangeText={(text) => {
+                const items = [...section.items];
+                items[li] = text;
+                onUpdate({ ...section, items });
+              }}
+            />
             <Pressable
-              style={styles.addListItemBtn}
+              style={styles.gutListRemove}
               onPress={() => {
-                const colCount = section.rows[0]?.length || 2;
-                onUpdate({ ...section, rows: [...section.rows, Array(colCount).fill('')] });
+                const items = section.items.filter((_, i) => i !== li);
+                if (items.length === 0) items.push('');
+                onUpdate({ ...section, items });
               }}
             >
-              <Text style={styles.addListItemBtnText}>+ Satır Ekle</Text>
-            </Pressable>
-            <Pressable
-              style={styles.addListItemBtn}
-              onPress={() => {
-                const rows = section.rows.map(r => [...r, '']);
-                onUpdate({ ...section, rows });
-              }}
-            >
-              <Text style={styles.addListItemBtnText}>+ Sütun Ekle</Text>
+              <Text style={{ color: '#F44336', fontSize: 14 }}>×</Text>
             </Pressable>
           </View>
-        </>
-      )}
-    </View>
-  );
+        ))}
+        <Pressable
+          style={styles.gutListAddBtn}
+          onPress={() => onUpdate({ ...section, items: [...section.items, ''] })}
+        >
+          <Text style={styles.gutListAddBtnText}>+ Madde Ekle</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (section.type === 'table') {
+    return (
+      <View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View>
+            {section.rows.map((row, ri) => (
+              <View key={ri} style={styles.gutTableRow}>
+                {row.map((cell, ci) => (
+                  <TextInput
+                    key={ci}
+                    style={[
+                      styles.gutTableCell,
+                      ri === 0 && styles.gutTableHeaderCell,
+                      isWeb && styles.inputWeb,
+                    ]}
+                    placeholder={ri === 0 ? `Sütun ${ci + 1}` : ''}
+                    placeholderTextColor={COLORS.textMuted}
+                    value={cell}
+                    onChangeText={(text) => {
+                      const rows = section.rows.map(r => [...r]);
+                      rows[ri][ci] = text;
+                      onUpdate({ ...section, rows });
+                    }}
+                  />
+                ))}
+                {ri > 0 && (
+                  <Pressable
+                    style={styles.gutTableRowRemove}
+                    onPress={() => {
+                      const rows = section.rows.filter((_, i) => i !== ri);
+                      onUpdate({ ...section, rows });
+                    }}
+                  >
+                    <Text style={{ color: '#F44336', fontSize: 14 }}>×</Text>
+                  </Pressable>
+                )}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+        <View style={styles.gutTableActions}>
+          <Pressable
+            style={styles.gutListAddBtn}
+            onPress={() => {
+              const colCount = section.rows[0]?.length || 2;
+              onUpdate({ ...section, rows: [...section.rows, Array(colCount).fill('')] });
+            }}
+          >
+            <Text style={styles.gutListAddBtnText}>+ Satır</Text>
+          </Pressable>
+          <Pressable
+            style={styles.gutListAddBtn}
+            onPress={() => {
+              const rows = section.rows.map(r => [...r, '']);
+              onUpdate({ ...section, rows });
+            }}
+          >
+            <Text style={styles.gutListAddBtnText}>+ Sütun</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  return null;
 }
+
+/* SectionEditor removed — replaced by GutenbergBlock above */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background, minHeight: 0 },
@@ -867,58 +972,171 @@ const styles = StyleSheet.create({
   statusBadgeText: { fontSize: 11, fontWeight: '700' },
   statusPublishedText: { color: COLORS.success },
   statusDraftText: { color: COLORS.primaryLight },
-  // Blog editor
+  // Blog editor field labels
   fieldLabel: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600', marginTop: SPACING.xs },
   fieldHint: { color: COLORS.textMuted, fontSize: 12 },
-  imagePreview: { borderRadius: RADIUS.md, overflow: 'hidden', marginTop: 4 },
-  imagePreviewImg: { width: '100%', height: 160, borderRadius: RADIUS.md },
-  sectionsDivider: { borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: SPACING.md, marginTop: SPACING.sm },
-  // Section editor
-  sectionEditorCard: {
-    borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg,
-    padding: SPACING.sm, backgroundColor: COLORS.surfaceElevated, gap: SPACING.xs,
+  // ── Gutenberg Editor Styles ──
+  gutTopBar: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingBottom: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border, marginBottom: SPACING.md,
   },
-  sectionEditorHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionEditorType: { color: COLORS.primary, fontSize: 12, fontWeight: '700', textTransform: 'uppercase' },
-  sectionEditorActions: { flexDirection: 'row', gap: 4 },
-  sectionMoveBtn: {
-    width: 28, height: 28, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
+  gutBackBtn: { paddingVertical: 6 },
+  gutBackBtnText: { color: COLORS.primary, fontSize: 14, fontWeight: '600' },
+  gutTopBarRight: { flexDirection: 'row', gap: SPACING.sm },
+  gutDraftBtn: {
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md,
+    paddingHorizontal: 16, paddingVertical: 8,
+  },
+  gutDraftBtnText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
+  gutPublishBtn: {
+    backgroundColor: COLORS.primary, borderRadius: RADIUS.md,
+    paddingHorizontal: 20, paddingVertical: 8,
+  },
+  gutPublishBtnText: { color: COLORS.white, fontSize: 13, fontWeight: '700' },
+  // Title
+  gutTitleInput: {
+    fontSize: 28, fontWeight: '800', color: COLORS.text, paddingVertical: SPACING.sm,
+    borderWidth: 0, backgroundColor: 'transparent',
+  } as any,
+  gutSlugPreview: { color: COLORS.textMuted, fontSize: 12, marginBottom: SPACING.md },
+  // Featured Image
+  gutFeaturedImageArea: {
+    marginBottom: SPACING.lg, borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingBottom: SPACING.lg,
+  },
+  gutFeaturedImageWrap: { borderRadius: RADIUS.xl, overflow: 'hidden', position: 'relative' as any },
+  gutFeaturedImageImg: { width: '100%', height: 220, borderRadius: RADIUS.xl },
+  gutFeaturedImageOverlay: {
+    position: 'absolute' as any, top: 8, right: 8,
+  },
+  gutFeaturedImageRemoveBtn: {
+    width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.6)',
     alignItems: 'center', justifyContent: 'center',
   },
-  sectionMoveBtnText: { color: COLORS.textSecondary, fontSize: 16, fontWeight: '700' },
-  headingLevelRow: { flexDirection: 'row', gap: SPACING.xs },
-  headingLevelBtn: {
+  gutFeaturedImageRemoveText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  gutFeaturedImageEmpty: {
+    borderWidth: 2, borderColor: COLORS.border, borderStyle: 'dashed' as any,
+    borderRadius: RADIUS.xl, paddingVertical: 40, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.surfaceElevated,
+  },
+  gutFeaturedImageIcon: { fontSize: 36, marginBottom: 8 },
+  gutFeaturedImageLabel: { color: COLORS.textSecondary, fontSize: 15, fontWeight: '600' },
+  gutFeaturedImageHint: { color: COLORS.textMuted, fontSize: 12, marginTop: 4 },
+  // Blocks area
+  gutBlocksArea: { minHeight: 200 },
+  gutEmptyContent: { paddingVertical: 40, alignItems: 'center' },
+  gutEmptyContentText: { color: COLORS.textMuted, fontSize: 14 },
+  gutBlockWrapper: {},
+  gutBlock: {
+    borderRadius: RADIUS.lg, borderWidth: 1, borderColor: 'transparent',
+    padding: SPACING.xs,
+  },
+  gutBlockFocused: {
+    borderColor: COLORS.primaryGlowStrong, backgroundColor: 'rgba(200, 134, 10, 0.04)',
+  },
+  gutBlockToolbar: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 6, paddingHorizontal: 4,
+  },
+  gutBlockTypeLabel: { color: COLORS.textMuted, fontSize: 11, fontWeight: '600' },
+  gutBlockToolbarActions: { flexDirection: 'row', gap: 4 },
+  gutToolbarBtn: {
+    width: 26, height: 26, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.surface,
+  },
+  gutToolbarBtnDanger: { borderColor: '#6A2A2A' },
+  gutToolbarBtnText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '700' },
+  // Add between blocks
+  gutAddBetween: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 4, opacity: 0.5,
+  },
+  gutAddBetweenLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
+  gutAddBtn: {
+    width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border,
+    alignItems: 'center', justifyContent: 'center', marginHorizontal: 8, backgroundColor: COLORS.surface,
+  },
+  gutAddBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.15)' },
+  gutAddBtnText: { color: COLORS.textMuted, fontSize: 16, fontWeight: '600', lineHeight: 18 },
+  gutAddBtnTextActive: { color: COLORS.primary },
+  // Block type picker
+  gutBlockPicker: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 8,
+    padding: SPACING.sm, backgroundColor: COLORS.surfaceElevated,
+    borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, marginBottom: 4,
+  },
+  gutBlockPickerItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  gutBlockPickerItemHover: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.08)' },
+  gutBlockPickerIcon: { fontSize: 14 },
+  gutBlockPickerLabel: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
+  // Paragraph block
+  gutParagraphInput: {
+    color: COLORS.text, fontSize: 15, lineHeight: 24, minHeight: 60,
+    backgroundColor: 'transparent', borderWidth: 0, textAlignVertical: 'top',
+    paddingHorizontal: 4, paddingVertical: 4,
+  } as any,
+  // Heading block
+  gutHeadingLevelRow: { flexDirection: 'row', gap: 6, marginBottom: 4 },
+  gutHeadingLevelBtn: {
     borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: 12, paddingVertical: 4,
+    paddingHorizontal: 10, paddingVertical: 3,
   },
-  headingLevelBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.15)' },
-  headingLevelBtnText: { color: COLORS.textMuted, fontSize: 12, fontWeight: '700' },
-  headingLevelBtnTextActive: { color: COLORS.primaryLight },
-  // List editor
-  listEditorRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
-  listEditorBullet: { color: COLORS.primary, fontSize: 14, fontWeight: '700', width: 20 },
-  listEditorRemove: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
-  addListItemBtn: {
+  gutHeadingLevelBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.15)' },
+  gutHeadingLevelText: { color: COLORS.textMuted, fontSize: 12, fontWeight: '700' },
+  gutHeadingLevelTextActive: { color: COLORS.primaryLight },
+  gutH2Input: {
+    fontSize: 22, fontWeight: '700', color: COLORS.text,
+    backgroundColor: 'transparent', borderWidth: 0, paddingHorizontal: 4, paddingVertical: 4,
+  } as any,
+  gutH3Input: {
+    fontSize: 18, fontWeight: '700', color: COLORS.text,
+    backgroundColor: 'transparent', borderWidth: 0, paddingHorizontal: 4, paddingVertical: 4,
+  } as any,
+  // Image block
+  gutImageBlock: {},
+  gutImagePreview: { borderRadius: RADIUS.lg, overflow: 'hidden' },
+  gutImagePreviewImg: { width: '100%', height: 180, borderRadius: RADIUS.lg },
+  gutImageEmpty: {
+    borderWidth: 2, borderColor: COLORS.border, borderStyle: 'dashed' as any,
+    borderRadius: RADIUS.lg, paddingVertical: 24, alignItems: 'center',
+    backgroundColor: COLORS.surfaceElevated,
+  },
+  gutImageEmptyIcon: { fontSize: 28, marginBottom: 4 },
+  gutImageEmptyText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
+  gutImageEmptyHint: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+  // List block
+  gutListRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  gutListBullet: { color: COLORS.primary, fontSize: 14, fontWeight: '700', width: 20 },
+  gutListInput: {
+    flex: 1, color: COLORS.text, fontSize: 15, backgroundColor: 'transparent',
+    borderWidth: 0, paddingVertical: 4, paddingHorizontal: 2,
+  } as any,
+  gutListRemove: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+  gutListAddBtn: {
     borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed' as any,
-    alignItems: 'center', paddingVertical: SPACING.xs,
+    alignItems: 'center', paddingVertical: 6, marginTop: 4,
   },
-  addListItemBtnText: { color: COLORS.textMuted, fontSize: 12, fontWeight: '600' },
-  // Table editor
-  tableEditorRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
-  tableEditorRowLabel: { color: COLORS.textMuted, fontSize: 11, width: 40 },
-  tableEditorActions: { flexDirection: 'row', gap: SPACING.xs },
-  // Section picker
-  sectionPickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs },
-  sectionPickerBtn: {
-    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.primary,
-    paddingHorizontal: 14, paddingVertical: 8,
+  gutListAddBtnText: { color: COLORS.textMuted, fontSize: 12, fontWeight: '600' },
+  // Table block
+  gutTableRow: { flexDirection: 'row', gap: 2, marginBottom: 2 },
+  gutTableCell: {
+    flex: 1, minWidth: 80, color: COLORS.text, fontSize: 13,
+    backgroundColor: COLORS.surfaceElevated, borderRadius: RADIUS.sm,
+    borderWidth: 1, borderColor: COLORS.border,
+    paddingHorizontal: 8, paddingVertical: 6,
   },
-  sectionPickerBtnText: { color: COLORS.primary, fontSize: 13, fontWeight: '600' },
-  addSectionBtn: {
-    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed' as any,
-    alignItems: 'center', paddingVertical: SPACING.sm,
+  gutTableHeaderCell: { fontWeight: '700', backgroundColor: 'rgba(200, 134, 10, 0.08)' },
+  gutTableRowRemove: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+  gutTableActions: { flexDirection: 'row', gap: SPACING.xs, marginTop: 4 },
+  // Meta panel
+  gutMetaToggle: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: SPACING.md, marginTop: SPACING.lg,
+    paddingVertical: SPACING.sm,
   },
-  addSectionBtnText: { color: COLORS.textMuted, fontSize: 13, fontWeight: '600' },
-  // Editor actions
-  editorActions: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.sm },
+  gutMetaToggleText: { color: COLORS.textSecondary, fontSize: 14, fontWeight: '600' },
+  gutMetaToggleArrow: { color: COLORS.textMuted, fontSize: 12 },
+  gutMetaPanel: { gap: SPACING.xs, paddingTop: SPACING.sm },
 });
