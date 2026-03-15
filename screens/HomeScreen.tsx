@@ -220,7 +220,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         <>
             {showQuickCards && (
                 <View style={styles.quickGrid}>
-                    <View style={styles.quickCard}>
+                    <View style={[styles.quickCard, isWeb && ({ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as any)]}>
                         <View style={styles.quickCardRow}>
                             <View style={styles.quickIconWrap}><FeatureIcon type="target" /></View>
                             <View style={styles.quickContent}>
@@ -229,7 +229,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                             </View>
                         </View>
                     </View>
-                    <View style={styles.quickCard}>
+                    <View style={[styles.quickCard, isWeb && ({ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as any)]}>
                         <View style={styles.quickCardRow}>
                             <View style={styles.quickIconWrap}><FeatureIcon type="speed" /></View>
                             <View style={styles.quickContent}>
@@ -238,7 +238,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                             </View>
                         </View>
                     </View>
-                    <View style={styles.quickCard}>
+                    <View style={[styles.quickCard, isWeb && ({ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as any)]}>
                         <View style={styles.quickCardRow}>
                             <View style={styles.quickIconWrap}><FeatureIcon type="check" /></View>
                             <View style={styles.quickContent}>
@@ -684,10 +684,12 @@ const styles = StyleSheet.create({
     quickCard: {
         flex: 1,
         minWidth: isWeb ? 220 : 100,
-        backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.md,
+        backgroundColor: COLORS.surfaceGlass,
+        borderRadius: RADIUS.xxl,
         borderWidth: 1,
         borderColor: COLORS.border,
+        borderTopWidth: 3,
+        borderTopColor: COLORS.primary,
         paddingVertical: SPACING.sm,
         paddingHorizontal: SPACING.sm,
     },
@@ -805,7 +807,7 @@ const styles = StyleSheet.create({
     },
     photoArea: {
         backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.xl,
+        borderRadius: RADIUS.xxl,
         borderWidth: 2,
         borderColor: COLORS.border,
         borderStyle: 'dashed',
@@ -824,6 +826,11 @@ const styles = StyleSheet.create({
     photoAreaFilled: {
         borderStyle: 'solid',
         borderColor: COLORS.primary,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+        elevation: 4,
     },
     photoAreaHover: {
         borderColor: '#3E3E3E',
@@ -874,9 +881,11 @@ const styles = StyleSheet.create({
     actionRow: {
         flexDirection: 'row',
         backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.lg,
+        borderRadius: RADIUS.xl,
         marginTop: SPACING.md,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     actionBtn: {
         flex: 1,
@@ -1040,6 +1049,11 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
         alignItems: 'center',
         justifyContent: 'center',
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        elevation: 3,
     },
     stepBadgeCompact: {
         width: 24,

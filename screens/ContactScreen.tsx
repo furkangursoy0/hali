@@ -66,7 +66,7 @@ export default function ContactScreen({ navigation }: ContactScreenProps) {
         <Text style={styles.subtitle}>Bilgilerinizi bırakın, en kısa sürede size dönelim.</Text>
 
         {!submitted ? (
-          <View style={styles.formCard}>
+          <View style={[styles.formCard, isWeb && ({ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', boxShadow: '0 0 30px rgba(200, 134, 10, 0.06)' } as any)]}>
             <TextInput style={styles.input} placeholder="Ad" placeholderTextColor={COLORS.textMuted} value={name} onChangeText={setName} />
             <TextInput style={styles.input} placeholder="Soyad" placeholderTextColor={COLORS.textMuted} value={surname} onChangeText={setSurname} />
             <TextInput
@@ -117,6 +117,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingTop: isWeb ? SPACING.lg : SPACING.xxl + SPACING.sm,
     paddingBottom: SPACING.xxl,
+    maxWidth: 560,
+    alignSelf: 'center',
+    width: '100%',
   },
   backBtn: {
     alignSelf: 'flex-start',
@@ -139,29 +142,34 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   formCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surfaceGlass,
+    borderRadius: RADIUS.xxl,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: SPACING.md,
+    padding: SPACING.lg,
     gap: SPACING.sm,
   },
   input: {
     backgroundColor: COLORS.surfaceElevated,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
     color: COLORS.text,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
+    paddingVertical: SPACING.sm + 4,
     fontSize: 15,
   },
   submitBtn: {
-    marginTop: SPACING.xs,
+    marginTop: SPACING.sm,
     backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     alignItems: 'center',
-    paddingVertical: SPACING.sm + 4,
+    paddingVertical: SPACING.md,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   submitBtnHover: {
     backgroundColor: COLORS.primaryLight,
@@ -175,8 +183,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   successCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surfaceGlass,
+    borderRadius: RADIUS.xxl,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: SPACING.lg,

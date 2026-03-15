@@ -181,7 +181,7 @@ const RenderCard = React.memo(function RenderCard({
 
     // Success
     return (
-        <View style={[styles.renderCard, styles.renderCardSuccess, !isSingle && { width: cardWidth as any }]}>
+        <View style={[styles.renderCard, styles.renderCardSuccess, !isSingle && { width: cardWidth as any }, isWeb && ({ boxShadow: '0 0 30px rgba(200, 134, 10, 0.1)' } as any)]}>
             <Pressable
                 onPress={() => onOpenFullscreen(index)}
                 style={({ hovered }: any) => [styles.cardImageWrap, hovered && { opacity: 0.9 }]}
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
     // Render card
     renderCard: {
         backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.xl,
+        borderRadius: RADIUS.xxl,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: COLORS.border,
@@ -602,7 +602,14 @@ const styles = StyleSheet.create({
         minHeight: 180,
         borderColor: (COLORS.error || '#F44336') + '40',
     },
-    renderCardSuccess: {},
+    renderCardSuccess: {
+        borderColor: COLORS.primaryGlowStrong,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+        elevation: 4,
+    },
 
     // Card loading
     cardLoadingMsg: {
@@ -736,7 +743,7 @@ const styles = StyleSheet.create({
     // Nav buttons
     navBtn: {
         backgroundColor: COLORS.surfaceElevated,
-        borderRadius: RADIUS.lg,
+        borderRadius: RADIUS.xl,
         paddingVertical: SPACING.md,
         alignItems: 'center',
         marginBottom: SPACING.sm,
@@ -753,14 +760,14 @@ const styles = StyleSheet.create({
     },
     navBtnPrimary: {
         backgroundColor: COLORS.primary,
-        borderRadius: RADIUS.lg,
+        borderRadius: RADIUS.xl,
         paddingVertical: SPACING.md,
         alignItems: 'center',
         marginBottom: SPACING.xxl,
         shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
-        shadowRadius: 8,
+        shadowRadius: 12,
         elevation: 6,
     },
     navBtnPrimaryHover: {

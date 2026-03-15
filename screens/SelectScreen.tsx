@@ -878,8 +878,8 @@ const styles = StyleSheet.create({
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.lg,
+        backgroundColor: COLORS.surfaceGlass,
+        borderRadius: RADIUS.xl,
         marginHorizontal: SPACING.md,
         paddingHorizontal: SPACING.md,
         marginBottom: SPACING.sm,
@@ -923,8 +923,8 @@ const styles = StyleSheet.create({
         zIndex: 40,
     },
     dropdownTrigger: {
-        backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.lg,
+        backgroundColor: COLORS.surfaceGlass,
+        borderRadius: RADIUS.xl,
         borderWidth: 1,
         borderColor: COLORS.border,
         paddingHorizontal: SPACING.sm,
@@ -1003,12 +1003,12 @@ const styles = StyleSheet.create({
 
     carpetCard: {
         backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.lg,
+        borderRadius: RADIUS.xl,
         overflow: 'hidden',
         borderWidth: 2,
         borderColor: 'transparent',
     },
-    carpetCardHover: { borderColor: '#343434' },
+    carpetCardHover: { borderColor: COLORS.primaryGlowStrong },
     carpetCardSelected: { borderColor: COLORS.primary },
     imageFrame: {
         width: '100%',
@@ -1203,8 +1203,8 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.surface,
-        borderRadius: RADIUS.lg,
+        backgroundColor: COLORS.surfaceGlass,
+        borderRadius: RADIUS.xl,
         borderWidth: 1,
         borderColor: COLORS.border,
         paddingHorizontal: SPACING.sm,

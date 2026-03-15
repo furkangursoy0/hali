@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Halı Dene – Promo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1080px;
+    background: #0a0a0a;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .card {
+    width: 1080px;
+    height: 1080px;
+    background: #0a0a0a;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 64px;
+    gap: 0;
+  }
+
+  /* ── TOP: brand ── */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 48px;
+  }
+  .brand-logo {
+    width: 36px;
+    height: 36px;
+  }
+  .brand-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+  .brand-name span {
+    color: #FFB300;
+  }
+
+  /* ── IMAGE ── */
+  .image-wrap {
+    position: relative;
+    width: 100%;
+    height: 480px;
+    border-radius: 20px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .image-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 50%, rgba(10,10,10,0.7) 100%);
+  }
+  .badge {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255,179,0,0.15);
+    border: 1px solid rgba(255,179,0,0.4);
+    border-radius: 100px;
+    padding: 8px 18px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    backdrop-filter: blur(8px);
+  }
+  .badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #FFB300;
+    box-shadow: 0 0 8px #FFB300;
+  }
+  .badge-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #FFB300;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── HEADLINE ── */
+  .headline {
+    margin-top: 44px;
+    font-size: 62px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .headline em {
+    font-style: normal;
+    background: linear-gradient(90deg, #FFB300, #E64A00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    margin-top: 18px;
+    font-size: 22px;
+    color: #888;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* ── FEATURES ── */
+  .features {
+    margin-top: 40px;
+    display: flex;
+    gap: 16px;
+  }
+  .feat {
+    flex: 1;
+    background: #161616;
+    border: 1px solid #222;
+    border-radius: 14px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .feat-icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+  .feat-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 4px;
+  }
+  .feat-desc {
+    font-size: 14px;
+    color: #666;
+    font-weight: 400;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: auto;
+    padding-top: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-url {
+    font-size: 18px;
+    font-weight: 600;
+    color: #FFB300;
+    letter-spacing: 0.01em;
+  }
+  .footer-cta {
+    background: linear-gradient(135deg, #FFB300, #E64A00);
+    border-radius: 100px;
+    padding: 14px 32px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── GLOW ── */
+  .glow {
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255,179,0,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .glow2 {
+    position: absolute;
+    bottom: 100px;
+    left: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(230,74,0,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="glow"></div>
+  <div class="glow2"></div>
+
+  <!-- Brand -->
+  <div class="brand">
+    <img class="brand-logo" src="/favicon.svg" alt="logo" />
+    <div class="brand-name">Halı <span>Dene</span></div>
+  </div>
+
+  <!-- Image -->
+  <div class="image-wrap">
+    <img src="/demo-after.jpg" alt="demo" />
+    <div class="image-overlay"></div>
+    <div class="badge">
+      <div class="badge-dot"></div>
+      <span class="badge-text">✦ Yapay Zeka Sonucu</span>
+    </div>
+  </div>
+
+  <!-- Headline -->
+  <div class="headline">
+    Müşteriniz halıyı<br /><em>kendi odasında görsün.</em>
+  </div>
+  <div class="subtitle">
+    Fotoğraf çek &nbsp;·&nbsp; Halı seç &nbsp;·&nbsp; 20 saniyede sonuç
+  </div>
+
+  <!-- Features -->
+  <div class="features">
+    <div class="feat">
+      <div class="feat-icon">🎯</div>
+      <div class="feat-title">Gerçekçi Sonuç</div>
+      <div class="feat-desc">Perspektif ve ışık uyumlu</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">Anında Hazır</div>
+      <div class="feat-desc">20–30 saniyede görüntü</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🗂️</div>
+      <div class="feat-title">3600+ Halı</div>
+      <div class="feat-desc">16 marka, geniş katalog</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-url">halidene.com</div>
+    <div class="footer-cta">Bilgi Almak İçin Yazın →</div>
+  </div>
+</div>
+</body>
+</html>

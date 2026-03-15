@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   formCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.xxl,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: SPACING.md,
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   },
   listCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.xxl,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: SPACING.md,
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   userCard: {
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.xl,
     padding: SPACING.sm,
     gap: SPACING.xs,
     backgroundColor: COLORS.surfaceElevated,

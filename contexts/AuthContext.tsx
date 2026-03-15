@@ -138,14 +138,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!axios.defaults.headers.common.Authorization) return;
       const response = await axios.get(`${API_BASE_URL}/auth/me`);
       const apiUser = response.data;
-      setUser({
+      const token = String(axios.defaults.headers.common.Authorization).replace('Bearer ', '');
+      const freshUser: AuthUser = {
         id: String(apiUser?.id || ''),
         fullName: String(apiUser?.fullName || ''),
         email: String(apiUser?.email || ''),
         username: String(apiUser?.username || String(apiUser?.email || '').split('@')[0] || ''),
         role: apiUser?.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
         credit: Number(apiUser?.credit || 0),
-      });
+      };
+      setUser(freshUser);
+      // localStorage'daki user datasını da tazele
+      persistSession(token, freshUser);
     } catch (err: any) {
       // Token expired or invalid → clear session so user sees login screen
       if (err?.response?.status === 401) {
@@ -320,34 +324,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsHydrated(true);
       return;
     }
-    try {
-      const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      const token = String(parsed?.token || '');
-      const savedUser = parsed?.user;
-      if (!token || !savedUser?.id) return;
 
-      axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-      setUser({
-        id: String(savedUser.id),
-        fullName: String(savedUser.fullName || ''),
-        email: String(savedUser.email || ''),
-        username: String(savedUser.username || ''),
-        role: savedUser.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
-        credit: Number(savedUser.credit || 0),
-      });
+    const run = async () => {
+      try {
+        const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        const token = String(parsed?.token || '');
+        const savedUser = parsed?.user;
+        if (!token || !savedUser?.id) return;
 
-      void refreshCurrentUser().then(() => {
-        if ((savedUser.role === 'ADMIN')) {
+        axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+        setUser({
+          id: String(savedUser.id),
+          fullName: String(savedUser.fullName || ''),
+          email: String(savedUser.email || ''),
+          username: String(savedUser.username || ''),
+          role: savedUser.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
+          credit: Number(savedUser.credit || 0),
+        });
+
+        // Token'ı sunucuya doğrulat — tamamlanmadan isHydrated=true yapma.
+        // Böylece süresi dolmuş token'da kullanıcı Home'u görmeden doğrudan Login'e gider.
+        await refreshCurrentUser();
+
+        if (savedUser.role === 'ADMIN') {
           void loadAdminUsers();
         }
-      });
-    } catch {
-      clearSession();
-    } finally {
-      setIsHydrated(true);
-    }
+      } catch {
+        clearSession();
+      } finally {
+        setIsHydrated(true);
+      }
+    };
+
+    void run();
+
+    // Safari BFCache düzeltmesi: Kullanıcı başka sekmeye geçip geri geldiğinde
+    // Safari sayfayı JS çalıştırmadan önbellekten geri yükler (persisted=true).
+    // Bu durumda token'ı yeniden doğrulayarak stale state'i önlüyoruz.
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        void refreshCurrentUser();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
   }, []);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

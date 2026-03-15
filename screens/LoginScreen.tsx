@@ -327,7 +327,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             >
               <Text style={[s.brandTabText, selectedBrand === brand && s.brandTabTextActive]}>
                 {brand}
-                <Text style={s.brandTabCount}>{` (${brandCarpets.length})`}</Text>
               </Text>
             </Pressable>
           );
