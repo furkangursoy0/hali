@@ -8,9 +8,10 @@ interface Props {
   isWide: boolean;
   onLoginPress: () => void;
   onWhatsAppPress: () => void;
+  onBlogPress?: () => void;
 }
 
-export default function LandingNavbar({ isWide, onLoginPress, onWhatsAppPress }: Props) {
+export default function LandingNavbar({ isWide, onLoginPress, onWhatsAppPress, onBlogPress }: Props) {
   return (
     <View style={[
       styles.navbar,
@@ -33,6 +34,14 @@ export default function LandingNavbar({ isWide, onLoginPress, onWhatsAppPress }:
 
         {/* Right buttons */}
         <View style={styles.navRight}>
+          {isWide && onBlogPress && (
+            <Pressable
+              style={({ hovered }: any) => [styles.navGhostBtn, hovered && styles.navGhostBtnHover]}
+              onPress={onBlogPress}
+            >
+              <Text style={styles.navGhostBtnText}>Blog</Text>
+            </Pressable>
+          )}
           {isWide && (
             <Pressable
               style={({ hovered }: any) => [styles.navGhostBtn, hovered && styles.navGhostBtnHover]}

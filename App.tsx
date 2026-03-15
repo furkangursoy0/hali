@@ -10,9 +10,27 @@ import SelectScreen from './screens/SelectScreen';
 import ResultScreen from './screens/ResultScreen';
 import ContactScreen from './screens/ContactScreen';
 import AdminScreen from './screens/AdminScreen';
+import BlogListScreen from './screens/BlogListScreen';
+import BlogPostScreen from './screens/BlogPostScreen';
 import { COLORS } from './constants/theme';
 
 const Stack = createStackNavigator();
+
+const linking = {
+  prefixes: [],
+  config: {
+    screens: {
+      Login: '',
+      Blog: 'blog',
+      BlogPost: 'blog/:slug',
+      Home: 'home',
+      Contact: 'contact',
+      Admin: 'admin',
+      Select: 'select',
+      Result: 'result',
+    },
+  },
+};
 
 function AppNavigator() {
   const { isLoggedIn, isHydrated } = useAuth();
@@ -26,7 +44,7 @@ function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator
         key={isLoggedIn ? 'auth' : 'guest'}
         initialRouteName={isLoggedIn ? 'Home' : 'Login'}
@@ -37,6 +55,8 @@ function AppNavigator() {
         }}
       >
         <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Halı Dene | Yapay Zeka ile Halı Deneme' }} />
+        <Stack.Screen name="Blog" component={BlogListScreen} options={{ title: 'Blog | Halı Dene' }} />
+        <Stack.Screen name="BlogPost" component={BlogPostScreen} options={{ title: 'Blog | Halı Dene' }} />
         <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Halı Dene' }} />
         <Stack.Screen name="Contact" component={ContactScreen} />
         <Stack.Screen name="Admin" component={AdminScreen} />

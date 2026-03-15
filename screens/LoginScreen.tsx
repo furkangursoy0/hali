@@ -503,7 +503,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     <View style={[s.container, isWeb && ({ height: '100dvh', maxHeight: '100dvh' } as any)]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
-      <LandingNavbar isWide={isWide} onLoginPress={scrollToLogin} onWhatsAppPress={openWhatsApp} />
+      <LandingNavbar isWide={isWide} onLoginPress={scrollToLogin} onWhatsAppPress={openWhatsApp} onBlogPress={() => navigation.navigate('Blog')} />
 
       <ScrollView
         ref={scrollViewRef}
