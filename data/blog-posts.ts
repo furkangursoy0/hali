@@ -20,6 +20,8 @@ export interface BlogPost {
   author: BlogAuthor;
   featuredImage?: string;
   featuredImageAlt?: string;
+  /** Markdown content — if set, takes priority over sections */
+  content?: string;
   sections: BlogSection[];
   published: boolean;
 }

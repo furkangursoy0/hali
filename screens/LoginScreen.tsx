@@ -210,14 +210,18 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     })
   ).current;
 
-  const renderBeforeAfter = () => {
+  const renderBeforeAfter = (hideTitle = false) => {
     const clipWidth = sliderPos.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
     const handleLeft = sliderPos.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
 
     return (
-      <View style={s.section}>
-        <Text style={[s.sectionTitle, isWide && s.sectionTitleWide]}>Yapay Zeka ile Halı Deneme</Text>
-        <Text style={s.sectionSubtitle}>Kaydırarak öncesi ve sonrasını karşılaştırın</Text>
+      <View style={[s.section, hideTitle && { marginBottom: 0 }]}>
+        {!hideTitle && (
+          <>
+            <Text style={[s.sectionTitle, isWide && s.sectionTitleWide]}>Yapay Zeka ile Halı Deneme</Text>
+            <Text style={s.sectionSubtitle}>Kaydırarak öncesi ve sonrasını karşılaştırın</Text>
+          </>
+        )}
         <View
           ref={sliderContainerRef}
           style={[
@@ -268,9 +272,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   /* ────────────────── ÖZELLİKLER ────────────────── */
   const renderFeatures = () => {
     const features = [
-      { icon: 'target' as const, title: 'Gerçekçi Sonuçlar', desc: 'Perspektif ve ışık uyumlu yerleştirme' },
-      { icon: 'speed' as const, title: 'Anında Sonuç', desc: '20-30 saniyede hazır görüntü' },
-      { icon: 'check' as const, title: 'Geniş Katalog', desc: `${TOTAL_CARPETS_LABEL} halı, ${TOTAL_BRANDS} marka` },
+      { icon: 'target' as const, title: 'Gerçekçi Yerleştirme', desc: 'AI ile perspektif ve ışık uyumlu sonuçlar' },
+      { icon: 'speed' as const, title: '30 Saniyede Hazır', desc: 'Bekletmeden, anında müşterinize gösterin' },
+      { icon: 'check' as const, title: `${TOTAL_BRANDS} Marka, ${TOTAL_CARPETS_LABEL} Halı`, desc: 'Geniş katalog ile her müşteriye doğru halı' },
     ];
     return (
       <View style={s.section}>
@@ -487,14 +491,38 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   /* ────────────────── FOOTER ────────────────── */
   const renderFooter = () => (
     <View style={s.footer}>
-      <View style={s.footerBrand}>
-        <Text style={s.footerLogo}>HALI</Text>
-        <View style={s.footerBadge}>
-          <Text style={s.footerBadgeText}>DENE</Text>
+      <View style={[s.footerInner, isWide && s.footerInnerWide]}>
+        <View style={s.footerBrandCol}>
+          <View style={s.footerBrand}>
+            <Text style={s.footerLogo}>HALI</Text>
+            <View style={s.footerBadge}>
+              <Text style={s.footerBadgeText}>DENE</Text>
+            </View>
+          </View>
+          <Text style={s.footerText}>Yapay zeka destekli halı deneme platformu.{'\n'}Halıları odalarda canlandırın.</Text>
         </View>
+
+        {isWide && (
+          <>
+            <View style={s.footerCol}>
+              <Text style={s.footerColTitle}>Platform</Text>
+              <Pressable onPress={scrollToLogin}><Text style={s.footerLink}>Giriş Yap</Text></Pressable>
+              <Pressable onPress={openWhatsApp}><Text style={s.footerLink}>Demo Talep</Text></Pressable>
+              <Pressable onPress={() => navigation.navigate('Blog')}><Text style={s.footerLink}>Blog</Text></Pressable>
+            </View>
+            <View style={s.footerCol}>
+              <Text style={s.footerColTitle}>İletişim</Text>
+              <Pressable onPress={openWhatsApp}><Text style={s.footerLink}>WhatsApp</Text></Pressable>
+              <Pressable onPress={() => navigation.navigate('Contact')}><Text style={s.footerLink}>İletişim Formu</Text></Pressable>
+              <Pressable onPress={() => Linking.openURL('tel:+905300947756')}><Text style={s.footerLink}>0530 094 77 56</Text></Pressable>
+            </View>
+          </>
+        )}
       </View>
-      <Text style={s.footerText}>Yapay zeka destekli halı deneme platformu</Text>
-      <Text style={s.footerCopy}>halidene.com · {new Date().getFullYear()}</Text>
+
+      <View style={s.footerBottom}>
+        <Text style={s.footerCopy}>© {new Date().getFullYear()} halidene.com · Tüm hakları saklıdır.</Text>
+      </View>
     </View>
   );
 
@@ -513,15 +541,35 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         keyboardShouldPersistTaps="handled"
       >
         <View style={[s.content, isWide && s.contentWide]}>
-          <HeroSection
-            isWide={isWide}
-            totalCarpets={TOTAL_CARPETS_LABEL}
-            totalBrands={TOTAL_BRANDS}
-            onLoginPress={scrollToLogin}
-            onWhatsAppPress={openWhatsApp}
-          />
+          {/* ── Hero + Before/After combined (desktop: side by side) ── */}
+          {isWide ? (
+            <View style={s.heroSplit}>
+              <View style={s.heroSplitLeft}>
+                <HeroSection
+                  isWide={isWide}
+                  totalCarpets={TOTAL_CARPETS_LABEL}
+                  totalBrands={TOTAL_BRANDS}
+                  onLoginPress={scrollToLogin}
+                  onWhatsAppPress={openWhatsApp}
+                />
+              </View>
+              <View style={s.heroSplitRight}>
+                {renderBeforeAfter(true)}
+              </View>
+            </View>
+          ) : (
+            <>
+              <HeroSection
+                isWide={isWide}
+                totalCarpets={TOTAL_CARPETS_LABEL}
+                totalBrands={TOTAL_BRANDS}
+                onLoginPress={scrollToLogin}
+                onWhatsAppPress={openWhatsApp}
+              />
+              {renderBeforeAfter()}
+            </>
+          )}
           <StatsStrip isWide={isWide} totalCarpets={TOTAL_CARPETS_LABEL} totalBrands={TOTAL_BRANDS} />
-          {renderBeforeAfter()}
           <HowItWorks isWide={isWide} />
           {renderFeatures()}
           {renderCatalog()}
@@ -580,6 +628,20 @@ const s = StyleSheet.create({
   },
   contentWide: {
     maxWidth: 1060,
+  },
+
+  /* ─── Hero Split Layout ─── */
+  heroSplit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xl,
+    marginBottom: SPACING.xl,
+  },
+  heroSplitLeft: {
+    flex: 1,
+  },
+  heroSplitRight: {
+    flex: 1.1,
   },
 
   /* ─── Section ─── */
@@ -1094,30 +1156,40 @@ const s = StyleSheet.create({
 
   /* ─── Footer ─── */
   footer: {
-    alignItems: 'center',
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.md,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
-    marginTop: SPACING.md,
+    marginTop: SPACING.xl,
+    paddingTop: SPACING.xxl,
+    paddingBottom: SPACING.lg,
+  },
+  footerInner: {
+    alignItems: 'center',
+  },
+  footerInnerWide: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.xxl,
+  },
+  footerBrandCol: {
+    flex: 1,
   },
   footerBrand: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   footerLogo: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
-    color: COLORS.textMuted,
+    color: COLORS.textSecondary,
     letterSpacing: 0.5,
   },
   footerBadge: {
     marginLeft: 4,
     backgroundColor: 'rgba(200, 134, 10, 0.1)',
     borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
   },
   footerBadgeText: {
     fontSize: 8,
@@ -1128,8 +1200,30 @@ const s = StyleSheet.create({
   },
   footerText: {
     color: COLORS.textMuted,
-    fontSize: 12,
-    marginBottom: 2,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  footerCol: {
+    gap: SPACING.sm,
+  },
+  footerColTitle: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: SPACING.xs,
+  },
+  footerLink: {
+    color: COLORS.textMuted,
+    fontSize: 14,
+  },
+  footerBottom: {
+    marginTop: SPACING.xl,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    alignItems: 'center',
   },
   footerCopy: {
     color: COLORS.textMuted,

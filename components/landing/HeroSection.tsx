@@ -24,7 +24,7 @@ export default function HeroSection({ isWide, totalCarpets, totalBrands, onLogin
   }, []);
 
   return (
-    <Animated.View style={[styles.hero, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+    <Animated.View style={[styles.hero, isWide && styles.heroWide, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       {/* Glow orbs */}
       <View style={[styles.glowOrb1, { pointerEvents: 'none' } as any]} />
       <View style={[styles.glowOrb2, { pointerEvents: 'none' } as any]} />
@@ -61,7 +61,7 @@ export default function HeroSection({ isWide, totalCarpets, totalBrands, onLogin
       </View>
 
       {/* Trust line */}
-      <Text style={styles.trustLine}>
+      <Text style={[styles.trustLine, isWide && styles.trustLineWide]}>
         {totalCarpets} halı{'  ·  '}{totalBrands} marka{'  ·  '}Ücretsiz demo
       </Text>
     </Animated.View>
@@ -74,6 +74,10 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.xxxl,
     paddingBottom: SPACING.xl,
     position: 'relative',
+  },
+  heroWide: {
+    alignItems: 'flex-start',
+    paddingTop: SPACING.xxl,
   },
   glowOrb1: {
     position: 'absolute',
@@ -102,9 +106,10 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   titleWide: {
-    fontSize: 52,
-    lineHeight: 62,
+    fontSize: 46,
+    lineHeight: 56,
     letterSpacing: -1,
+    textAlign: 'left',
   },
   titleAccent: {
     color: COLORS.primaryLight,
@@ -123,6 +128,7 @@ const styles = StyleSheet.create({
   subtitleWide: {
     fontSize: 17,
     lineHeight: 26,
+    textAlign: 'left',
   },
   ctaRow: {
     flexDirection: 'row',
@@ -177,5 +183,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: SPACING.lg,
     letterSpacing: 0.3,
+  },
+  trustLineWide: {
+    textAlign: 'left',
   },
 });

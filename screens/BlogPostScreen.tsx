@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, Platform, useWindowDimen
 // Note: ScrollView kept in import for non-web fallback but web uses native overflow scroll
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { getAllPosts, getBlogPostBySlug } from '../services/blog-storage';
+import { parseMarkdownToSections } from '../services/markdown-parser';
 import type { BlogSection } from '../data/blog-posts';
 
 const isWeb = Platform.OS === 'web';
@@ -97,17 +98,25 @@ export default function BlogPostScreen({ navigation, route }: any) {
 
   const otherPosts = useMemo(() => getAllPosts().filter(p => p.slug !== slug).slice(0, 4), [slug]);
 
+  // Resolve sections: prefer markdown content, fallback to sections array
+  const resolvedSections = useMemo(() => {
+    if (!post) return [];
+    if (post.content && post.content.trim()) {
+      return parseMarkdownToSections(post.content);
+    }
+    return post.sections;
+  }, [post]);
+
   // Table of contents from headings
   const tocItems = useMemo(() => {
-    if (!post) return [];
-    return post.sections
+    return resolvedSections
       .filter((s): s is Extract<BlogSection, { type: 'heading' }> => s.type === 'heading')
       .map((s, i) => ({
         id: `toc-heading-${i}`,
         text: s.text,
         level: s.level || 2,
       }));
-  }, [post]);
+  }, [resolvedSections]);
 
   // Intersection observer for ToC active state
   useEffect(() => {
@@ -438,7 +447,7 @@ export default function BlogPostScreen({ navigation, route }: any) {
               </View>
             )}
 
-            {post.sections.map((section, i) => renderSection(section, i))}
+            {resolvedSections.map((section, i) => renderSection(section, i))}
           </View>
         </View>
 

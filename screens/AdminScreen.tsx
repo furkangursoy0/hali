@@ -3,7 +3,8 @@ import { Alert, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, Te
 import { COLORS, RADIUS, SPACING } from '../constants/theme';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { getAllPosts, savePost, deletePost as deleteStoredPost, generateSlug } from '../services/blog-storage';
-import type { BlogPost, BlogSection, BlogAuthor } from '../data/blog-posts';
+import { sectionsToMarkdown } from '../services/markdown-parser';
+import type { BlogPost, BlogSection } from '../data/blog-posts';
 
 interface AdminScreenProps {
   navigation: any;
@@ -20,6 +21,7 @@ function emptyPost(): BlogPost {
     title: '',
     metaDescription: '',
     summary: '',
+    content: '',
     date: new Date().toISOString().split('T')[0],
     author: { name: 'Halı Dene Ekibi' },
     sections: [],
@@ -98,7 +100,11 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
   // Blog handlers
   const handleNewPost = () => setEditingPost(emptyPost());
 
-  const handleEditPost = (post: BlogPost) => setEditingPost({ ...post, sections: post.sections.map(s => ({ ...s })) });
+  const handleEditPost = (post: BlogPost) => {
+    // Convert sections to markdown content if no content field
+    const content = post.content || sectionsToMarkdown(post.sections);
+    setEditingPost({ ...post, content });
+  };
 
   const handleDeletePost = (slug: string) => {
     deleteStoredPost(slug);
@@ -106,64 +112,15 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     setBlogFeedback('Yazı silindi.');
   };
 
-  const handleSavePost = (published: boolean) => {
-    if (!editingPost) return;
-    const post = { ...editingPost, published };
-    if (!post.title.trim()) { setBlogFeedback('Başlık gerekli.'); return; }
-    if (!post.slug.trim()) post.slug = generateSlug(post.title);
-    savePost(post);
+  const handleSavePost = (post: BlogPost, published: boolean) => {
+    const finalPost = { ...post, published };
+    if (!finalPost.title.trim()) { setBlogFeedback('Başlık gerekli.'); return; }
+    if (!finalPost.slug.trim()) finalPost.slug = generateSlug(finalPost.title);
+    savePost(finalPost);
     setEditingPost(null);
     setBlogRefreshKey(k => k + 1);
     setBlogFeedback(published ? 'Yazı yayınlandı.' : 'Taslak kaydedildi.');
   };
-
-  const updateEditingPost = useCallback((updates: Partial<BlogPost>) => {
-    setEditingPost(prev => prev ? { ...prev, ...updates } : null);
-  }, []);
-
-  const updateSection = useCallback((index: number, section: BlogSection) => {
-    setEditingPost(prev => {
-      if (!prev) return null;
-      const sections = [...prev.sections];
-      sections[index] = section;
-      return { ...prev, sections };
-    });
-  }, []);
-
-  const removeSection = useCallback((index: number) => {
-    setEditingPost(prev => {
-      if (!prev) return null;
-      const sections = prev.sections.filter((_, i) => i !== index);
-      return { ...prev, sections };
-    });
-  }, []);
-
-  const moveSection = useCallback((index: number, direction: -1 | 1) => {
-    setEditingPost(prev => {
-      if (!prev) return null;
-      const sections = [...prev.sections];
-      const target = index + direction;
-      if (target < 0 || target >= sections.length) return prev;
-      [sections[index], sections[target]] = [sections[target], sections[index]];
-      return { ...prev, sections };
-    });
-  }, []);
-
-  const addSection = useCallback((type: BlogSection['type']) => {
-    setEditingPost(prev => {
-      if (!prev) return null;
-      let newSection: BlogSection;
-      switch (type) {
-        case 'paragraph': newSection = { type: 'paragraph', text: '' }; break;
-        case 'heading': newSection = { type: 'heading', text: '', level: 2 }; break;
-        case 'image': newSection = { type: 'image', url: '', alt: '' }; break;
-        case 'table': newSection = { type: 'table', rows: [['Başlık 1', 'Başlık 2'], ['', '']] }; break;
-        case 'list': newSection = { type: 'list', items: [''], ordered: false }; break;
-        default: return prev;
-      }
-      return { ...prev, sections: [...prev.sections, newSection] };
-    });
-  }, []);
 
   if (!isAdmin) {
     return (
@@ -297,11 +254,6 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
               <BlogEditor
                 post={editingPost}
                 isCompactWeb={isCompactWeb}
-                onUpdate={updateEditingPost}
-                onUpdateSection={updateSection}
-                onRemoveSection={removeSection}
-                onMoveSection={moveSection}
-                onAddSection={addSection}
                 onSave={handleSavePost}
                 onCancel={() => setEditingPost(null)}
               />
@@ -369,292 +321,265 @@ function BlogList({ posts, isCompactWeb, onNew, onEdit, onDelete }: {
   );
 }
 
-/* ─── Gutenberg-Style Blog Editor ─── */
-function BlogEditor({ post, isCompactWeb, onUpdate, onUpdateSection, onRemoveSection, onMoveSection, onAddSection, onSave, onCancel }: {
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * WordPress Gutenberg-Style Markdown Blog Editor
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function BlogEditor({ post, isCompactWeb, onSave, onCancel }: {
   post: BlogPost;
   isCompactWeb: boolean;
-  onUpdate: (updates: Partial<BlogPost>) => void;
-  onUpdateSection: (index: number, section: BlogSection) => void;
-  onRemoveSection: (index: number) => void;
-  onMoveSection: (index: number, direction: -1 | 1) => void;
-  onAddSection: (type: BlogSection['type']) => void;
-  onSave: (published: boolean) => void;
+  onSave: (post: BlogPost, published: boolean) => void;
   onCancel: () => void;
 }) {
-  const [showMeta, setShowMeta] = useState(false);
-  const [activeBlockMenu, setActiveBlockMenu] = useState<number | null>(null);
-  const [focusedBlock, setFocusedBlock] = useState<number | null>(null);
+  const [title, setTitle] = useState(post.title);
+  const [slug, setSlug] = useState(post.slug);
+  const [slugEdited, setSlugEdited] = useState(!!post.slug);
+  const [content, setContent] = useState(post.content || sectionsToMarkdown(post.sections));
+  const [metaDescription, setMetaDescription] = useState(post.metaDescription);
+  const [summary, setSummary] = useState(post.summary);
+  const [authorName, setAuthorName] = useState(post.author.name);
+  const [authorAvatar, setAuthorAvatar] = useState(post.author.avatar || '');
+  const [date, setDate] = useState(post.date);
+  const [featuredImage, setFeaturedImage] = useState(post.featuredImage || '');
+  const [featuredImageAlt, setFeaturedImageAlt] = useState(post.featuredImageAlt || '');
+  const [showImageInput, setShowImageInput] = useState(false);
+  const [showSeo, setShowSeo] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
-  const blockTypes: { type: BlogSection['type']; icon: string; label: string }[] = [
-    { type: 'paragraph', icon: '¶', label: 'Paragraf' },
-    { type: 'heading', icon: 'H', label: 'Başlık' },
-    { type: 'image', icon: '🖼', label: 'Görsel' },
-    { type: 'list', icon: '☰', label: 'Liste' },
-    { type: 'table', icon: '▦', label: 'Tablo' },
-  ];
+  const handleTitleChange = (text: string) => {
+    setTitle(text);
+    if (!slugEdited) {
+      setSlug(generateSlug(text));
+    }
+  };
+
+  const buildPost = (): BlogPost => ({
+    ...post,
+    title,
+    slug: slug || generateSlug(title),
+    content,
+    metaDescription,
+    summary,
+    date,
+    author: { name: authorName, avatar: authorAvatar || undefined },
+    featuredImage: featuredImage || undefined,
+    featuredImageAlt: featuredImageAlt || undefined,
+    sections: [], // Sections will be parsed from content at render time
+  });
 
   return (
-    <View style={styles.formCard}>
+    <View style={styles.editorCard}>
       {/* ── Top Action Bar ── */}
-      <View style={styles.gutTopBar}>
-        <Pressable style={styles.gutBackBtn} onPress={onCancel}>
-          <Text style={styles.gutBackBtnText}>← Geri</Text>
+      <View style={styles.edTopBar}>
+        <Pressable style={styles.edBackBtn} onPress={onCancel}>
+          <Text style={styles.edBackBtnText}>← Geri</Text>
         </Pressable>
-        <View style={styles.gutTopBarRight}>
-          <Pressable style={styles.gutDraftBtn} onPress={() => onSave(false)}>
-            <Text style={styles.gutDraftBtnText}>Taslak Kaydet</Text>
+        <View style={styles.edTopBarRight}>
+          <Pressable
+            style={[styles.edPreviewBtn, showPreview && styles.edPreviewBtnActive]}
+            onPress={() => setShowPreview(!showPreview)}
+          >
+            <Text style={[styles.edPreviewBtnText, showPreview && styles.edPreviewBtnTextActive]}>
+              {showPreview ? 'Düzenle' : 'Önizleme'}
+            </Text>
           </Pressable>
-          <Pressable style={styles.gutPublishBtn} onPress={() => onSave(true)}>
-            <Text style={styles.gutPublishBtnText}>Yayınla</Text>
+          <Pressable style={styles.edDraftBtn} onPress={() => onSave(buildPost(), false)}>
+            <Text style={styles.edDraftBtnText}>Taslak</Text>
+          </Pressable>
+          <Pressable style={styles.edPublishBtn} onPress={() => onSave(buildPost(), true)}>
+            <Text style={styles.edPublishBtnText}>Yayınla</Text>
           </Pressable>
         </View>
       </View>
 
-      {/* ── Title (Gutenberg-style large input) ── */}
+      {/* ── Title ── */}
       <TextInput
-        style={[styles.gutTitleInput, isWeb && styles.inputWeb]}
-        placeholder="Başlık ekleyin..."
+        style={[styles.edTitleInput, isWeb && styles.inputWeb]}
+        placeholder="Başlığı girin..."
         placeholderTextColor={COLORS.textMuted}
-        value={post.title}
-        onChangeText={(title) => {
-          const updates: Partial<BlogPost> = { title };
-          if (!post.slug || post.slug === generateSlug(post.title)) {
-            updates.slug = generateSlug(title);
-          }
-          onUpdate(updates);
-        }}
+        value={title}
+        onChangeText={handleTitleChange}
+        multiline={false}
       />
-      {post.slug ? (
-        <Text style={styles.gutSlugPreview}>halidene.com/blog/{post.slug}</Text>
-      ) : null}
+      <Text style={styles.edSlugPreview}>
+        halidene.com/blog/<Text style={{ color: COLORS.primary }}>{slug || 'url-slug'}</Text>
+      </Text>
 
-      {/* ── Featured Image (Ana Görsel) ── */}
-      <View style={styles.gutFeaturedImageArea}>
-        {post.featuredImage ? (
-          <View style={styles.gutFeaturedImageWrap}>
-            <Image source={{ uri: post.featuredImage }} style={styles.gutFeaturedImageImg} resizeMode="cover" />
-            <View style={styles.gutFeaturedImageOverlay}>
+      {/* ── Featured Image ── */}
+      <View style={styles.edFeaturedArea}>
+        {featuredImage ? (
+          <View style={styles.edFeaturedWrap}>
+            <Image source={{ uri: featuredImage }} style={styles.edFeaturedImg} resizeMode="cover" />
+            <View style={styles.edFeaturedOverlay}>
               <Pressable
-                style={styles.gutFeaturedImageRemoveBtn}
-                onPress={() => onUpdate({ featuredImage: undefined, featuredImageAlt: undefined })}
+                style={styles.edFeaturedRemoveBtn}
+                onPress={() => { setFeaturedImage(''); setFeaturedImageAlt(''); }}
               >
-                <Text style={styles.gutFeaturedImageRemoveText}>×</Text>
+                <Text style={styles.edFeaturedRemoveText}>✕</Text>
               </Pressable>
+            </View>
+            <View style={styles.edFeaturedAltRow}>
+              <TextInput
+                style={[styles.edFeaturedAltInput, isWeb && styles.inputWeb]}
+                placeholder="Görsel alt metni (SEO)..."
+                placeholderTextColor={COLORS.textMuted}
+                value={featuredImageAlt}
+                onChangeText={setFeaturedImageAlt}
+              />
             </View>
           </View>
         ) : (
-          <View style={styles.gutFeaturedImageEmpty}>
-            <Text style={styles.gutFeaturedImageIcon}>🖼</Text>
-            <Text style={styles.gutFeaturedImageLabel}>Ana Görsel Ekle</Text>
-            <Text style={styles.gutFeaturedImageHint}>Önerilen boyut: 1200 × 630 px (16:9)</Text>
-          </View>
-        )}
-        <TextInput
-          style={[styles.input, isWeb && styles.inputWeb, { marginTop: 8 }]}
-          placeholder="Görsel URL yapıştırın..."
-          placeholderTextColor={COLORS.textMuted}
-          value={post.featuredImage || ''}
-          onChangeText={(featuredImage) => onUpdate({ featuredImage: featuredImage || undefined })}
-          autoCapitalize="none"
-        />
-        {post.featuredImage ? (
-          <TextInput
-            style={[styles.input, isWeb && styles.inputWeb, { marginTop: 4 }]}
-            placeholder="Görsel alt metni (SEO için)"
-            placeholderTextColor={COLORS.textMuted}
-            value={post.featuredImageAlt || ''}
-            onChangeText={(featuredImageAlt) => onUpdate({ featuredImageAlt: featuredImageAlt || undefined })}
-          />
-        ) : null}
-      </View>
-
-      {/* ── Content Blocks (Gutenberg-style) ── */}
-      <View style={styles.gutBlocksArea}>
-        {post.sections.length === 0 && (
-          <View style={styles.gutEmptyContent}>
-            <Text style={styles.gutEmptyContentText}>İçerik eklemek için aşağıdaki + butonuna tıklayın</Text>
-          </View>
-        )}
-
-        {post.sections.map((section, index) => (
-          <View key={index} style={styles.gutBlockWrapper}>
-            {/* Block */}
+          <View>
             <Pressable
-              style={[
-                styles.gutBlock,
-                focusedBlock === index && styles.gutBlockFocused,
-              ]}
-              onPress={() => setFocusedBlock(focusedBlock === index ? null : index)}
+              style={styles.edFeaturedEmpty}
+              onPress={() => setShowImageInput(!showImageInput)}
             >
-              {/* Block toolbar (visible when focused) */}
-              {focusedBlock === index && (
-                <View style={styles.gutBlockToolbar}>
-                  <Text style={styles.gutBlockTypeLabel}>
-                    {section.type === 'paragraph' ? '¶ Paragraf' :
-                     section.type === 'heading' ? `H${(section as any).level || 2} Başlık` :
-                     section.type === 'image' ? '🖼 Görsel' :
-                     section.type === 'list' ? '☰ Liste' :
-                     section.type === 'table' ? '▦ Tablo' : section.type}
-                  </Text>
-                  <View style={styles.gutBlockToolbarActions}>
-                    {index > 0 && (
-                      <Pressable onPress={() => onMoveSection(index, -1)} style={styles.gutToolbarBtn}>
-                        <Text style={styles.gutToolbarBtnText}>↑</Text>
-                      </Pressable>
-                    )}
-                    {index < post.sections.length - 1 && (
-                      <Pressable onPress={() => onMoveSection(index, 1)} style={styles.gutToolbarBtn}>
-                        <Text style={styles.gutToolbarBtnText}>↓</Text>
-                      </Pressable>
-                    )}
-                    <Pressable onPress={() => { onRemoveSection(index); setFocusedBlock(null); }} style={[styles.gutToolbarBtn, styles.gutToolbarBtnDanger]}>
-                      <Text style={[styles.gutToolbarBtnText, { color: '#F44336' }]}>🗑</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              )}
-
-              {/* Block content */}
-              <GutenbergBlock
-                section={section}
-                onUpdate={(s) => onUpdateSection(index, s)}
-              />
+              <Text style={styles.edFeaturedIcon}>📷</Text>
+              <Text style={styles.edFeaturedLabel}>Ana Görsel Ekle</Text>
+              <Text style={styles.edFeaturedHint}>Önerilen boyut: 1200 x 630 px (16:9 oran)</Text>
+              <Text style={styles.edFeaturedHint2}>Blog kartları ve sosyal medya paylaşımlarında kullanılır</Text>
             </Pressable>
-
-            {/* Inline add button between blocks */}
-            <View style={styles.gutAddBetween}>
-              <View style={styles.gutAddBetweenLine} />
-              <Pressable
-                style={[styles.gutAddBtn, activeBlockMenu === index && styles.gutAddBtnActive]}
-                onPress={() => setActiveBlockMenu(activeBlockMenu === index ? null : index)}
-              >
-                <Text style={[styles.gutAddBtnText, activeBlockMenu === index && styles.gutAddBtnTextActive]}>+</Text>
-              </Pressable>
-              <View style={styles.gutAddBetweenLine} />
-            </View>
-
-            {/* Block type picker */}
-            {activeBlockMenu === index && (
-              <View style={styles.gutBlockPicker}>
-                {blockTypes.map(({ type, icon, label }) => (
-                  <Pressable
-                    key={type}
-                    style={({ hovered }: any) => [styles.gutBlockPickerItem, hovered && styles.gutBlockPickerItemHover]}
-                    onPress={() => { onAddSection(type); setActiveBlockMenu(null); }}
-                  >
-                    <Text style={styles.gutBlockPickerIcon}>{icon}</Text>
-                    <Text style={styles.gutBlockPickerLabel}>{label}</Text>
-                  </Pressable>
-                ))}
+            {showImageInput && (
+              <View style={styles.edFeaturedInputArea}>
+                <TextInput
+                  style={[styles.input, isWeb && styles.inputWeb]}
+                  placeholder="Görsel URL yapıştırın..."
+                  placeholderTextColor={COLORS.textMuted}
+                  value={featuredImage}
+                  onChangeText={setFeaturedImage}
+                  autoCapitalize="none"
+                />
+                <TextInput
+                  style={[styles.input, isWeb && styles.inputWeb, { marginTop: 6 }]}
+                  placeholder="Alt metin (SEO için)..."
+                  placeholderTextColor={COLORS.textMuted}
+                  value={featuredImageAlt}
+                  onChangeText={setFeaturedImageAlt}
+                />
               </View>
             )}
           </View>
-        ))}
-
-        {/* Add first/last block button */}
-        {post.sections.length === 0 || activeBlockMenu === -1 ? null : (
-          <View style={styles.gutAddBetween}>
-            <View style={styles.gutAddBetweenLine} />
-            <Pressable
-              style={[styles.gutAddBtn, activeBlockMenu === -1 && styles.gutAddBtnActive]}
-              onPress={() => setActiveBlockMenu(activeBlockMenu === -1 ? null : -1)}
-            >
-              <Text style={styles.gutAddBtnText}>+</Text>
-            </Pressable>
-            <View style={styles.gutAddBetweenLine} />
-          </View>
-        )}
-
-        {/* Bottom block picker (for adding first block or at end) */}
-        {(activeBlockMenu === -1 || post.sections.length === 0) && (
-          <View style={styles.gutBlockPicker}>
-            {blockTypes.map(({ type, icon, label }) => (
-              <Pressable
-                key={type}
-                style={({ hovered }: any) => [styles.gutBlockPickerItem, hovered && styles.gutBlockPickerItemHover]}
-                onPress={() => { onAddSection(type); setActiveBlockMenu(null); }}
-              >
-                <Text style={styles.gutBlockPickerIcon}>{icon}</Text>
-                <Text style={styles.gutBlockPickerLabel}>{label}</Text>
-              </Pressable>
-            ))}
-          </View>
         )}
       </View>
 
-      {/* ── Meta / SEO Panel (collapsible) ── */}
-      <Pressable
-        style={styles.gutMetaToggle}
-        onPress={() => setShowMeta(!showMeta)}
-      >
-        <Text style={styles.gutMetaToggleText}>⚙ Yazı Ayarları (SEO, Yazar, Tarih)</Text>
-        <Text style={styles.gutMetaToggleArrow}>{showMeta ? '▲' : '▼'}</Text>
+      {/* ── Content Area ── */}
+      {showPreview ? (
+        <View style={styles.edPreviewArea}>
+          <Text style={styles.edPreviewLabel}>Önizleme</Text>
+          <MarkdownPreview content={content} />
+        </View>
+      ) : (
+        <View style={styles.edContentArea}>
+          {/* Toolbar hints */}
+          <View style={styles.edToolbarHints}>
+            <Text style={styles.edToolbarHintText}>
+              <Text style={{ fontWeight: '700', color: COLORS.textSecondary }}>##</Text> Başlık{'   '}
+              <Text style={{ fontWeight: '700', color: COLORS.textSecondary }}>###</Text> Alt Başlık{'   '}
+              <Text style={{ fontWeight: '700', color: COLORS.textSecondary }}>**metin**</Text> Kalın{'   '}
+              <Text style={{ fontWeight: '700', color: COLORS.textSecondary }}>- madde</Text> Liste{'   '}
+              <Text style={{ fontWeight: '700', color: COLORS.textSecondary }}>[metin](url)</Text> Link
+            </Text>
+          </View>
+          <TextInput
+            style={[styles.edContentInput, isWeb && styles.edContentInputWeb]}
+            placeholder={`İçeriğinizi buraya yazın...
+
+## Başlık
+
+Paragraf metni. **Kalın** ve [link](url) kullanabilirsiniz.
+
+### Alt Başlık
+
+- Madde 1
+- Madde 2
+
+1. Sıralı madde
+2. Sıralı madde
+
+![Görsel açıklaması](gorsel-url.jpg)
+*Görsel alt yazısı*
+
+| Sütun 1 | Sütun 2 | Sütun 3 |
+| --- | --- | --- |
+| Veri 1 | Veri 2 | Veri 3 |`}
+            placeholderTextColor={COLORS.textMuted}
+            value={content}
+            onChangeText={setContent}
+            multiline
+            textAlignVertical="top"
+          />
+        </View>
+      )}
+
+      {/* ── SEO & Meta Panel (Collapsible) ── */}
+      <Pressable style={styles.edSeoToggle} onPress={() => setShowSeo(!showSeo)}>
+        <Text style={styles.edSeoToggleText}>SEO & Meta Ayarları</Text>
+        <Text style={styles.edSeoToggleArrow}>{showSeo ? '▼' : '▸'}</Text>
       </Pressable>
 
-      {showMeta && (
-        <View style={styles.gutMetaPanel}>
-          {/* Slug */}
-          <Text style={styles.fieldLabel}>Slug (URL)</Text>
+      {showSeo && (
+        <View style={styles.edSeoPanel}>
+          <Text style={styles.edFieldLabel}>URL Slug</Text>
           <TextInput
             style={[styles.input, isWeb && styles.inputWeb]}
-            placeholder="yazi-url-adresi"
+            placeholder="url-slug"
             placeholderTextColor={COLORS.textMuted}
-            value={post.slug}
-            onChangeText={(slug) => onUpdate({ slug })}
+            value={slug}
+            onChangeText={(text) => { setSlug(text); setSlugEdited(true); }}
             autoCapitalize="none"
           />
 
-          {/* Meta Description */}
-          <Text style={styles.fieldLabel}>Meta Açıklama (SEO)</Text>
+          <Text style={styles.edFieldLabel}>Meta Açıklama <Text style={styles.edCharCount}>({metaDescription.length}/160)</Text></Text>
           <TextInput
             style={[styles.input, styles.textArea, isWeb && styles.inputWeb]}
-            placeholder="Google arama sonuçlarında görünecek açıklama (max 160 karakter)"
+            placeholder="Arama sonuçlarında görünecek açıklama..."
             placeholderTextColor={COLORS.textMuted}
-            value={post.metaDescription}
-            onChangeText={(metaDescription) => onUpdate({ metaDescription })}
+            value={metaDescription}
+            onChangeText={setMetaDescription}
             multiline
-            numberOfLines={3}
+            maxLength={160}
           />
-          <Text style={styles.fieldHint}>{(post.metaDescription || '').length}/160 karakter</Text>
 
-          {/* Summary */}
-          <Text style={styles.fieldLabel}>Özet</Text>
+          <Text style={styles.edFieldLabel}>Özet</Text>
           <TextInput
             style={[styles.input, styles.textArea, isWeb && styles.inputWeb]}
-            placeholder="Blog listesinde görünecek kısa özet"
+            placeholder="Blog listesinde gösterilecek kısa özet..."
             placeholderTextColor={COLORS.textMuted}
-            value={post.summary}
-            onChangeText={(summary) => onUpdate({ summary })}
+            value={summary}
+            onChangeText={setSummary}
             multiline
-            numberOfLines={2}
           />
 
-          {/* Author */}
-          <Text style={styles.fieldLabel}>Yazar</Text>
-          <TextInput
-            style={[styles.input, isWeb && styles.inputWeb]}
-            placeholder="Yazar adı"
-            placeholderTextColor={COLORS.textMuted}
-            value={post.author.name}
-            onChangeText={(name) => onUpdate({ author: { ...post.author, name } })}
-          />
-          <TextInput
-            style={[styles.input, isWeb && styles.inputWeb]}
-            placeholder="Yazar fotoğraf URL (opsiyonel)"
-            placeholderTextColor={COLORS.textMuted}
-            value={post.author.avatar || ''}
-            onChangeText={(avatar) => onUpdate({ author: { ...post.author, avatar: avatar || undefined } })}
-            autoCapitalize="none"
-          />
+          <View style={[styles.edSeoRow, isCompactWeb && styles.compactStack]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.edFieldLabel}>Yazar</Text>
+              <TextInput
+                style={[styles.input, isWeb && styles.inputWeb]}
+                placeholder="Yazar adı"
+                placeholderTextColor={COLORS.textMuted}
+                value={authorName}
+                onChangeText={setAuthorName}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.edFieldLabel}>Yazar Avatar URL</Text>
+              <TextInput
+                style={[styles.input, isWeb && styles.inputWeb]}
+                placeholder="Avatar URL (opsiyonel)"
+                placeholderTextColor={COLORS.textMuted}
+                value={authorAvatar}
+                onChangeText={setAuthorAvatar}
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
 
-          {/* Date */}
-          <Text style={styles.fieldLabel}>Tarih</Text>
+          <Text style={styles.edFieldLabel}>Yayın Tarihi</Text>
           <TextInput
             style={[styles.input, isWeb && styles.inputWeb]}
             placeholder="YYYY-MM-DD"
             placeholderTextColor={COLORS.textMuted}
-            value={post.date}
-            onChangeText={(date) => onUpdate({ date })}
+            value={date}
+            onChangeText={setDate}
           />
         </View>
       )}
@@ -662,217 +587,185 @@ function BlogEditor({ post, isCompactWeb, onUpdate, onUpdateSection, onRemoveSec
   );
 }
 
-/* ─── Gutenberg Block Renderer (inline editing) ─── */
-function GutenbergBlock({ section, onUpdate }: {
-  section: BlogSection;
-  onUpdate: (section: BlogSection) => void;
-}) {
-  if (section.type === 'paragraph') {
-    return (
-      <TextInput
-        style={[styles.gutParagraphInput, isWeb && styles.inputWeb]}
-        placeholder="Yazmaya başlayın... (**kalın**, [link](url) desteklenir)"
-        placeholderTextColor={COLORS.textMuted}
-        value={section.text}
-        onChangeText={(text) => onUpdate({ ...section, text })}
-        multiline
-      />
-    );
-  }
+/* ─── Markdown Preview Component ─── */
+function MarkdownPreview({ content }: { content: string }) {
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+  let key = 0;
 
-  if (section.type === 'heading') {
-    return (
-      <View>
-        <View style={styles.gutHeadingLevelRow}>
-          <Pressable
-            style={[styles.gutHeadingLevelBtn, section.level !== 3 && styles.gutHeadingLevelBtnActive]}
-            onPress={() => onUpdate({ ...section, level: 2 })}
-          >
-            <Text style={[styles.gutHeadingLevelText, section.level !== 3 && styles.gutHeadingLevelTextActive]}>H2</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.gutHeadingLevelBtn, section.level === 3 && styles.gutHeadingLevelBtnActive]}
-            onPress={() => onUpdate({ ...section, level: 3 })}
-          >
-            <Text style={[styles.gutHeadingLevelText, section.level === 3 && styles.gutHeadingLevelTextActive]}>H3</Text>
-          </Pressable>
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (!trimmed) { i++; continue; }
+
+    // Heading ###
+    if (trimmed.startsWith('### ')) {
+      elements.push(
+        <Text key={key++} style={styles.prevH3}>{trimmed.slice(4)}</Text>
+      );
+      i++; continue;
+    }
+
+    // Heading ##
+    if (trimmed.startsWith('## ')) {
+      elements.push(
+        <Text key={key++} style={styles.prevH2}>{trimmed.slice(3)}</Text>
+      );
+      i++; continue;
+    }
+
+    // Image
+    const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (imgMatch) {
+      let caption = '';
+      if (i + 1 < lines.length) {
+        const next = lines[i + 1].trim();
+        if (next.startsWith('*') && next.endsWith('*') && next.length > 2) {
+          caption = next.slice(1, -1);
+          i++;
+        }
+      }
+      elements.push(
+        <View key={key++} style={styles.prevImageWrap}>
+          <Image source={{ uri: imgMatch[2] }} style={styles.prevImage} resizeMode="cover" />
+          {!!caption && <Text style={styles.prevImageCaption}>{caption}</Text>}
         </View>
-        <TextInput
-          style={[
-            section.level === 3 ? styles.gutH3Input : styles.gutH2Input,
-            isWeb && styles.inputWeb,
-          ]}
-          placeholder={section.level === 3 ? 'Alt başlık...' : 'Başlık...'}
-          placeholderTextColor={COLORS.textMuted}
-          value={section.text}
-          onChangeText={(text) => onUpdate({ ...section, text })}
-        />
-      </View>
-    );
-  }
+      );
+      i++; continue;
+    }
 
-  if (section.type === 'image') {
-    return (
-      <View style={styles.gutImageBlock}>
-        {section.url ? (
-          <View style={styles.gutImagePreview}>
-            <Image source={{ uri: section.url }} style={styles.gutImagePreviewImg} resizeMode="cover" />
-          </View>
-        ) : (
-          <View style={styles.gutImageEmpty}>
-            <Text style={styles.gutImageEmptyIcon}>🖼</Text>
-            <Text style={styles.gutImageEmptyText}>Görsel URL girin</Text>
-            <Text style={styles.gutImageEmptyHint}>Önerilen: 800 × 450 px</Text>
-          </View>
-        )}
-        <TextInput
-          style={[styles.input, isWeb && styles.inputWeb, { marginTop: 6 }]}
-          placeholder="Görsel URL..."
-          placeholderTextColor={COLORS.textMuted}
-          value={section.url}
-          onChangeText={(url) => onUpdate({ ...section, url })}
-          autoCapitalize="none"
-        />
-        <TextInput
-          style={[styles.input, isWeb && styles.inputWeb, { marginTop: 4 }]}
-          placeholder="Alt metin (SEO)"
-          placeholderTextColor={COLORS.textMuted}
-          value={section.alt}
-          onChangeText={(alt) => onUpdate({ ...section, alt })}
-        />
-        <TextInput
-          style={[styles.input, isWeb && styles.inputWeb, { marginTop: 4 }]}
-          placeholder="Açıklama (opsiyonel)"
-          placeholderTextColor={COLORS.textMuted}
-          value={section.caption || ''}
-          onChangeText={(caption) => onUpdate({ ...section, caption: caption || undefined })}
-        />
-      </View>
-    );
-  }
-
-  if (section.type === 'list') {
-    return (
-      <View>
-        <View style={styles.gutHeadingLevelRow}>
-          <Pressable
-            style={[styles.gutHeadingLevelBtn, !section.ordered && styles.gutHeadingLevelBtnActive]}
-            onPress={() => onUpdate({ ...section, ordered: false })}
-          >
-            <Text style={[styles.gutHeadingLevelText, !section.ordered && styles.gutHeadingLevelTextActive]}>• Madde</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.gutHeadingLevelBtn, section.ordered && styles.gutHeadingLevelBtnActive]}
-            onPress={() => onUpdate({ ...section, ordered: true })}
-          >
-            <Text style={[styles.gutHeadingLevelText, section.ordered && styles.gutHeadingLevelTextActive]}>1. Numaralı</Text>
-          </Pressable>
+    // Unordered list
+    if (trimmed.match(/^[-*]\s/)) {
+      const items: string[] = [];
+      while (i < lines.length && lines[i].trim().match(/^[-*]\s/)) {
+        items.push(lines[i].trim().replace(/^[-*]\s/, ''));
+        i++;
+      }
+      elements.push(
+        <View key={key++} style={styles.prevList}>
+          {items.map((item, idx) => (
+            <View key={idx} style={styles.prevListItem}>
+              <Text style={styles.prevListBullet}>•</Text>
+              <Text style={styles.prevListText}>{renderInlineMarkdown(item)}</Text>
+            </View>
+          ))}
         </View>
-        {section.items.map((item, li) => (
-          <View key={li} style={styles.gutListRow}>
-            <Text style={styles.gutListBullet}>{section.ordered ? `${li + 1}.` : '•'}</Text>
-            <TextInput
-              style={[styles.gutListInput, isWeb && styles.inputWeb]}
-              placeholder={`Madde ${li + 1}`}
-              placeholderTextColor={COLORS.textMuted}
-              value={item}
-              onChangeText={(text) => {
-                const items = [...section.items];
-                items[li] = text;
-                onUpdate({ ...section, items });
-              }}
-            />
-            <Pressable
-              style={styles.gutListRemove}
-              onPress={() => {
-                const items = section.items.filter((_, i) => i !== li);
-                if (items.length === 0) items.push('');
-                onUpdate({ ...section, items });
-              }}
-            >
-              <Text style={{ color: '#F44336', fontSize: 14 }}>×</Text>
-            </Pressable>
-          </View>
-        ))}
-        <Pressable
-          style={styles.gutListAddBtn}
-          onPress={() => onUpdate({ ...section, items: [...section.items, ''] })}
-        >
-          <Text style={styles.gutListAddBtnText}>+ Madde Ekle</Text>
-        </Pressable>
-      </View>
-    );
-  }
+      );
+      continue;
+    }
 
-  if (section.type === 'table') {
-    return (
-      <View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View>
-            {section.rows.map((row, ri) => (
-              <View key={ri} style={styles.gutTableRow}>
+    // Ordered list
+    if (trimmed.match(/^\d+\.\s/)) {
+      const items: string[] = [];
+      while (i < lines.length && lines[i].trim().match(/^\d+\.\s/)) {
+        items.push(lines[i].trim().replace(/^\d+\.\s/, ''));
+        i++;
+      }
+      elements.push(
+        <View key={key++} style={styles.prevList}>
+          {items.map((item, idx) => (
+            <View key={idx} style={styles.prevListItem}>
+              <Text style={styles.prevListBullet}>{idx + 1}.</Text>
+              <Text style={styles.prevListText}>{renderInlineMarkdown(item)}</Text>
+            </View>
+          ))}
+        </View>
+      );
+      continue;
+    }
+
+    // Table
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      const rows: string[][] = [];
+      while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
+        const row = lines[i].trim();
+        if (!row.match(/^\|[\s\-:]+(\|[\s\-:]+)+\|$/)) {
+          const cells = row.slice(1, -1).split('|').map(c => c.trim());
+          if (cells.some(c => c.length > 0)) rows.push(cells);
+        }
+        i++;
+      }
+      if (rows.length > 0) {
+        const [header, ...dataRows] = rows;
+        elements.push(
+          <View key={key++} style={styles.prevTable}>
+            <View style={styles.prevTableHeaderRow}>
+              {header.map((cell, ci) => (
+                <View key={ci} style={styles.prevTableCell}>
+                  <Text style={styles.prevTableHeaderText}>{cell}</Text>
+                </View>
+              ))}
+            </View>
+            {dataRows.map((row, ri) => (
+              <View key={ri} style={[styles.prevTableRow, ri % 2 === 0 && styles.prevTableRowAlt]}>
                 {row.map((cell, ci) => (
-                  <TextInput
-                    key={ci}
-                    style={[
-                      styles.gutTableCell,
-                      ri === 0 && styles.gutTableHeaderCell,
-                      isWeb && styles.inputWeb,
-                    ]}
-                    placeholder={ri === 0 ? `Sütun ${ci + 1}` : ''}
-                    placeholderTextColor={COLORS.textMuted}
-                    value={cell}
-                    onChangeText={(text) => {
-                      const rows = section.rows.map(r => [...r]);
-                      rows[ri][ci] = text;
-                      onUpdate({ ...section, rows });
-                    }}
-                  />
+                  <View key={ci} style={styles.prevTableCell}>
+                    <Text style={styles.prevTableCellText}>{cell}</Text>
+                  </View>
                 ))}
-                {ri > 0 && (
-                  <Pressable
-                    style={styles.gutTableRowRemove}
-                    onPress={() => {
-                      const rows = section.rows.filter((_, i) => i !== ri);
-                      onUpdate({ ...section, rows });
-                    }}
-                  >
-                    <Text style={{ color: '#F44336', fontSize: 14 }}>×</Text>
-                  </Pressable>
-                )}
               </View>
             ))}
           </View>
-        </ScrollView>
-        <View style={styles.gutTableActions}>
-          <Pressable
-            style={styles.gutListAddBtn}
-            onPress={() => {
-              const colCount = section.rows[0]?.length || 2;
-              onUpdate({ ...section, rows: [...section.rows, Array(colCount).fill('')] });
-            }}
-          >
-            <Text style={styles.gutListAddBtnText}>+ Satır</Text>
-          </Pressable>
-          <Pressable
-            style={styles.gutListAddBtn}
-            onPress={() => {
-              const rows = section.rows.map(r => [...r, '']);
-              onUpdate({ ...section, rows });
-            }}
-          >
-            <Text style={styles.gutListAddBtnText}>+ Sütun</Text>
-          </Pressable>
-        </View>
-      </View>
+        );
+      }
+      continue;
+    }
+
+    // Paragraph
+    let text = trimmed;
+    i++;
+    while (i < lines.length) {
+      const next = lines[i].trim();
+      if (!next || next.startsWith('## ') || next.startsWith('### ') ||
+          next.match(/^[-*]\s/) || next.match(/^\d+\.\s/) ||
+          next.match(/^!\[/) || (next.startsWith('|') && next.endsWith('|'))) break;
+      text += ' ' + next;
+      i++;
+    }
+    elements.push(
+      <Text key={key++} style={styles.prevParagraph}>{renderInlineMarkdown(text)}</Text>
     );
   }
 
-  return null;
+  if (elements.length === 0) {
+    return <Text style={styles.prevEmpty}>İçerik önizlemesi burada görünecek...</Text>;
+  }
+
+  return <View>{elements}</View>;
 }
 
-/* SectionEditor removed — replaced by GutenbergBlock above */
+/* ─── Inline markdown renderer (bold + links) ─── */
+function renderInlineMarkdown(text: string): React.ReactNode {
+  const parts: React.ReactNode[] = [];
+  const regex = /(\*\*(.+?)\*\*|\[(.+?)\]\((.+?)\))/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let k = 0;
 
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    if (match[2]) {
+      parts.push(<Text key={k++} style={{ fontWeight: '700', color: COLORS.text }}>{match[2]}</Text>);
+    } else if (match[3] && match[4]) {
+      parts.push(
+        <Text key={k++} style={{ color: COLORS.primary, textDecorationLine: 'underline' }}>
+          {match[3]}
+        </Text>
+      );
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+  return parts.length === 1 && typeof parts[0] === 'string' ? text : parts;
+}
+
+/* ━━━━━━━━━━━━━━━━ STYLES ━━━━━━━━━━━━━━━━ */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background, minHeight: 0 },
   scroll: { flex: 1, minHeight: 0 },
@@ -972,171 +865,148 @@ const styles = StyleSheet.create({
   statusBadgeText: { fontSize: 11, fontWeight: '700' },
   statusPublishedText: { color: COLORS.success },
   statusDraftText: { color: COLORS.primaryLight },
-  // Blog editor field labels
-  fieldLabel: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600', marginTop: SPACING.xs },
-  fieldHint: { color: COLORS.textMuted, fontSize: 12 },
-  // ── Gutenberg Editor Styles ──
-  gutTopBar: {
+
+  /* ━━━━━━ Blog Editor ━━━━━━ */
+  editorCard: {
+    backgroundColor: COLORS.surface, borderRadius: RADIUS.xxl,
+    borderWidth: 1, borderColor: COLORS.border, padding: SPACING.lg, marginBottom: SPACING.md,
+  },
+  // Top bar
+  edTopBar: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingBottom: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border, marginBottom: SPACING.md,
+    paddingBottom: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border, marginBottom: SPACING.lg,
   },
-  gutBackBtn: { paddingVertical: 6 },
-  gutBackBtnText: { color: COLORS.primary, fontSize: 14, fontWeight: '600' },
-  gutTopBarRight: { flexDirection: 'row', gap: SPACING.sm },
-  gutDraftBtn: {
+  edBackBtn: { paddingVertical: 6 },
+  edBackBtnText: { color: COLORS.primary, fontSize: 14, fontWeight: '600' },
+  edTopBarRight: { flexDirection: 'row', gap: SPACING.sm, alignItems: 'center' },
+  edPreviewBtn: {
     borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md,
-    paddingHorizontal: 16, paddingVertical: 8,
+    paddingHorizontal: 14, paddingVertical: 7,
   },
-  gutDraftBtnText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
-  gutPublishBtn: {
+  edPreviewBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.12)' },
+  edPreviewBtnText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
+  edPreviewBtnTextActive: { color: COLORS.primaryLight },
+  edDraftBtn: {
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md,
+    paddingHorizontal: 14, paddingVertical: 7,
+  },
+  edDraftBtnText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
+  edPublishBtn: {
     backgroundColor: COLORS.primary, borderRadius: RADIUS.md,
-    paddingHorizontal: 20, paddingVertical: 8,
+    paddingHorizontal: 18, paddingVertical: 8,
   },
-  gutPublishBtnText: { color: COLORS.white, fontSize: 13, fontWeight: '700' },
+  edPublishBtnText: { color: COLORS.white, fontSize: 13, fontWeight: '700' },
   // Title
-  gutTitleInput: {
+  edTitleInput: {
     fontSize: 28, fontWeight: '800', color: COLORS.text, paddingVertical: SPACING.sm,
     borderWidth: 0, backgroundColor: 'transparent',
   } as any,
-  gutSlugPreview: { color: COLORS.textMuted, fontSize: 12, marginBottom: SPACING.md },
+  edSlugPreview: { color: COLORS.textMuted, fontSize: 12, marginBottom: SPACING.lg },
   // Featured Image
-  gutFeaturedImageArea: {
+  edFeaturedArea: {
     marginBottom: SPACING.lg, borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingBottom: SPACING.lg,
   },
-  gutFeaturedImageWrap: { borderRadius: RADIUS.xl, overflow: 'hidden', position: 'relative' as any },
-  gutFeaturedImageImg: { width: '100%', height: 220, borderRadius: RADIUS.xl },
-  gutFeaturedImageOverlay: {
-    position: 'absolute' as any, top: 8, right: 8,
-  },
-  gutFeaturedImageRemoveBtn: {
-    width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.6)',
+  edFeaturedWrap: { borderRadius: RADIUS.xl, overflow: 'hidden', position: 'relative' as any },
+  edFeaturedImg: { width: '100%', height: 260, borderRadius: RADIUS.xl },
+  edFeaturedOverlay: { position: 'absolute' as any, top: 10, right: 10 },
+  edFeaturedRemoveBtn: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.6)',
     alignItems: 'center', justifyContent: 'center',
   },
-  gutFeaturedImageRemoveText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  gutFeaturedImageEmpty: {
+  edFeaturedRemoveText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  edFeaturedAltRow: { padding: SPACING.sm },
+  edFeaturedAltInput: {
+    backgroundColor: COLORS.surfaceElevated, borderRadius: RADIUS.md, borderWidth: 1,
+    borderColor: COLORS.border, color: COLORS.text, paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm, fontSize: 13,
+  },
+  edFeaturedEmpty: {
     borderWidth: 2, borderColor: COLORS.border, borderStyle: 'dashed' as any,
-    borderRadius: RADIUS.xl, paddingVertical: 40, alignItems: 'center', justifyContent: 'center',
+    borderRadius: RADIUS.xl, paddingVertical: 48, alignItems: 'center', justifyContent: 'center',
     backgroundColor: COLORS.surfaceElevated,
   },
-  gutFeaturedImageIcon: { fontSize: 36, marginBottom: 8 },
-  gutFeaturedImageLabel: { color: COLORS.textSecondary, fontSize: 15, fontWeight: '600' },
-  gutFeaturedImageHint: { color: COLORS.textMuted, fontSize: 12, marginTop: 4 },
-  // Blocks area
-  gutBlocksArea: { minHeight: 200 },
-  gutEmptyContent: { paddingVertical: 40, alignItems: 'center' },
-  gutEmptyContentText: { color: COLORS.textMuted, fontSize: 14 },
-  gutBlockWrapper: {},
-  gutBlock: {
-    borderRadius: RADIUS.lg, borderWidth: 1, borderColor: 'transparent',
-    padding: SPACING.xs,
+  edFeaturedIcon: { fontSize: 40, marginBottom: 8 },
+  edFeaturedLabel: { color: COLORS.textSecondary, fontSize: 16, fontWeight: '700' },
+  edFeaturedHint: { color: COLORS.textMuted, fontSize: 13, marginTop: 4 },
+  edFeaturedHint2: { color: COLORS.textMuted, fontSize: 12, marginTop: 2, fontStyle: 'italic' },
+  edFeaturedInputArea: { marginTop: SPACING.sm, gap: 0 },
+  // Content
+  edContentArea: {
+    marginBottom: SPACING.lg,
   },
-  gutBlockFocused: {
-    borderColor: COLORS.primaryGlowStrong, backgroundColor: 'rgba(200, 134, 10, 0.04)',
-  },
-  gutBlockToolbar: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: 6, paddingHorizontal: 4,
-  },
-  gutBlockTypeLabel: { color: COLORS.textMuted, fontSize: 11, fontWeight: '600' },
-  gutBlockToolbarActions: { flexDirection: 'row', gap: 4 },
-  gutToolbarBtn: {
-    width: 26, height: 26, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.surface,
-  },
-  gutToolbarBtnDanger: { borderColor: '#6A2A2A' },
-  gutToolbarBtnText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '700' },
-  // Add between blocks
-  gutAddBetween: {
-    flexDirection: 'row', alignItems: 'center', paddingVertical: 4, opacity: 0.5,
-  },
-  gutAddBetweenLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
-  gutAddBtn: {
-    width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border,
-    alignItems: 'center', justifyContent: 'center', marginHorizontal: 8, backgroundColor: COLORS.surface,
-  },
-  gutAddBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.15)' },
-  gutAddBtnText: { color: COLORS.textMuted, fontSize: 16, fontWeight: '600', lineHeight: 18 },
-  gutAddBtnTextActive: { color: COLORS.primary },
-  // Block type picker
-  gutBlockPicker: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 8,
-    padding: SPACING.sm, backgroundColor: COLORS.surfaceElevated,
-    borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, marginBottom: 4,
-  },
-  gutBlockPickerItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.md,
+  edToolbarHints: {
+    backgroundColor: COLORS.surfaceElevated, borderRadius: RADIUS.md,
     borderWidth: 1, borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, marginBottom: SPACING.sm,
   },
-  gutBlockPickerItemHover: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.08)' },
-  gutBlockPickerIcon: { fontSize: 14 },
-  gutBlockPickerLabel: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
-  // Paragraph block
-  gutParagraphInput: {
-    color: COLORS.text, fontSize: 15, lineHeight: 24, minHeight: 60,
-    backgroundColor: 'transparent', borderWidth: 0, textAlignVertical: 'top',
-    paddingHorizontal: 4, paddingVertical: 4,
-  } as any,
-  // Heading block
-  gutHeadingLevelRow: { flexDirection: 'row', gap: 6, marginBottom: 4 },
-  gutHeadingLevelBtn: {
-    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: 10, paddingVertical: 3,
-  },
-  gutHeadingLevelBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.15)' },
-  gutHeadingLevelText: { color: COLORS.textMuted, fontSize: 12, fontWeight: '700' },
-  gutHeadingLevelTextActive: { color: COLORS.primaryLight },
-  gutH2Input: {
-    fontSize: 22, fontWeight: '700', color: COLORS.text,
-    backgroundColor: 'transparent', borderWidth: 0, paddingHorizontal: 4, paddingVertical: 4,
-  } as any,
-  gutH3Input: {
-    fontSize: 18, fontWeight: '700', color: COLORS.text,
-    backgroundColor: 'transparent', borderWidth: 0, paddingHorizontal: 4, paddingVertical: 4,
-  } as any,
-  // Image block
-  gutImageBlock: {},
-  gutImagePreview: { borderRadius: RADIUS.lg, overflow: 'hidden' },
-  gutImagePreviewImg: { width: '100%', height: 180, borderRadius: RADIUS.lg },
-  gutImageEmpty: {
-    borderWidth: 2, borderColor: COLORS.border, borderStyle: 'dashed' as any,
-    borderRadius: RADIUS.lg, paddingVertical: 24, alignItems: 'center',
-    backgroundColor: COLORS.surfaceElevated,
-  },
-  gutImageEmptyIcon: { fontSize: 28, marginBottom: 4 },
-  gutImageEmptyText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
-  gutImageEmptyHint: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
-  // List block
-  gutListRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
-  gutListBullet: { color: COLORS.primary, fontSize: 14, fontWeight: '700', width: 20 },
-  gutListInput: {
-    flex: 1, color: COLORS.text, fontSize: 15, backgroundColor: 'transparent',
-    borderWidth: 0, paddingVertical: 4, paddingHorizontal: 2,
-  } as any,
-  gutListRemove: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-  gutListAddBtn: {
-    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed' as any,
-    alignItems: 'center', paddingVertical: 6, marginTop: 4,
-  },
-  gutListAddBtnText: { color: COLORS.textMuted, fontSize: 12, fontWeight: '600' },
-  // Table block
-  gutTableRow: { flexDirection: 'row', gap: 2, marginBottom: 2 },
-  gutTableCell: {
-    flex: 1, minWidth: 80, color: COLORS.text, fontSize: 13,
-    backgroundColor: COLORS.surfaceElevated, borderRadius: RADIUS.sm,
+  edToolbarHintText: { color: COLORS.textMuted, fontSize: 12, lineHeight: 20 },
+  edContentInput: {
+    color: COLORS.text, fontSize: 15, lineHeight: 26,
+    minHeight: 400, textAlignVertical: 'top',
+    backgroundColor: COLORS.surfaceElevated, borderRadius: RADIUS.lg,
     borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: 8, paddingVertical: 6,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.md,
+  } as any,
+  edContentInputWeb: {
+    outlineStyle: 'none', outlineWidth: 0,
+    fontFamily: 'ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", monospace',
+    fontSize: 14, lineHeight: 24, minHeight: 500,
+    resize: 'vertical',
+  } as any,
+  // Preview
+  edPreviewArea: {
+    backgroundColor: COLORS.surfaceElevated, borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: COLORS.border,
+    padding: SPACING.lg, marginBottom: SPACING.lg, minHeight: 300,
   },
-  gutTableHeaderCell: { fontWeight: '700', backgroundColor: 'rgba(200, 134, 10, 0.08)' },
-  gutTableRowRemove: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-  gutTableActions: { flexDirection: 'row', gap: SPACING.xs, marginTop: 4 },
-  // Meta panel
-  gutMetaToggle: {
+  edPreviewLabel: {
+    color: COLORS.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase',
+    letterSpacing: 1, marginBottom: SPACING.md,
+  },
+  // SEO Panel
+  edSeoToggle: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: SPACING.md, marginTop: SPACING.lg,
+    borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: SPACING.md,
     paddingVertical: SPACING.sm,
   },
-  gutMetaToggleText: { color: COLORS.textSecondary, fontSize: 14, fontWeight: '600' },
-  gutMetaToggleArrow: { color: COLORS.textMuted, fontSize: 12 },
-  gutMetaPanel: { gap: SPACING.xs, paddingTop: SPACING.sm },
+  edSeoToggleText: { color: COLORS.textSecondary, fontSize: 14, fontWeight: '600' },
+  edSeoToggleArrow: { color: COLORS.textMuted, fontSize: 12 },
+  edSeoPanel: { gap: SPACING.sm, paddingTop: SPACING.sm },
+  edSeoRow: { flexDirection: 'row', gap: SPACING.sm },
+  edFieldLabel: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600', marginTop: SPACING.xs },
+  edCharCount: { color: COLORS.textMuted, fontWeight: '400' },
+
+  /* ━━━━━━ Preview Styles ━━━━━━ */
+  prevH2: {
+    fontSize: 22, fontWeight: '700', color: COLORS.text,
+    marginTop: SPACING.xl, marginBottom: SPACING.sm, lineHeight: 30,
+  },
+  prevH3: {
+    fontSize: 18, fontWeight: '700', color: COLORS.text,
+    marginTop: SPACING.lg, marginBottom: SPACING.sm, lineHeight: 26,
+  },
+  prevParagraph: {
+    fontSize: 15, color: COLORS.textSecondary, lineHeight: 26, marginBottom: SPACING.md,
+  },
+  prevList: { marginBottom: SPACING.md, paddingLeft: 4 },
+  prevListItem: { flexDirection: 'row', marginBottom: 6 },
+  prevListBullet: { color: COLORS.primary, fontWeight: '700', width: 24, fontSize: 15, lineHeight: 26 },
+  prevListText: { flex: 1, fontSize: 15, color: COLORS.textSecondary, lineHeight: 26 },
+  prevImageWrap: { marginVertical: SPACING.md, borderRadius: RADIUS.lg, overflow: 'hidden' },
+  prevImage: { width: '100%', height: 240, borderRadius: RADIUS.lg },
+  prevImageCaption: { fontSize: 13, color: COLORS.textMuted, textAlign: 'center', marginTop: SPACING.sm, fontStyle: 'italic' },
+  prevTable: {
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg,
+    overflow: 'hidden', marginVertical: SPACING.md,
+  },
+  prevTableHeaderRow: {
+    flexDirection: 'row', backgroundColor: COLORS.surfaceElevated,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  },
+  prevTableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  prevTableRowAlt: { backgroundColor: 'rgba(26, 26, 26, 0.5)' },
+  prevTableCell: { flex: 1, paddingHorizontal: 12, paddingVertical: 10 },
+  prevTableHeaderText: { fontSize: 13, fontWeight: '700', color: COLORS.text },
+  prevTableCellText: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+  prevEmpty: { color: COLORS.textMuted, fontSize: 14, fontStyle: 'italic' },
 });
