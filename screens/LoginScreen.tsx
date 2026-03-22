@@ -242,7 +242,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   };
 
 /* ────────────────── HALI KATALOĞU ────────────────── */
-  const catalogCarpets = (BRAND_CATALOG as Record<string, { thumbPath: string; imagePath: string }[]>)[selectedBrand] || [];
+  const allCatalogCarpets = (BRAND_CATALOG as Record<string, { thumbPath: string; imagePath: string }[]>)[selectedBrand] || [];
+  const catalogCarpets = isWide ? allCatalogCarpets : allCatalogCarpets.slice(0, 6);
 
   const renderCatalog = () => (
     <View style={s.section}>
