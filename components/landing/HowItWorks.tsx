@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
-import { COLORS, SPACING, RADIUS } from '../../constants/theme';
+import { COLORS, SPACING } from '../../constants/theme';
 
 const isWeb = Platform.OS === 'web';
 
@@ -36,35 +36,23 @@ export default function HowItWorks({ isWide }: Props) {
 
       <View style={[styles.stepsRow, !isWide && styles.stepsCol]}>
         {STEPS.map((step, i) => (
-          <React.Fragment key={step.num}>
-            <Animated.View
-              style={[
-                styles.stepCard,
-                isWeb && ({
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                } as any),
-                {
-                  opacity: anims[i],
-                  transform: [{ translateY: anims[i].interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
-                },
-              ]}
-            >
-              <View style={styles.stepNum}>
-                <Text style={styles.stepNumText}>{step.num}</Text>
-              </View>
-              <Text style={styles.stepTitle}>{step.title}</Text>
-              <Text style={styles.stepDesc}>{step.desc}</Text>
-            </Animated.View>
-
-            {/* Connector */}
-            {i < STEPS.length - 1 && (
-              <View style={[styles.connector, !isWide && styles.connectorVert]}>
-                <View style={[styles.connectorLine, !isWide && styles.connectorLineVert]} />
-                <Text style={styles.connectorArrow}>{isWide ? '→' : '↓'}</Text>
-              </View>
-            )}
-          </React.Fragment>
+          <Animated.View
+            key={step.num}
+            style={[
+              styles.stepItem,
+              isWide && styles.stepItemWide,
+              {
+                opacity: anims[i],
+                transform: [{ translateY: anims[i].interpolate({ inputRange: [0, 1], outputRange: [15, 0] }) }],
+              },
+            ]}
+          >
+            <View style={[styles.stepNum, isWide && styles.stepNumWide]}>
+              <Text style={styles.stepNumText}>{step.num}</Text>
+            </View>
+            <Text style={[styles.stepTitle, isWide && styles.stepTitleWide]}>{step.title}</Text>
+            <Text style={styles.stepDesc}>{step.desc}</Text>
+          </Animated.View>
         ))}
       </View>
     </View>
@@ -94,79 +82,53 @@ const styles = StyleSheet.create({
   },
   stepsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
   stepsCol: {
     flexDirection: 'column',
-    alignItems: 'stretch',
+    gap: SPACING.lg,
   },
-  stepCard: {
+  stepItem: {
+    flexDirection: 'column',
+  },
+  stepItemWide: {
     flex: 1,
-    backgroundColor: COLORS.surfaceGlass,
-    borderRadius: RADIUS.xxl,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.lg,
     alignItems: 'center',
-    borderTopWidth: 3,
-    borderTopColor: COLORS.primary,
   },
   stepNum: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
+  stepNumWide: {
+    alignSelf: 'center',
+  },
   stepNumText: {
     color: COLORS.white,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
   },
   stepTitle: {
     color: COLORS.text,
     fontSize: 16,
     fontWeight: '700',
+    marginBottom: 4,
+  },
+  stepTitleWide: {
     textAlign: 'center',
-    marginBottom: 6,
   },
   stepDesc: {
     color: COLORS.textSecondary,
     fontSize: 13,
-    textAlign: 'center',
     lineHeight: 19,
-  },
-  connector: {
-    width: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  connectorVert: {
-    width: '100%',
-    height: 32,
-    flexDirection: 'column',
-  },
-  connectorLine: {
-    width: 20,
-    height: 1,
-    backgroundColor: COLORS.border,
-  },
-  connectorLineVert: {
-    width: 1,
-    height: 12,
-    alignSelf: 'center',
-  },
-  connectorArrow: {
-    color: COLORS.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

@@ -47,34 +47,6 @@ interface LoginScreenProps {
   navigation: any;
 }
 
-/* ─── Feature Icon ─── */
-const FeatureIcon = ({ type }: { type: 'target' | 'speed' | 'check' }) => {
-  if (type === 'target') {
-    return (
-      <View style={s.iconBase}>
-        <View style={s.iconTargetOuter} />
-        <View style={s.iconTargetInner} />
-        <View style={s.iconTargetDot} />
-      </View>
-    );
-  }
-  if (type === 'speed') {
-    return (
-      <View style={s.iconBase}>
-        <View style={s.iconBolt} />
-        <View style={s.iconBoltTail} />
-      </View>
-    );
-  }
-  return (
-    <View style={s.iconBase}>
-      <View style={s.iconCheckCircle} />
-      <View style={s.iconCheckStem} />
-      <View style={s.iconCheckArm} />
-    </View>
-  );
-};
-
 export default function LoginScreen({ navigation }: LoginScreenProps) {
   const { signIn } = useAuth();
   const { width: viewportWidth } = useWindowDimensions();
@@ -269,41 +241,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     );
   };
 
-  /* ────────────────── ÖZELLİKLER ────────────────── */
-  const renderFeatures = () => {
-    const features = [
-      { icon: 'target' as const, title: 'Gerçekçi Yerleştirme', desc: 'AI ile perspektif ve ışık uyumlu sonuçlar' },
-      { icon: 'speed' as const, title: '30 Saniyede Hazır', desc: 'Bekletmeden, anında müşterinize gösterin' },
-      { icon: 'check' as const, title: `${TOTAL_BRANDS} Marka, ${TOTAL_CARPETS_LABEL} Halı`, desc: 'Geniş katalog ile her müşteriye doğru halı' },
-    ];
-    return (
-      <View style={s.section}>
-        <View style={[s.featuresGrid, !isWide && s.featuresGridMobile]}>
-          {features.map((f) => (
-            <View
-              key={f.title}
-              style={[
-                s.featureCard,
-                !isWide && s.featureCardMobile,
-                isWeb && ({
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                } as any),
-              ]}
-            >
-              <View style={s.featureIconWrap}>
-                <FeatureIcon type={f.icon} />
-              </View>
-              <Text style={[s.featureTitle, isWide && s.featureTitleWide]}>{f.title}</Text>
-              <Text style={[s.featureDesc, isWide && s.featureDescWide]}>{f.desc}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    );
-  };
-
-  /* ────────────────── HALI KATALOĞU ────────────────── */
+/* ────────────────── HALI KATALOĞU ────────────────── */
   const catalogCarpets = (BRAND_CATALOG as Record<string, { thumbPath: string; imagePath: string }[]>)[selectedBrand] || [];
 
   const renderCatalog = () => (
@@ -535,7 +473,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
       <ScrollView
         ref={scrollViewRef}
-        style={[s.scroll, isWeb && ({ overflowY: 'auto' } as any)]}
+        style={[s.scroll, isWeb && ({ overflowY: 'auto', overflowX: 'hidden' } as any)]}
         contentContainerStyle={[s.scrollContent, isWide ? s.scrollContentWide : s.scrollContentMobile]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -571,7 +509,6 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           )}
           <StatsStrip isWide={isWide} totalCarpets={TOTAL_CARPETS_LABEL} totalBrands={TOTAL_BRANDS} />
           <HowItWorks isWide={isWide} />
-          {renderFeatures()}
           {renderCatalog()}
           {renderContactCTA()}
           {renderLoginForm()}
@@ -609,6 +546,7 @@ const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+    overflow: 'hidden',
   },
   scroll: { flex: 1 },
   scrollContent: {
@@ -616,18 +554,18 @@ const s = StyleSheet.create({
     paddingBottom: SPACING.xxl,
   },
   scrollContentWide: {
-    paddingHorizontal: SPACING.xl,
+    paddingHorizontal: SPACING.xxl,
   },
   scrollContentMobile: {
     paddingTop: SPACING.sm,
   },
   content: {
     width: '100%',
-    maxWidth: 1060,
+    maxWidth: 1280,
     alignSelf: 'center',
   },
   contentWide: {
-    maxWidth: 1060,
+    maxWidth: 1280,
   },
 
   /* ─── Hero Split Layout ─── */
@@ -826,78 +764,6 @@ const s = StyleSheet.create({
     marginLeft: 1,
   },
 
-  /* ─── Features (enhanced) ─── */
-  featuresGrid: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-  featuresGridMobile: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  featureCard: {
-    flex: 1,
-    minWidth: 140,
-    backgroundColor: COLORS.surfaceGlass,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderTopWidth: 3,
-    borderTopColor: COLORS.primary,
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.md,
-    alignItems: 'center',
-  },
-  featureCardMobile: {
-    flex: 0,
-    width: '30%',
-    minWidth: 100,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.sm,
-  },
-  featureIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: COLORS.primaryGlow,
-    borderWidth: 1,
-    borderColor: COLORS.primaryGlowStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.md,
-  },
-  featureTitle: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  featureTitleWide: {
-    fontSize: 16,
-  },
-  featureDesc: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 17,
-  },
-  featureDescWide: {
-    fontSize: 13,
-    lineHeight: 19,
-  },
-
-  /* ─── Feature Icons ─── */
-  iconBase: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
-  iconTargetOuter: { position: 'absolute', width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: COLORS.primary },
-  iconTargetInner: { position: 'absolute', width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: COLORS.primary },
-  iconTargetDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.primary },
-  iconBolt: { position: 'absolute', width: 10, height: 3, borderRadius: 2, backgroundColor: COLORS.primary, transform: [{ rotate: '-28deg' }], top: 6 },
-  iconBoltTail: { position: 'absolute', width: 10, height: 3, borderRadius: 2, backgroundColor: COLORS.primary, transform: [{ rotate: '-28deg' }], top: 12, left: 5 },
-  iconCheckCircle: { position: 'absolute', width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: COLORS.primary },
-  iconCheckStem: { position: 'absolute', width: 2.5, height: 7, backgroundColor: COLORS.primary, borderRadius: 2, transform: [{ rotate: '-40deg' }], left: 6, top: 8 },
-  iconCheckArm: { position: 'absolute', width: 2.5, height: 11, backgroundColor: COLORS.primary, borderRadius: 2, transform: [{ rotate: '46deg' }], left: 10, top: 5 },
 
   /* ─── Showcase / Catalog ─── */
   showcaseGrid: {

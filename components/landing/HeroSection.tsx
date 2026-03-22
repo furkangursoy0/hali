@@ -60,10 +60,6 @@ export default function HeroSection({ isWide, totalCarpets, totalBrands, onLogin
         </Pressable>
       </View>
 
-      {/* Trust line */}
-      <Text style={[styles.trustLine, isWide && styles.trustLineWide]}>
-        {totalCarpets} halı{'  ·  '}{totalBrands} marka{'  ·  '}Ücretsiz demo
-      </Text>
     </Animated.View>
   );
 }
@@ -177,14 +173,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
     textAlign: 'center',
-  },
-  trustLine: {
-    color: COLORS.textMuted,
-    fontSize: 13,
-    marginTop: SPACING.lg,
-    letterSpacing: 0.3,
-  },
-  trustLineWide: {
-    textAlign: 'left',
   },
 });
