@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
-import { COLORS, SPACING } from '../../constants/theme';
+import { COLORS, SPACING, RADIUS } from '../../constants/theme';
 
 const isWeb = Platform.OS === 'web';
 
@@ -9,9 +9,9 @@ interface Props {
 }
 
 const STEPS = [
-  { num: '1', title: 'Oda Fotoğrafı Çekin', desc: 'Müşterinizin odasını telefon kamerasıyla çekin' },
-  { num: '2', title: 'Halı Seçin', desc: 'Geniş katalogdan istediğiniz halıyı seçin' },
-  { num: '3', title: 'Sonucu Gösterin', desc: 'Yapay zeka halıyı odaya yerleştirir' },
+  { num: '1', emoji: '📸', title: 'Oda Fotoğrafı Çekin', desc: 'Müşterinizin odasını telefon kamerasıyla çekin' },
+  { num: '2', emoji: '🎨', title: 'Halı Seçin', desc: 'Geniş katalogdan istediğiniz halıyı seçin' },
+  { num: '3', emoji: '✨', title: 'Sonucu Gösterin', desc: 'AI halıyı odaya yerleştirir, anında paylaşın' },
 ];
 
 export default function HowItWorks({ isWide }: Props) {
@@ -22,7 +22,7 @@ export default function HowItWorks({ isWide }: Props) {
       Animated.stagger(
         200,
         anims.map((a) =>
-          Animated.timing(a, { toValue: 1, duration: 500, useNativeDriver: true })
+          Animated.timing(a, { toValue: 1, duration: 600, useNativeDriver: true })
         )
       ).start();
     }, 300);
@@ -34,7 +34,12 @@ export default function HowItWorks({ isWide }: Props) {
       <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide]}>Nasıl Çalışır?</Text>
       <Text style={styles.sectionSubtitle}>3 adımda müşterinize sunum yapın</Text>
 
-      <View style={[styles.stepsRow, !isWide && styles.stepsCol]}>
+      <View style={[styles.stepsContainer, isWide && styles.stepsContainerWide]}>
+        {/* Desktop: horizontal connector line behind steps */}
+        {isWide && (
+          <View style={styles.connectorLineWide} />
+        )}
+
         {STEPS.map((step, i) => (
           <Animated.View
             key={step.num}
@@ -43,15 +48,32 @@ export default function HowItWorks({ isWide }: Props) {
               isWide && styles.stepItemWide,
               {
                 opacity: anims[i],
-                transform: [{ translateY: anims[i].interpolate({ inputRange: [0, 1], outputRange: [15, 0] }) }],
+                transform: [{ translateY: anims[i].interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
               },
             ]}
           >
-            <View style={[styles.stepNum, isWide && styles.stepNumWide]}>
-              <Text style={styles.stepNumText}>{step.num}</Text>
+            {/* Number badge */}
+            <View style={[
+              styles.numBadge,
+              isWeb && ({ boxShadow: '0 4px 20px rgba(200, 134, 10, 0.3)' } as any),
+            ]}>
+              <Text style={styles.emoji}>{step.emoji}</Text>
+              <View style={styles.numCircle}>
+                <Text style={styles.numText}>{step.num}</Text>
+              </View>
             </View>
+
+            {/* Mobile: vertical connector */}
+            {!isWide && i < STEPS.length - 1 && (
+              <View style={styles.connectorVert}>
+                <View style={styles.connectorDot} />
+                <View style={styles.connectorDot} />
+                <View style={styles.connectorDot} />
+              </View>
+            )}
+
             <Text style={[styles.stepTitle, isWide && styles.stepTitleWide]}>{step.title}</Text>
-            <Text style={styles.stepDesc}>{step.desc}</Text>
+            <Text style={[styles.stepDesc, isWide && styles.stepDescWide]}>{step.desc}</Text>
           </Animated.View>
         ))}
       </View>
@@ -61,74 +83,118 @@ export default function HowItWorks({ isWide }: Props) {
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.xxl,
     width: '100%',
+    paddingVertical: SPACING.xl,
   },
   sectionTitle: {
     color: COLORS.text,
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
     textAlign: 'center',
     marginBottom: SPACING.xs,
   },
   sectionTitleWide: {
-    fontSize: 28,
+    fontSize: 32,
   },
   sectionSubtitle: {
     color: COLORS.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
     textAlign: 'center',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
   },
-  stepsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  stepsCol: {
+  stepsContainer: {
     flexDirection: 'column',
-    gap: SPACING.lg,
+    alignItems: 'center',
+    gap: 0,
+  },
+  stepsContainerWide: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    position: 'relative',
+    gap: SPACING.xxl,
+    paddingHorizontal: SPACING.xl,
+  },
+  connectorLineWide: {
+    position: 'absolute',
+    top: 32,
+    left: '20%',
+    right: '20%',
+    height: 2,
+    backgroundColor: COLORS.border,
+    zIndex: 0,
   },
   stepItem: {
-    flexDirection: 'column',
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 300,
   },
   stepItemWide: {
     flex: 1,
-    alignItems: 'center',
+    maxWidth: 280,
+    zIndex: 1,
   },
-  stepNum: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  numBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: COLORS.surface,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+    position: 'relative',
+  },
+  emoji: {
+    fontSize: 26,
+  },
+  numCircle: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.sm,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
-  stepNumWide: {
-    alignSelf: 'center',
-  },
-  stepNumText: {
+  numText: {
     color: COLORS.white,
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '800',
+  },
+  connectorVert: {
+    alignItems: 'center',
+    gap: 4,
+    marginVertical: SPACING.sm,
+  },
+  connectorDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: COLORS.textMuted,
   },
   stepTitle: {
     color: COLORS.text,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    marginBottom: 4,
+    textAlign: 'center',
+    marginBottom: 6,
   },
   stepTitleWide: {
-    textAlign: 'center',
+    fontSize: 18,
   },
   stepDesc: {
     color: COLORS.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    maxWidth: 220,
+  },
+  stepDescWide: {
+    fontSize: 14,
   },
 });
