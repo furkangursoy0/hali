@@ -25,9 +25,9 @@ export default function HeroSection({ isWide, totalCarpets, totalBrands, onLogin
 
   return (
     <Animated.View style={[styles.hero, isWide && styles.heroWide, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      {/* Glow orbs */}
-      <View style={[styles.glowOrb1, { pointerEvents: 'none' } as any]} />
-      <View style={[styles.glowOrb2, { pointerEvents: 'none' } as any]} />
+      {/* Glow orbs — only on desktop */}
+      {isWide && <View style={[styles.glowOrb1, { pointerEvents: 'none' } as any]} />}
+      {isWide && <View style={[styles.glowOrb2, { pointerEvents: 'none' } as any]} />}
 
       <Text style={[styles.title, isWide && styles.titleWide]}>
         {'Müşterilerinize Halıları'}
@@ -70,6 +70,7 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.xxxl,
     paddingBottom: SPACING.xl,
     position: 'relative',
+    overflow: 'hidden',
   },
   heroWide: {
     alignItems: 'flex-start',

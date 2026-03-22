@@ -29,86 +29,51 @@ export default function HowItWorks({ isWide }: Props) {
     return () => clearTimeout(timeout);
   }, []);
 
-  if (isWide) {
-    return (
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, styles.sectionTitleWide]}>Nasıl Çalışır?</Text>
-        <Text style={styles.sectionSubtitle}>3 adımda müşterinize sunum yapın</Text>
-
-        <View style={styles.stepsRowWide}>
-          {STEPS.map((step, i) => (
-            <React.Fragment key={step.num}>
-              <Animated.View
-                style={[
-                  styles.stepCardWide,
-                  {
-                    opacity: anims[i],
-                    transform: [{ translateY: anims[i].interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }],
-                  },
-                ]}
-              >
-                <View style={[
-                  styles.iconCircle,
-                  isWeb && ({ boxShadow: '0 4px 20px rgba(200, 134, 10, 0.25)' } as any),
-                ]}>
-                  <Text style={styles.emoji}>{step.emoji}</Text>
-                  <View style={styles.numBadge}>
-                    <Text style={styles.numText}>{step.num}</Text>
-                  </View>
-                </View>
-                <Text style={styles.stepTitleWide}>{step.title}</Text>
-                <Text style={styles.stepDescWide}>{step.desc}</Text>
-              </Animated.View>
-
-              {i < STEPS.length - 1 && (
-                <View style={styles.arrowWide}>
-                  <Text style={styles.arrowText}>›</Text>
-                </View>
-              )}
-            </React.Fragment>
-          ))}
-        </View>
-      </View>
-    );
-  }
-
-  // Mobile: horizontal compact cards
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Nasıl Çalışır?</Text>
+      <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide]}>Nasıl Çalışır?</Text>
       <Text style={styles.sectionSubtitle}>3 adımda müşterinize sunum yapın</Text>
 
-      <View style={styles.stepsMobile}>
+      <View style={[styles.stepsContainer, isWide && styles.stepsContainerWide]}>
+        {/* Desktop: horizontal connector line behind steps */}
+        {isWide && (
+          <View style={styles.connectorLineWide} />
+        )}
+
         {STEPS.map((step, i) => (
           <Animated.View
             key={step.num}
             style={[
-              styles.stepCardMobile,
-              isWeb && ({ boxShadow: '0 2px 12px rgba(0,0,0,0.2)' } as any),
+              styles.stepItem,
+              isWide && styles.stepItemWide,
               {
                 opacity: anims[i],
                 transform: [{ translateY: anims[i].interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
               },
             ]}
           >
-            {/* Left: number + icon */}
-            <View style={styles.mobileLeft}>
-              <View style={styles.mobileNumBadge}>
-                <Text style={styles.mobileNumText}>{step.num}</Text>
-              </View>
-              <View style={[
-                styles.mobileIconCircle,
-                isWeb && ({ boxShadow: '0 2px 12px rgba(200, 134, 10, 0.2)' } as any),
-              ]}>
-                <Text style={styles.mobileEmoji}>{step.emoji}</Text>
+            {/* Number badge */}
+            <View style={[
+              styles.numBadge,
+              isWeb && ({ boxShadow: '0 4px 20px rgba(200, 134, 10, 0.3)' } as any),
+            ]}>
+              <Text style={styles.emoji}>{step.emoji}</Text>
+              <View style={styles.numCircle}>
+                <Text style={styles.numText}>{step.num}</Text>
               </View>
             </View>
 
-            {/* Right: text */}
-            <View style={styles.mobileRight}>
-              <Text style={styles.mobileTitle}>{step.title}</Text>
-              <Text style={styles.mobileDesc}>{step.desc}</Text>
-            </View>
+            <Text style={[styles.stepTitle, isWide && styles.stepTitleWide]}>{step.title}</Text>
+            <Text style={[styles.stepDesc, isWide && styles.stepDescWide]}>{step.desc}</Text>
+
+            {/* Mobile: vertical connector AFTER text */}
+            {!isWide && i < STEPS.length - 1 && (
+              <View style={styles.connectorVert}>
+                <View style={styles.connectorDot} />
+                <View style={styles.connectorDot} />
+                <View style={styles.connectorDot} />
+              </View>
+            )}
           </Animated.View>
         ))}
       </View>
@@ -121,7 +86,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xxl,
     width: '100%',
     paddingVertical: SPACING.xl,
-    paddingHorizontal: SPACING.md,
   },
   sectionTitle: {
     color: COLORS.text,
@@ -139,27 +103,42 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: SPACING.xl,
   },
-
-  /* ─── DESKTOP ─── */
-  stepsRowWide: {
+  stepsContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 0,
+  },
+  stepsContainerWide: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    gap: SPACING.md,
-    maxWidth: 900,
-    alignSelf: 'center',
-    width: '100%',
+    position: 'relative',
+    gap: SPACING.xxl,
+    paddingHorizontal: SPACING.xl,
   },
-  stepCardWide: {
-    flex: 1,
+  connectorLineWide: {
+    position: 'absolute',
+    top: 32,
+    left: '20%',
+    right: '20%',
+    height: 2,
+    backgroundColor: COLORS.border,
+    zIndex: 0,
+  },
+  stepItem: {
     alignItems: 'center',
-    maxWidth: 260,
-    paddingVertical: SPACING.lg,
+    width: '100%',
+    maxWidth: 300,
   },
-  iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  stepItemWide: {
+    flex: 1,
+    maxWidth: 280,
+    zIndex: 1,
+  },
+  numBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: COLORS.surface,
     borderWidth: 2,
     borderColor: COLORS.primary,
@@ -169,72 +148,12 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   emoji: {
-    fontSize: 30,
+    fontSize: 26,
   },
-  numBadge: {
+  numCircle: {
     position: 'absolute',
     top: -6,
     right: -6,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  numText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  stepTitleWide: {
-    color: COLORS.text,
-    fontSize: 18,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  stepDescWide: {
-    color: COLORS.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-    maxWidth: 200,
-  },
-  arrowWide: {
-    paddingTop: 28,
-    paddingHorizontal: 4,
-  },
-  arrowText: {
-    color: COLORS.primary,
-    fontSize: 28,
-    fontWeight: '300',
-  },
-
-  /* ─── MOBILE ─── */
-  stepsMobile: {
-    gap: SPACING.md,
-    alignItems: 'center',
-    width: '100%',
-  },
-  stepCardMobile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    width: '100%',
-    maxWidth: 400,
-    gap: SPACING.md,
-  },
-  mobileLeft: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  mobileNumBadge: {
     width: 22,
     height: 22,
     borderRadius: 11,
@@ -242,36 +161,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mobileNumText: {
+  numText: {
     color: COLORS.white,
     fontSize: 12,
     fontWeight: '800',
   },
-  mobileIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: COLORS.background,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
+  connectorVert: {
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
+    marginVertical: SPACING.sm,
   },
-  mobileEmoji: {
-    fontSize: 22,
+  connectorDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: COLORS.textMuted,
   },
-  mobileRight: {
-    flex: 1,
-  },
-  mobileTitle: {
+  stepTitle: {
     color: COLORS.text,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    marginBottom: 4,
+    textAlign: 'center',
+    marginBottom: 6,
   },
-  mobileDesc: {
+  stepTitleWide: {
+    fontSize: 18,
+  },
+  stepDesc: {
     color: COLORS.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    maxWidth: 220,
+  },
+  stepDescWide: {
+    fontSize: 14,
   },
 });
