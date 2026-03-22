@@ -285,11 +285,19 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
               hovered && s.showcaseItemHover,
             ]}
           >
-            <Image
-              source={{ uri: getCarpetThumbnailUrl(carpet.imagePath, carpet.thumbPath) }}
-              style={s.showcaseImage}
-              resizeMode="cover"
-            />
+            {isWeb ? (
+              React.createElement('img', {
+                src: getCarpetThumbnailUrl(carpet.imagePath, carpet.thumbPath),
+                loading: 'lazy',
+                style: { width: '100%', aspectRatio: '1/1.35', objectFit: 'cover', display: 'block' },
+              })
+            ) : (
+              <Image
+                source={{ uri: getCarpetThumbnailUrl(carpet.imagePath, carpet.thumbPath) }}
+                style={s.showcaseImage}
+                resizeMode="cover"
+              />
+            )}
           </Pressable>
         ))}
       </View>
