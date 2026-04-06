@@ -25,6 +25,8 @@ import LandingNavbar from '../components/landing/LandingNavbar';
 import HeroSection from '../components/landing/HeroSection';
 import StatsStrip from '../components/landing/StatsStrip';
 import HowItWorks from '../components/landing/HowItWorks';
+import StructuredBodyContent from '../components/landing/StructuredBodyContent';
+import FaqSection, { LANDING_FAQS } from '../components/landing/FaqSection';
 
 const isWeb = Platform.OS === 'web';
 
@@ -34,6 +36,10 @@ const WHATSAPP_MESSAGE = encodeURIComponent('Merhaba, Halı Dene hakkında bilgi
 const CATALOG_BRANDS = Object.keys(BRAND_CATALOG);
 const TOTAL_CARPETS_LABEL = `${Math.floor(CATALOG_STATS.totalCarpets / 100) * 100}+`;
 const TOTAL_BRANDS = CATALOG_STATS.totalBrands;
+const SITE_URL = 'https://halidene.com';
+const LANDING_TITLE = 'Halı Dene | Yapay Zeka ile Odanızda 3D Halı Deneyin';
+const LANDING_DESCRIPTION =
+  'Yapay zeka ile odanızda 3D halı deneyin. Binlerce halıyı müşterinizin veya kendi odanızın fotoğrafında görün, daha hızlı ve güvenli karar verin.';
 
 const DEMO_CARPET = {
   thumbPath: 'carpets-thumbs/Atlas/Beykoz/ZY01A.webp',
@@ -63,6 +69,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [selectedBrand, setSelectedBrand] = useState('Atlas');
   const [containerWidth, setContainerWidth] = useState(0);
+  const [showBeforeOverlay, setShowBeforeOverlay] = useState(!isWeb || isWide);
+  const [showDeferredSections, setShowDeferredSections] = useState(!isWeb || isWide);
 
   const handleLogin = async () => {
     if (submitting) return;
@@ -96,9 +104,77 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
   const showcaseCols = isWide ? 4 : 3;
   const showcaseItemWidth = `${(100 / showcaseCols) - 2}%` as any;
 
+  useEffect(() => {
+    if (!isWeb) return;
+
+    document.title = LANDING_TITLE;
+
+    const ensureMeta = (selector: string, attributes: Record<string, string>) => {
+      let el = document.querySelector(selector) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement('meta');
+        document.head.appendChild(el);
+      }
+      Object.entries(attributes).forEach(([key, value]) => el!.setAttribute(key, value));
+    };
+
+    ensureMeta('meta[name="description"]', { name: 'description', content: LANDING_DESCRIPTION });
+    ensureMeta('meta[property="og:title"]', { property: 'og:title', content: LANDING_TITLE });
+    ensureMeta('meta[property="og:description"]', { property: 'og:description', content: LANDING_DESCRIPTION });
+    ensureMeta('meta[property="og:url"]', { property: 'og:url', content: SITE_URL });
+    ensureMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
+    ensureMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: LANDING_TITLE });
+    ensureMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: LANDING_DESCRIPTION });
+    ensureMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
+
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = SITE_URL;
+
+    let script = document.querySelector('script[type="application/ld+json"][data-landing-faq]') as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.setAttribute('data-landing-faq', 'true');
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: LANDING_FAQS.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer,
+        },
+      })),
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isWeb || isWide) {
+      setShowBeforeOverlay(true);
+      setShowDeferredSections(true);
+      return;
+    }
+
+    const beforeTimer = window.setTimeout(() => setShowBeforeOverlay(true), 120);
+    const deferredTimer = window.setTimeout(() => setShowDeferredSections(true), 260);
+
+    return () => {
+      window.clearTimeout(beforeTimer);
+      window.clearTimeout(deferredTimer);
+    };
+  }, [isWide]);
+
   /* ────────────────── BEFORE / AFTER SLIDER ────────────────── */
   const demoCarpetUrl = getCarpetThumbnailUrl(DEMO_CARPET.imagePath, DEMO_CARPET.thumbPath);
-  const beforeImageUri = isWeb ? '/demo-before.jpg' : undefined;
+  const beforeImageUri = isWeb && showBeforeOverlay ? '/demo-before.jpg' : undefined;
   const afterImageUri = isWeb ? '/demo-after.jpg' : undefined;
 
   const sliderPos = useRef(new Animated.Value(0)).current;
@@ -190,7 +266,17 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
       <View style={[s.section, hideTitle && { marginBottom: 0 }]}>
         {!hideTitle && (
           <>
-            <Text style={[s.sectionTitle, isWide && s.sectionTitleWide]}>Yapay Zeka ile Halı Deneme</Text>
+            {isWeb
+              ? React.createElement(
+                  'h2',
+                  { style: StyleSheet.flatten([s.sectionTitle, isWide && s.sectionTitleWide]) as any },
+                  'Öncesi ve Sonrası'
+                )
+              : (
+                <Text style={[s.sectionTitle, isWide && s.sectionTitleWide]}>
+                  Öncesi ve Sonrası
+                </Text>
+              )}
             <Text style={s.sectionSubtitle}>Kaydırarak öncesi ve sonrasını karşılaştırın</Text>
           </>
         )}
@@ -205,11 +291,33 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
           {...(!isWeb ? panResponder.panHandlers : {})}
         >
           {afterImageUri && (
-            <Image source={{ uri: afterImageUri }} style={s.sliderImage} resizeMode="cover" />
+            isWeb
+              ? React.createElement('img', {
+                  src: afterImageUri,
+                  alt: 'Odaya yerleştirilmiş halı örneği',
+                  loading: 'eager',
+                  fetchPriority: 'high',
+                  decoding: 'async',
+                  width: 1200,
+                  height: 900,
+                  style: StyleSheet.flatten(s.sliderImage) as any,
+                })
+              : <Image source={{ uri: afterImageUri }} style={s.sliderImage} resizeMode="cover" />
           )}
           {beforeImageUri && (
             <Animated.View style={[s.sliderBeforeClip, { width: clipWidth }]}>
-              <Image source={{ uri: beforeImageUri }} style={[s.sliderImageAbsolute, containerWidth > 0 && { width: containerWidth }]} resizeMode="cover" />
+              {isWeb
+                ? React.createElement('img', {
+                    src: beforeImageUri,
+                    alt: 'Halı eklenmeden önce oda görünümü',
+                    loading: 'eager',
+                    fetchPriority: 'low',
+                    decoding: 'async',
+                    width: 1200,
+                    height: 900,
+                    style: StyleSheet.flatten([s.sliderImageAbsolute, containerWidth > 0 && { width: containerWidth }]) as any,
+                  })
+                : <Image source={{ uri: beforeImageUri }} style={[s.sliderImageAbsolute, containerWidth > 0 && { width: containerWidth }]} resizeMode="cover" />}
             </Animated.View>
           )}
           <Animated.View style={[s.sliderDivider, { left: handleLeft }]}>
@@ -517,11 +625,17 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             </>
           )}
           <StatsStrip isWide={isWide} totalCarpets={TOTAL_CARPETS_LABEL} totalBrands={TOTAL_BRANDS} />
-          <HowItWorks isWide={isWide} />
-          {renderCatalog()}
-          {renderContactCTA()}
-          {renderLoginForm()}
-          {renderFooter()}
+          {showDeferredSections && (
+            <>
+              <HowItWorks isWide={isWide} />
+              <StructuredBodyContent isWide={isWide} />
+              {renderCatalog()}
+              <FaqSection isWide={isWide} />
+              {renderContactCTA()}
+              {renderLoginForm()}
+              {renderFooter()}
+            </>
+          )}
         </View>
       </ScrollView>
 
