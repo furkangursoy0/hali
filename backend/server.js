@@ -304,7 +304,7 @@ async function applyEdgePolish(base64Image, roomBuffer, maskBuffer) {
 
 function buildRenderFormData({ roomBuffer, carpetBuffer, prompt, n, size, quality, maskBuffer }) {
     const formData = new FormData();
-    formData.append('model', 'gpt-image-2');
+    formData.append('model', 'gpt-image-1.5');
     formData.append('image[]', roomBuffer, { filename: 'room.png', contentType: 'image/png' });
     if (carpetBuffer) formData.append('image[]', carpetBuffer, { filename: 'carpet.png', contentType: 'image/png' });
     if (maskBuffer) formData.append('mask', maskBuffer, { filename: 'floor-mask.png', contentType: 'image/png' });
