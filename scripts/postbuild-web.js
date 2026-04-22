@@ -15,7 +15,7 @@ html = html.replace('<html lang="en">', '<html lang="tr">');
 // Replace title
 html = html.replace(
   /<title>[^<]*<\/title>/,
-  '<title>Halı Dene | Yapay Zeka ile Odanızda 3D Halı Deneyin</title>'
+  '<title>Halı Dene | Odanda Yapay Zeka ile Halıyı Gör!</title>'
 );
 
 // Remove Expo-generated duplicate meta tags (theme-color, description)
@@ -27,13 +27,12 @@ html = html.replace(/<link rel="icon" href="\/favicon\.ico"\s*\/?\s*>/g, '');
 
 // Meta tags to inject before </head>
 const metaTags = `
-  <meta name="description" content="Yapay zeka ile odanızda 3D halı deneyin. Binlerce halıyı oda fotoğrafında görün, müşteriye daha hızlı sunum yapın ve karar sürecini kolaylaştırın." />
-  <link rel="preload" as="image" href="/demo-after.jpg" fetchpriority="high" />
+  <meta name="description" content="Müşterilerinize halıları evlerinde gösterin. Yapay zeka destekli halı deneme platformu. 3600+ halı, 16 marka, 20 saniyede sonuç." />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Halı Dene | Yapay Zeka ile Odanızda 3D Halı Deneyin" />
-  <meta property="og:description" content="Yapay zeka ile odanızda 3D halı deneyin. Binlerce halıyı oda fotoğrafında görün ve daha hızlı karar verin." />
+  <meta property="og:title" content="Halı Dene | Odanda Yapay Zeka ile Halıyı Gör!" />
+  <meta property="og:description" content="Müşterilerinize halıları evlerinde gösterin. Yapay zeka destekli halı deneme platformu." />
   <meta property="og:url" content="https://halidene.com" />
   <meta property="og:image" content="https://halidene.com/og-image.png" />
   <meta property="og:locale" content="tr_TR" />
@@ -41,8 +40,8 @@ const metaTags = `
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Halı Dene | Yapay Zeka ile Odanızda 3D Halı Deneyin" />
-  <meta name="twitter:description" content="Yapay zeka ile odanızda 3D halı deneyin. Binlerce halıyı oda fotoğrafında görün ve daha hızlı karar verin." />
+  <meta name="twitter:title" content="Halı Dene | Odanda Yapay Zeka ile Halıyı Gör!" />
+  <meta name="twitter:description" content="Müşterilerinize halıları evlerinde gösterin. Yapay zeka destekli halı deneme platformu." />
   <meta name="twitter:image" content="https://halidene.com/og-image.png" />
 
   <!-- Theme -->
@@ -73,46 +72,6 @@ const metaTags = `
       "@type": "Offer",
       "category": "SaaS"
     }
-  }
-  </script>
-  <script type="application/ld+json" data-landing-faq="true">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Halı Dene nasıl çalışır?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Kullanıcı oda fotoğrafını yükler veya çeker, katalogdan bir halı seçer ve yapay zeka kısa süre içinde halıyı odanın içine yerleştirilmiş şekilde gösterir."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "3D halı deneme gerçek ölçüyü gösterir mi?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Sistem görsel olarak daha gerçekçi bir yerleşim sunar. Satış öncesi karar vermeyi kolaylaştırır; kesin ölçü doğrulaması için ürün ölçüsü yine ayrıca kontrol edilmelidir."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Bu sistem mağazalar için uygun mu?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Evet. Halı mağazaları, bayiler ve satış ekipleri müşteriye daha hızlı sunum yapmak, farklı modelleri karşılaştırmak ve karar süresini kısaltmak için kullanabilir."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Sonuç ne kadar sürede oluşur?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Landing sayfasındaki mevcut akışa göre sonuçlar genellikle 20 ila 30 saniye içinde hazırlanır."
-        }
-      }
-    ]
   }
   </script>
 `;

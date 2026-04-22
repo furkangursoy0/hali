@@ -54,7 +54,7 @@ function AppNavigator() {
           gestureEnabled: true,
         }}
       >
-        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Halı Dene | Yapay Zeka ile Odanızda 3D Halı Deneyin' }} />
+        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Halı Dene | Yapay Zeka ile Halı Deneme' }} />
         <Stack.Screen name="Blog" component={BlogListScreen} options={{ title: 'Blog | Halı Dene' }} />
         <Stack.Screen name="BlogPost" component={BlogPostScreen} options={{ title: 'Blog | Halı Dene' }} />
         <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Halı Dene' }} />

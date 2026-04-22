@@ -29,19 +29,19 @@ export default function HeroSection({ isWide, totalCarpets, totalBrands, onLogin
       {isWide && <View style={[styles.glowOrb1, { pointerEvents: 'none' } as any]} />}
       {isWide && <View style={[styles.glowOrb2, { pointerEvents: 'none' } as any]} />}
 
-      {isWeb
-        ? React.createElement(
-            'h1',
-            { style: StyleSheet.flatten([styles.title, isWide && styles.titleWide]) as any },
-            'Yapay Zeka ile Odanızda 3D Halı Deneyin'
-          )
-        : (
-          <Text style={[styles.title, isWide && styles.titleWide]}>Yapay Zeka ile Odanızda 3D Halı Deneyin</Text>
+      <Text style={[styles.title, isWide && styles.titleWide]}>
+        {'Müşterilerinize Halıları'}
+        {'\n'}
+        {isWeb ? (
+          <Text style={isWide ? styles.titleAccentWide : styles.titleAccent}>Evlerinde Gösterin</Text>
+        ) : (
+          <Text style={styles.titleAccent}>Evlerinde Gösterin</Text>
         )}
+      </Text>
 
       <Text style={[styles.subtitle, isWide && styles.subtitleWide]}>
-        Halıları oda fotoğrafında gerçekçi biçimde gösterin.{'\n'}
-        Daha hızlı sunum yapın, karar sürecini kolaylaştırın.
+        Yapay zeka ile halılarınızı müşterinizin odasına yerleştirin.{'\n'}
+        Satışlarınızı artırın, iadeleri azaltın.
       </Text>
 
       {/* CTAs */}
@@ -107,6 +107,12 @@ const styles = StyleSheet.create({
     lineHeight: 56,
     letterSpacing: -1,
     textAlign: 'left',
+  },
+  titleAccent: {
+    color: COLORS.primaryLight,
+  },
+  titleAccentWide: {
+    color: COLORS.primaryLight,
   },
   subtitle: {
     color: COLORS.textSecondary,
