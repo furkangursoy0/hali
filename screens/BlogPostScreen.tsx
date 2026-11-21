@@ -289,7 +289,7 @@ export default function BlogPostScreen({ navigation, route }: any) {
         } as any),
       ]}>
         <View style={styles.navInner}>
-          <Pressable style={styles.brandRow} onPress={() => navigation.navigate('Login')}>
+          <Pressable style={styles.brandRow} onPress={() => navigation.navigate(isWeb ? 'Landing' : 'Login')}>
             <Text style={styles.logo}>HALI</Text>
             <View style={styles.logoBadge}>
               <Text style={styles.logoBadgeText}>DENE</Text>
@@ -304,9 +304,9 @@ export default function BlogPostScreen({ navigation, route }: any) {
             </Pressable>
             <Pressable
               style={({ hovered }: any) => [styles.navPrimaryBtn, hovered && styles.navPrimaryBtnHover]}
-              onPress={() => navigation.navigate('Login')}
+              onPress={() => navigation.navigate(isWeb ? 'Contact' : 'Login')}
             >
-              <Text style={styles.navPrimaryBtnText}>{isWeb ? 'Demoyu Gör' : isWide ? 'Giriş Yap' : 'Giriş'}</Text>
+              <Text style={styles.navPrimaryBtnText}>{isWeb ? 'İletişim' : isWide ? 'Giriş Yap' : 'Giriş'}</Text>
             </Pressable>
           </View>
         </View>
@@ -329,7 +329,7 @@ export default function BlogPostScreen({ navigation, route }: any) {
           <View style={[styles.heroInner, !isWide && styles.heroInnerMobile]}>
             {/* Breadcrumb */}
             <View style={styles.breadcrumb}>
-              <Pressable onPress={() => navigation.navigate('Login')}>
+              <Pressable onPress={() => navigation.navigate(isWeb ? 'Landing' : 'Login')}>
                 <Text style={styles.breadcrumbLink}>Ana Sayfa</Text>
               </Pressable>
               <Text style={styles.breadcrumbSep}>›</Text>
@@ -478,14 +478,14 @@ export default function BlogPostScreen({ navigation, route }: any) {
         <View style={styles.ctaBanner}>
           <View style={[styles.ctaBannerInner, !isWide && styles.ctaBannerInnerMobile]}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.ctaBannerTitle}>Halıyı Odanızda Deneyin</Text>
-              <Text style={styles.ctaBannerSub}>Yapay zeka ile 3700+ halıyı odanızda görün. Ücretsiz deneyin.</Text>
+              <Text style={styles.ctaBannerTitle}>{isWeb ? 'Halı Dene’yi mağazanızda keşfedin' : 'Halıyı Odanızda Deneyin'}</Text>
+              <Text style={styles.ctaBannerSub}>{isWeb ? '3700+ halıyı müşterilerinizin odasında gösterin.' : 'Yapay zeka ile 3700+ halıyı odanızda görün. Ücretsiz deneyin.'}</Text>
             </View>
             <Pressable
               style={({ hovered }: any) => [styles.ctaBtn, hovered && styles.ctaBtnHover]}
-              onPress={() => navigation.navigate('Login')}
+              onPress={() => navigation.navigate(isWeb ? 'Contact' : 'Login')}
             >
-              <Text style={styles.ctaBtnText}>Ücretsiz Dene →</Text>
+              <Text style={styles.ctaBtnText}>{isWeb ? 'Bilgi Alın' : 'Ücretsiz Dene →'}</Text>
             </Pressable>
           </View>
         </View>
