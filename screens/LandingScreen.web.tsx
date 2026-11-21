@@ -37,7 +37,7 @@ function BrandMark() {
 }
 
 function HeroComparison() {
-  const [split, setSplit] = useState(50);
+  const [split, setSplit] = useState(46);
   const slider = useRef<HTMLInputElement>(null);
 
   function updateSplit(event: PointerEvent<HTMLDivElement>) {
@@ -83,10 +83,6 @@ function HeroComparison() {
           aria-label="Halı eklenmeden önceki ve sonraki oda görüntüsünü karşılaştır"
           aria-valuetext={`Önce yüzde ${Math.round(split)}, sonra yüzde ${100 - Math.round(split)}`}
         />
-      </div>
-      <div className="hd-preview-actions">
-        <button type="button" aria-pressed={split === 100} onClick={() => setSplit(100)}>Önce</button>
-        <button type="button" aria-pressed={split === 0} onClick={() => setSplit(0)}>Sonra</button>
       </div>
     </figure>
   );
