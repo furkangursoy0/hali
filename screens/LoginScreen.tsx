@@ -476,6 +476,17 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     </View>
   );
 
+  if (isWeb) {
+    return (
+      <ScrollView style={s.container} contentContainerStyle={s.merchantLogin}>
+        <Pressable onPress={() => navigation.navigate('Login')} style={s.merchantBack}>
+          <Text style={s.loginDemoLink}>Ana Sayfa</Text>
+        </Pressable>
+        {renderLoginForm()}
+      </ScrollView>
+    );
+  }
+
   /* ────────────────── MAIN RENDER ────────────────── */
   return (
     <View style={[s.container, isWeb && ({ height: '100dvh', maxHeight: '100dvh' } as any)]}>
@@ -576,6 +587,17 @@ const s = StyleSheet.create({
     width: '100%',
     maxWidth: LANDING_LAYOUT.maxWidth,
     alignSelf: 'center',
+  },
+  merchantLogin: {
+    width: '100%',
+    maxWidth: 880,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xxl,
+    alignSelf: 'center',
+  },
+  merchantBack: {
+    alignSelf: 'flex-start',
+    marginBottom: SPACING.lg,
   },
 
   /* ─── Hero Split Layout ─── */

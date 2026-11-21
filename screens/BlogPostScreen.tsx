@@ -306,7 +306,7 @@ export default function BlogPostScreen({ navigation, route }: any) {
               style={({ hovered }: any) => [styles.navPrimaryBtn, hovered && styles.navPrimaryBtnHover]}
               onPress={() => navigation.navigate('Login')}
             >
-              <Text style={styles.navPrimaryBtnText}>{isWide ? 'Giriş Yap' : 'Giriş'}</Text>
+              <Text style={styles.navPrimaryBtnText}>{isWeb ? 'Demoyu Gör' : isWide ? 'Giriş Yap' : 'Giriş'}</Text>
             </Pressable>
           </View>
         </View>

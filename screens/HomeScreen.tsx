@@ -210,7 +210,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             {!isLoggedIn && (
                 <Pressable
                     style={({ hovered }: any) => [styles.accountPrimaryBtnInline, hovered && styles.accountPrimaryBtnHover]}
-                    onPress={() => navigation.navigate('Login')}
+                    onPress={() => navigation.navigate(isWeb ? 'MerchantLogin' : 'Login')}
                 >
                     <Text style={styles.accountPrimaryBtnText}>Giriş Yap</Text>
                 </Pressable>
