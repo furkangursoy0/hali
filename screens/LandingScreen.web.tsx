@@ -1,4 +1,4 @@
-import React, { useId, useRef, useState, type FormEvent } from 'react';
+import React, { useId, useRef, useState, type FormEvent, type PointerEvent } from 'react';
 import ContactForm from '../components/landing/ContactForm.web';
 import CATALOG from '../data/catalog-stats.json';
 import '../components/landing/web-landing.css';
@@ -36,34 +36,55 @@ function BrandMark() {
   return <span className="hd-wordmark"><span className="hd-brand-mark" aria-hidden="true">H</span>Halı Dene</span>;
 }
 
-const DEFAULT_COMPARISON_SPLIT = 50;
-
 function HeroComparison() {
-  const [split, setSplit] = useState(DEFAULT_COMPARISON_SPLIT);
+  const [split, setSplit] = useState(50);
+  const slider = useRef<HTMLInputElement>(null);
+
+  function updateSplit(event: PointerEvent<HTMLDivElement>) {
+    const { left, width } = event.currentTarget.getBoundingClientRect();
+    if (!width) return;
+    const fraction = Math.max(0, Math.min(1, (event.clientX - left) / width));
+    setSplit(Math.round(fraction * 1000) / 10);
+  }
+
+  function startDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!event.isPrimary || event.button !== 0) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    slider.current?.focus({ preventScroll: true });
+    updateSplit(event);
+  }
+
+  function moveDrag(event: PointerEvent<HTMLDivElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) updateSplit(event);
+  }
+
+  function endDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    updateSplit(event);
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  }
 
   return (
-    <figure className="hd-hero-comparison" id="oda-onizleme">
-      <figcaption className="hd-preview-heading">
-        <img src={RUG} alt="" width={30} height={30} decoding="async" />
-        <span><small>Önce / Sonra</small><strong>Oda Önizlemesi</strong></span>
-      </figcaption>
-      <div className="hd-comparison-images">
-        <img src={ROOM_AFTER} alt="Örnek salonda yapay zekâyla yerleştirilmiş halı" width={852} height={1002} decoding="async" />
-        <img className="hd-comparison-before" src={ROOM_BEFORE} alt="" width={852} height={1002} decoding="async"
+    <figure className="hd-hero-comparison" aria-label="Oda karşılaştırması">
+      <div className="hd-comparison-images" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag}>
+        <img src={ROOM_AFTER} alt="Örnek salonda yapay zekâyla yerleştirilmiş halı" width={852} height={1002} decoding="async" draggable={false} />
+        <img className="hd-comparison-before" src={ROOM_BEFORE} alt="" width={852} height={1002} decoding="async" draggable={false}
           style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }} />
-        <span className="hd-comparison-divider" style={{ left: `${split}%` }} aria-hidden="true"><span>↔</span></span>
+        <span className="hd-comparison-divider" style={{ left: `${split}%` }} aria-hidden="true" />
+        <span className="hd-comparison-handle" style={{ left: `clamp(19px, ${split}%, calc(100% - 19px))` }} aria-hidden="true">↔</span>
         <input
+          ref={slider}
           type="range"
           min={0}
           max={100}
+          step="any"
           value={split}
           onChange={event => setSplit(event.currentTarget.valueAsNumber)}
           aria-label="Halı eklenmeden önceki ve sonraki oda görüntüsünü karşılaştır"
-          aria-valuetext={`Önce yüzde ${split}, sonra yüzde ${100 - split}`}
+          aria-valuetext={`Önce yüzde ${Math.round(split)}, sonra yüzde ${100 - Math.round(split)}`}
         />
       </div>
       <div className="hd-preview-actions">
-        <button className="hd-compare-reset" type="button" aria-label="Karşılaştırmayı ortala" onClick={() => setSplit(DEFAULT_COMPARISON_SPLIT)}><span aria-hidden="true">↻</span></button>
         <button type="button" aria-pressed={split === 100} onClick={() => setSplit(100)}>Önce</button>
         <button type="button" aria-pressed={split === 0} onClick={() => setSplit(0)}>Sonra</button>
       </div>
@@ -71,27 +92,13 @@ function HeroComparison() {
   );
 }
 
-function StorePreview() {
+function HeroVisual() {
   return (
     <div className="hd-hero-media">
-      <section className="hd-showroom" aria-label="Halı Dene mağaza ekranı önizlemesi">
-        <div className="hd-showroom-chrome" aria-hidden="true"><i /><i /><i /><span /></div>
-        <div className="hd-showroom-header"><strong>Halı Dene</strong><span>Mağaza ekranı</span></div>
-        <div className="hd-showroom-panel">
-          <div className="hd-showroom-image">
-            <img src="/landing/store-kiosk.webp"
-              alt="Halı mağazasında oda önizlemesini gösteren Halı Dene ekranı"
-              width={1160} height={1160} fetchPriority="high" decoding="async" />
-          </div>
-          <div className="hd-showroom-selection">
-            <div className="hd-showroom-rug">
-              <img src={RUG} alt="" width={68} height={96} decoding="async" />
-              <div><small>Seçili halı</small><strong>Klasik desenli halı</strong></div>
-            </div>
-            <a href="#oda-onizleme" className="hd-showroom-action"><span aria-hidden="true">✦</span>Odada Gör</a>
-          </div>
-        </div>
-      </section>
+      <figure className="hd-hero-visual">
+        <img src="/landing/store-kiosk.webp" alt="Halı Dene kiosk görseli"
+          width={1160} height={1160} fetchPriority="high" decoding="async" />
+      </figure>
       <HeroComparison />
     </div>
   );
@@ -288,7 +295,7 @@ export default function LandingScreen() {
               <button className="hd-button hd-button-primary" type="submit">Demo Talep Et</button>
             </form>
           </div>
-          <StorePreview />
+          <HeroVisual />
         </section>
 
         <HowItWorks />
