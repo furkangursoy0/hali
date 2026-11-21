@@ -1,4 +1,4 @@
-import React, { useId, useRef, useState, type FormEvent, type PointerEvent } from 'react';
+import React, { useId, useRef, useState, type CSSProperties, type FormEvent, type PointerEvent } from 'react';
 import ContactForm from '../components/landing/ContactForm.web';
 import CATALOG from '../data/catalog-stats.json';
 import '../components/landing/web-landing.css';
@@ -37,7 +37,7 @@ function BrandMark() {
 }
 
 function HeroComparison() {
-  const [split, setSplit] = useState(46);
+  const [split, setSplit] = useState(50);
   const slider = useRef<HTMLInputElement>(null);
 
   function updateSplit(event: PointerEvent<HTMLDivElement>) {
@@ -66,12 +66,14 @@ function HeroComparison() {
 
   return (
     <figure className="hd-hero-comparison" aria-label="Oda karşılaştırması">
-      <div className="hd-comparison-images" onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag}>
+      <div className="hd-comparison-images" style={{ '--hd-split': `${split}%` } as CSSProperties}
+        onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag}>
         <img src={ROOM_AFTER} alt="Örnek salonda yapay zekâyla yerleştirilmiş halı" width={852} height={1002} decoding="async" draggable={false} />
-        <img className="hd-comparison-before" src={ROOM_BEFORE} alt="" width={852} height={1002} decoding="async" draggable={false}
-          style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }} />
-        <span className="hd-comparison-divider" style={{ left: `${split}%` }} aria-hidden="true" />
-        <span className="hd-comparison-handle" style={{ left: `clamp(19px, ${split}%, calc(100% - 19px))` }} aria-hidden="true">↔</span>
+        <div className="hd-comparison-before" aria-hidden="true">
+          <img src={ROOM_BEFORE} alt="" width={852} height={1002} decoding="async" draggable={false} />
+        </div>
+        <span className="hd-comparison-divider" aria-hidden="true" />
+        <span className="hd-comparison-handle" aria-hidden="true">↔</span>
         <input
           ref={slider}
           type="range"
