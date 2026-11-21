@@ -36,6 +36,31 @@ function BrandMark() {
   return <span className="hd-wordmark"><span className="hd-brand-mark" aria-hidden="true">H</span>Halı Dene</span>;
 }
 
+function HeroComparison() {
+  const [split, setSplit] = useState(46);
+
+  return (
+    <figure className="hd-hero-comparison">
+      <div className="hd-comparison-images">
+        <img src={ROOM_AFTER} alt="Örnek salonda yapay zekâyla yerleştirilmiş halı" width={852} height={1002} decoding="async" />
+        <img className="hd-comparison-before" src={ROOM_BEFORE} alt="" width={852} height={1002} decoding="async"
+          style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }} />
+        <span className="hd-comparison-divider" style={{ left: `${split}%` }} aria-hidden="true"><span>↔</span></span>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={split}
+          onChange={event => setSplit(event.currentTarget.valueAsNumber)}
+          aria-label="Halı eklenmeden önceki ve sonraki oda görüntüsünü karşılaştır"
+          aria-valuetext={`Önce yüzde ${split}, sonra yüzde ${100 - split}`}
+        />
+      </div>
+      <figcaption><span>Önce</span><span>Sonra</span></figcaption>
+    </figure>
+  );
+}
+
 function CatalogMarquee() {
   return (
     <section id="markalar" className="hd-catalog" aria-labelledby="hd-catalog-title">
@@ -225,11 +250,14 @@ export default function LandingScreen() {
               <button className="hd-button hd-button-primary" type="submit">Demo Talep Et</button>
             </form>
           </div>
-          <figure className="hd-hero-visual">
-            <img src="/landing/store-kiosk.webp"
-              alt="Halı mağazasında Halı Dene oda önizlemesini gösteren dikey ekran"
-              width={1160} height={1160} fetchPriority="high" decoding="async" />
-          </figure>
+          <div className="hd-hero-media">
+            <figure className="hd-hero-visual">
+              <img src="/landing/store-kiosk.webp"
+                alt="Halı mağazasında Halı Dene oda önizlemesini gösteren dikey ekran"
+                width={1160} height={1160} fetchPriority="high" decoding="async" />
+            </figure>
+            <HeroComparison />
+          </div>
         </section>
 
         <HowItWorks />
