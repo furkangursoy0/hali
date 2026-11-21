@@ -94,8 +94,8 @@ function HeroVisual() {
   return (
     <div className="hd-hero-media">
       <figure className="hd-hero-visual">
-        <img src="/landing/store-kiosk.webp" alt="Halı Dene kiosk görseli"
-          width={1160} height={1160} fetchPriority="high" decoding="async" />
+        <img src="/landing/store-kiosk-selection.webp" alt="Halı Dene halı seçimi ekranını gösteren kiosk"
+          width={1101} height={1428} fetchPriority="high" decoding="async" />
       </figure>
       <HeroComparison />
     </div>
