@@ -36,11 +36,17 @@ function BrandMark() {
   return <span className="hd-wordmark"><span className="hd-brand-mark" aria-hidden="true">H</span>Halı Dene</span>;
 }
 
+const DEFAULT_COMPARISON_SPLIT = 50;
+
 function HeroComparison() {
-  const [split, setSplit] = useState(46);
+  const [split, setSplit] = useState(DEFAULT_COMPARISON_SPLIT);
 
   return (
-    <figure className="hd-hero-comparison">
+    <figure className="hd-hero-comparison" id="oda-onizleme">
+      <figcaption className="hd-preview-heading">
+        <img src={RUG} alt="" width={30} height={30} decoding="async" />
+        <span><small>Önce / Sonra</small><strong>Oda Önizlemesi</strong></span>
+      </figcaption>
       <div className="hd-comparison-images">
         <img src={ROOM_AFTER} alt="Örnek salonda yapay zekâyla yerleştirilmiş halı" width={852} height={1002} decoding="async" />
         <img className="hd-comparison-before" src={ROOM_BEFORE} alt="" width={852} height={1002} decoding="async"
@@ -56,8 +62,38 @@ function HeroComparison() {
           aria-valuetext={`Önce yüzde ${split}, sonra yüzde ${100 - split}`}
         />
       </div>
-      <figcaption><span>Önce</span><span>Sonra</span></figcaption>
+      <div className="hd-preview-actions">
+        <button className="hd-compare-reset" type="button" aria-label="Karşılaştırmayı ortala" onClick={() => setSplit(DEFAULT_COMPARISON_SPLIT)}><span aria-hidden="true">↻</span></button>
+        <button type="button" aria-pressed={split === 100} onClick={() => setSplit(100)}>Önce</button>
+        <button type="button" aria-pressed={split === 0} onClick={() => setSplit(0)}>Sonra</button>
+      </div>
     </figure>
+  );
+}
+
+function StorePreview() {
+  return (
+    <div className="hd-hero-media">
+      <section className="hd-showroom" aria-label="Halı Dene mağaza ekranı önizlemesi">
+        <div className="hd-showroom-chrome" aria-hidden="true"><i /><i /><i /><span /></div>
+        <div className="hd-showroom-header"><strong>Halı Dene</strong><span>Mağaza ekranı</span></div>
+        <div className="hd-showroom-panel">
+          <div className="hd-showroom-image">
+            <img src="/landing/store-kiosk.webp"
+              alt="Halı mağazasında oda önizlemesini gösteren Halı Dene ekranı"
+              width={1160} height={1160} fetchPriority="high" decoding="async" />
+          </div>
+          <div className="hd-showroom-selection">
+            <div className="hd-showroom-rug">
+              <img src={RUG} alt="" width={68} height={96} decoding="async" />
+              <div><small>Seçili halı</small><strong>Klasik desenli halı</strong></div>
+            </div>
+            <a href="#oda-onizleme" className="hd-showroom-action"><span aria-hidden="true">✦</span>Odada Gör</a>
+          </div>
+        </div>
+      </section>
+      <HeroComparison />
+    </div>
   );
 }
 
@@ -226,10 +262,12 @@ export default function LandingScreen() {
         <div className="hd-container hd-navbar-inner">
           <a href="/" aria-label="Halı Dene ana sayfa"><BrandMark /></a>
           <nav aria-label="Ana menü">
-            <a href="#nasil-calisir">Nasıl Çalışır?</a>
-            <a href="#ozellikler">Özellikler</a>
-            <a href="#markalar">Markalar</a>
-            <a href="#sss">SSS</a>
+            <div className="hd-navbar-links">
+              <a href="#nasil-calisir">Nasıl Çalışır?</a>
+              <a href="#ozellikler">Özellikler</a>
+              <a href="#markalar">Markalar</a>
+              <a href="#sss">SSS</a>
+            </div>
             <a className="hd-nav-blog" href="/blog">Blog</a>
           </nav>
         </div>
@@ -239,25 +277,18 @@ export default function LandingScreen() {
         <section className="hd-container hd-hero" aria-labelledby="hd-hero-title">
           <div className="hd-hero-copy">
             <p className="hd-eyebrow">Fiziksel halı mağazaları için</p>
-            <h1 id="hd-hero-title">Müşterilerinize Halıları Evlerinde Gösterin</h1>
+            <h1 id="hd-hero-title">Müşterilerinize <span>Halıları Evlerinde Gösterin</span></h1>
             <p className="hd-hero-description">Müşteriniz mağazanızdayken seçtiği halıyı yapay zekâyla kendi odasında görsün.</p>
             <form className="hd-interest" onSubmit={handleInterest}>
               <label className="hd-interest-field">
-                <span aria-hidden="true">✉</span>
+                <span className="hd-mail-icon" aria-hidden="true" />
                 <input type="email" value={email} onChange={event => setEmail(event.currentTarget.value)}
                   placeholder="E-posta adresiniz" aria-label="Demo için e-posta adresiniz" autoComplete="email" required />
               </label>
               <button className="hd-button hd-button-primary" type="submit">Demo Talep Et</button>
             </form>
           </div>
-          <div className="hd-hero-media">
-            <figure className="hd-hero-visual">
-              <img src="/landing/store-kiosk.webp"
-                alt="Halı mağazasında Halı Dene oda önizlemesini gösteren dikey ekran"
-                width={1160} height={1160} fetchPriority="high" decoding="async" />
-            </figure>
-            <HeroComparison />
-          </div>
+          <StorePreview />
         </section>
 
         <HowItWorks />
