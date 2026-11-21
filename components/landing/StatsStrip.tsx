@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
-import { COLORS, SPACING, RADIUS } from '../../constants/theme';
+import { SPACING, RADIUS } from '../../constants/theme';
+import { LANDING_COLORS as COLORS, LANDING_SHADOW } from './theme';
 
 const isWeb = Platform.OS === 'web';
 
@@ -18,9 +19,10 @@ const STATS = (carpets: string, brands: number) => [
 
 export default function StatsStrip({ isWide, totalCarpets, totalBrands }: Props) {
   const stats = STATS(totalCarpets, totalBrands);
-  const anims = useRef(stats.map(() => new Animated.Value(0))).current;
+  const anims = useRef(stats.map(() => new Animated.Value(isWeb ? 1 : 0))).current;
 
   useEffect(() => {
+    if (isWeb) return;
     Animated.stagger(
       150,
       anims.map((a) =>
@@ -30,17 +32,13 @@ export default function StatsStrip({ isWide, totalCarpets, totalBrands }: Props)
   }, []);
 
   return (
-    <View style={[
-      styles.container,
-      isWeb && ({
-        boxShadow: '0 0 40px rgba(200, 134, 10, 0.06)',
-      } as any),
-    ]}>
+    <View style={styles.container}>
       {stats.map((stat, i) => (
         <Animated.View
           key={stat.label}
           style={[
             styles.statItem,
+            isWide && styles.statItemWide,
             i < stats.length - 1 && styles.statDivider,
             { opacity: anims[i], transform: [{ translateY: anims[i].interpolate({ inputRange: [0, 1], outputRange: [15, 0] }) }] },
           ]}
@@ -60,14 +58,20 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginBottom: SPACING.xl,
+    marginBottom: isWeb ? SPACING.xxl : SPACING.xl,
     overflow: 'hidden',
+    ...(isWeb && { boxShadow: LANDING_SHADOW.card }),
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: SPACING.lg,
+    paddingVertical: isWeb ? SPACING.md : SPACING.lg,
     paddingHorizontal: SPACING.sm,
+  },
+  statItemWide: {
+    alignItems: 'flex-start',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
   },
   statDivider: {
     borderRightWidth: 1,
@@ -75,19 +79,20 @@ const styles = StyleSheet.create({
   },
   statValue: {
     color: COLORS.primaryLight,
-    fontSize: 28,
+    fontSize: isWeb ? 22 : 28,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   statValueWide: {
-    fontSize: 36,
+    fontSize: 30,
   },
   statLabel: {
     color: COLORS.textSecondary,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    textAlign: 'center',
+    textTransform: isWeb ? 'none' : 'uppercase',
+    letterSpacing: isWeb ? 0 : 0.5,
   },
 });
