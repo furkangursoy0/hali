@@ -2,6 +2,9 @@ import React, { useId, useRef, useState, type FormEvent } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../../constants/env';
 
+export const DEMO_WHATSAPP_URL = 'https://wa.me/905300947756?text='
+  + encodeURIComponent('Merhaba, fiziksel halı mağazam için Halı Dene hakkında bilgi almak istiyorum.');
+
 interface ContactFormProps {
   initialEmail?: string;
 }
@@ -42,11 +45,11 @@ export default function ContactForm({ initialEmail = '' }: ContactFormProps) {
     submitting.current = true;
     setStatus('sending');
     try {
-      await axios.post(`${API_BASE_URL}/contact`, payload);
+      await axios.post(`${API_BASE_URL}/contact`, payload, { timeout: 8000 });
       setStatus('sent');
     } catch (failure) {
       const message = axios.isAxiosError(failure) ? failure.response?.data?.error : undefined;
-      setError(typeof message === 'string' && message ? message : 'Talebiniz gönderilemedi. Lütfen tekrar deneyin.');
+      setError(typeof message === 'string' && message ? message : 'Talebiniz formdan iletilemedi. WhatsApp üzerinden demo talep edebilirsiniz.');
       setStatus('idle');
     } finally {
       submitting.current = false;
@@ -82,6 +85,7 @@ export default function ContactForm({ initialEmail = '' }: ContactFormProps) {
       <button type="submit" className="hd-button hd-button-primary" disabled={status === 'sending'}>
         {status === 'sending' ? 'Gönderiliyor…' : 'Talebi Gönder'}
       </button>
+      <a className="hd-contact-whatsapp" href={DEMO_WHATSAPP_URL}>WhatsApp’tan demo talep et</a>
     </form>
   );
 }

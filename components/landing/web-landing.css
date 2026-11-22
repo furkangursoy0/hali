@@ -121,7 +121,9 @@
 .hd-interest-field input::placeholder { color: #697990; }
 .hd-interest-field:focus-within { border-color: var(--hd-blue); box-shadow: 0 0 0 3px rgb(36 88 245 / 13%); }
 .hd-interest-field input:focus-visible { outline: none; }
-.hd-interest .hd-form-error { flex-basis: 100%; }
+.hd-interest .hd-contact-form .hd-contact-whatsapp { justify-self: center; color: var(--hd-blue-dark); font-size: .875rem; font-weight: 680; }
+.hd-contact-whatsapp:hover { text-decoration: underline; }
+.hd-form-error { flex-basis: 100%; }
 .hd-interest .hd-button { flex-shrink: 0; min-height: 48px; padding-inline: clamp(16px, 1.7vw, 24px); border-radius: 8px; font-size: .875rem; font-weight: 800; box-shadow: 0 2px 5px rgb(15 23 42 / 9%); }
 
 .hd-hero-benefits {

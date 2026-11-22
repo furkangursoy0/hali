@@ -1,9 +1,7 @@
 import React, { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type PointerEvent } from 'react';
-import ContactForm, { demoEmailError } from '../components/landing/ContactForm.web';
+import ContactForm, { DEMO_WHATSAPP_URL, demoEmailError } from '../components/landing/ContactForm.web';
 import CATALOG from '../data/catalog-stats.json';
 
-const WHATSAPP_URL = 'https://wa.me/905300947756?text='
-  + encodeURIComponent('Merhaba, fiziksel halı mağazam için Halı Dene hakkında bilgi almak istiyorum.');
 const CARPET_COUNT = `${Math.floor(CATALOG.totalCarpets / 100) * 100}+`;
 const ROOM_BEFORE = '/landing/room-before.webp';
 const ROOM_AFTER = '/landing/room-after.webp';
@@ -411,7 +409,7 @@ export default function LandingScreen() {
       <footer className="hd-footer">
         <div className="hd-container hd-footer-inner">
           <div><a href="/" aria-label="Halı Dene ana sayfa"><BrandMark /></a><p>Fiziksel halı mağazaları için görselleştirme.</p></div>
-          <nav aria-label="Alt menü"><a href="/blog">Blog</a><a href="/contact">İletişim</a><a href={WHATSAPP_URL}>WhatsApp</a></nav>
+          <nav aria-label="Alt menü"><a href="/blog">Blog</a><a href="/contact">İletişim</a><a href={DEMO_WHATSAPP_URL}>WhatsApp</a></nav>
         </div>
         <div className="hd-container hd-copyright">© {new Date().getFullYear()} halidene.com · Tüm hakları saklıdır.</div>
       </footer>
