@@ -6,6 +6,12 @@ interface ContactFormProps {
   initialEmail?: string;
 }
 
+export function demoEmailError(field: HTMLInputElement) {
+  if (!field.value.trim()) return 'Lütfen e-posta adresinizi girin.';
+  if (field.validity.typeMismatch) return 'Lütfen geçerli bir e-posta adresi girin.';
+  return '';
+}
+
 export default function ContactForm({ initialEmail = '' }: ContactFormProps) {
   const fieldId = useId();
   const submitting = useRef(false);
@@ -16,13 +22,16 @@ export default function ContactForm({ initialEmail = '' }: ContactFormProps) {
     event.preventDefault();
     if (submitting.current) return;
 
-    const fields = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const invalidInput = Array.from(form.querySelectorAll('input')).find(input => !input.validity.valid);
+    const fields = new FormData(form);
     const field = (name: string) => String(fields.get(name) ?? '').trim();
     const payload = { name: field('name'), surname: field('surname'), email: field('email'), phone: field('phone') };
 
     setError('');
-    if (Object.values(payload).some(value => !value)) {
-      setError('Lütfen tüm alanları doldurun.');
+    if (invalidInput || Object.values(payload).some(value => !value)) {
+      setError(invalidInput?.type === 'email' ? demoEmailError(invalidInput) : 'Lütfen tüm alanları doldurun.');
+      invalidInput?.focus();
       return;
     }
     if (payload.phone.replace(/\D/g, '').length < 10) {
@@ -54,7 +63,7 @@ export default function ContactForm({ initialEmail = '' }: ContactFormProps) {
   }
 
   return (
-    <form className="hd-contact-form" onSubmit={submit} aria-busy={status === 'sending'}>
+    <form className="hd-contact-form" onSubmit={submit} noValidate aria-busy={status === 'sending'}>
       <div className="hd-contact-fields">
         <label htmlFor={`${fieldId}-name`}>Ad
           <input className="hd-input" id={`${fieldId}-name`} name="name" autoComplete="given-name" required />

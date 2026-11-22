@@ -1,5 +1,5 @@
-import React, { useId, useRef, useState, type CSSProperties, type FormEvent, type PointerEvent } from 'react';
-import ContactForm from '../components/landing/ContactForm.web';
+import React, { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type PointerEvent } from 'react';
+import ContactForm, { demoEmailError } from '../components/landing/ContactForm.web';
 import CATALOG from '../data/catalog-stats.json';
 import '../components/landing/web-landing.css';
 
@@ -8,6 +8,13 @@ const WHATSAPP_URL = 'https://wa.me/905300947756?text='
 const CARPET_COUNT = `${Math.floor(CATALOG.totalCarpets / 100) * 100}+`;
 const ROOM_BEFORE = '/landing/room-before.webp';
 const ROOM_AFTER = '/landing/room-after.webp';
+
+const SECTION_LINKS = [
+  ['nasil-calisir', 'Nasıl Çalışır?'],
+  ['ozellikler', 'Özellikler'],
+  ['markalar', 'Markalar'],
+  ['sss', 'SSS'],
+];
 
 const BRANDS = [
   ['Artemis', 'artemis'], ['Atlas', 'atlas'], ['Bahariye', 'bahariye'],
@@ -146,7 +153,7 @@ function FaqSection() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className="hd-faq hd-container" id="sss" aria-labelledby="hd-faq-title">
+    <section className="hd-faq hd-container" id="sss" tabIndex={-1} aria-labelledby="hd-faq-title">
       <div className="hd-section-heading"><h2 id="hd-faq-title">Sık Sorulan Sorular</h2></div>
       <div className="hd-faq-list">
         {QUESTIONS.map(([question, answer], index) => {
@@ -198,7 +205,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section className="hd-flow" id="nasil-calisir" aria-labelledby="hd-flow-title">
+    <section className="hd-flow" id="nasil-calisir" tabIndex={-1} aria-labelledby="hd-flow-title">
       <div className="hd-container">
         <div className="hd-section-heading">
           <h2 id="hd-flow-title">Nasıl Çalışır?</h2>
@@ -231,7 +238,7 @@ function Features() {
   ];
 
   return (
-    <section className="hd-container hd-features" id="ozellikler" aria-labelledby="hd-feature-title">
+    <section className="hd-container hd-features" id="ozellikler" tabIndex={-1} aria-labelledby="hd-feature-title">
       <div className="hd-features-heading">
         <h2 id="hd-feature-title">Mağaza içi halı sunumu</h2>
         <p>Müşteriniz halının kendi odasında nasıl durduğunu mağazada görsün.</p>
@@ -250,8 +257,36 @@ function Features() {
 
 export default function LandingScreen() {
   const dialog = useRef<HTMLDialogElement>(null);
+  const emailInput = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState('');
   const [requestEmail, setRequestEmail] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState('');
+
+  useEffect(() => {
+    const scrollToHash = () => {
+      const id = window.location.hash.slice(1);
+      if (SECTION_LINKS.some(([section]) => section === id)) {
+        document.getElementById(id)?.scrollIntoView({ block: 'start' });
+      }
+    };
+
+    scrollToHash();
+    window.addEventListener('hashchange', scrollToHash);
+    return () => window.removeEventListener('hashchange', scrollToHash);
+  }, []);
+
+  function handleSectionLink(event: MouseEvent<HTMLAnchorElement>) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    const hash = event.currentTarget.hash;
+    const section = document.getElementById(hash.slice(1));
+    if (!section) return;
+
+    event.preventDefault();
+    window.history.replaceState(window.history.state, '', hash);
+    section.focus({ preventScroll: true });
+    section.scrollIntoView({ block: 'start' });
+  }
 
   function openRequest(initialEmail = '') {
     setRequestEmail(initialEmail);
@@ -260,20 +295,28 @@ export default function LandingScreen() {
 
   function handleInterest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    openRequest(email.trim());
+    const field = emailInput.current;
+    if (!field) return;
+
+    const error = demoEmailError(field);
+    setEmailError(error);
+    if (error) {
+      field.focus();
+      return;
+    }
+    openRequest(field.value.trim());
   }
 
   return (
-    <div className="hd-landing">
+    <div className="hd-landing hd-home">
       <header className="hd-navbar">
         <div className="hd-container hd-navbar-inner">
           <a href="/" aria-label="Halı Dene ana sayfa"><BrandMark /></a>
           <nav aria-label="Ana menü">
             <div className="hd-navbar-links">
-              <a href="#nasil-calisir">Nasıl Çalışır?</a>
-              <a href="#ozellikler">Özellikler</a>
-              <a href="#markalar">Markalar</a>
-              <a href="#sss">SSS</a>
+              {SECTION_LINKS.map(([id, title]) => (
+                <a key={id} href={`#${id}`} onClick={handleSectionLink}>{title}</a>
+              ))}
             </div>
             <a className="hd-nav-blog" href="/blog">Blog</a>
           </nav>
@@ -286,13 +329,17 @@ export default function LandingScreen() {
             <p className="hd-eyebrow">Fiziksel halı mağazaları için</p>
             <h1 id="hd-hero-title">Müşterilerinize <span>Halıları Evlerinde Gösterin</span></h1>
             <p className="hd-hero-description">Müşteriniz mağazanızdayken seçtiği halıyı yapay zekâyla kendi odasında görsün.</p>
-            <form className="hd-interest" onSubmit={handleInterest}>
+            <form className="hd-interest" onSubmit={handleInterest} noValidate>
               <label className="hd-interest-field">
                 <span className="hd-mail-icon" aria-hidden="true" />
-                <input type="email" value={email} onChange={event => setEmail(event.currentTarget.value)}
-                  placeholder="E-posta adresiniz" aria-label="Demo için e-posta adresiniz" autoComplete="email" required />
+                <input ref={emailInput} type="email" value={email} onChange={event => {
+                  setEmail(event.currentTarget.value);
+                  setEmailError('');
+                }} placeholder="E-posta adresiniz" aria-label="Demo için e-posta adresiniz" autoComplete="email"
+                  aria-invalid={emailError ? true : undefined} aria-describedby={emailError ? 'hd-interest-error' : undefined} required />
               </label>
               <button className="hd-button hd-button-primary" type="submit">Demo Talep Et</button>
+              {emailError && <p id="hd-interest-error" className="hd-form-error" role="alert">{emailError}</p>}
             </form>
           </div>
           <HeroVisual />
