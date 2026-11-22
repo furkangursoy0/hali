@@ -112,17 +112,17 @@ function HeroBenefits() {
   const items = [
     {
       title: 'QR ile fotoğraf aktarımı',
-      description: 'Müşteriniz oda fotoğrafını telefonundan yükler.',
+      description: ['Oda fotoğrafını QR ile', 'telefondan yükleyin.'],
       icon: 'M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3M7 7h3v3H7zm7 0h3v3h-3zm-7 7h3v3H7zm7 0h3v3h-3z',
     },
     {
-      title: 'Önce–sonra karşılaştırması',
-      description: 'Halının odayı nasıl değiştirdiğini gösterin.',
-      icon: 'M12 3v18M8 8l-4 4 4 4m8-8 4 4-4 4',
+      title: 'Yapay Zeka Destekli',
+      description: ['Seçilen halıyı odada', 'gerçekçi biçimde görün.'],
+      icon: 'M10 3c.8 4.4 2.6 6.2 7 7-4.4.8-6.2 2.6-7 7-.8-4.4-2.6-6.2-7-7 4.4-.8 6.2-2.6 7-7Zm9 11v6m-3-3h6M19 3v4m-2-2h4',
     },
     {
       title: `${CARPET_COUNT} halı modeli`,
-      description: 'Farklı markaları tek katalogda sunun.',
+      description: ['Marka ve koleksiyonları', 'tek katalogda keşfedin.'],
       icon: 'm12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5',
     },
   ];
@@ -136,7 +136,10 @@ function HeroBenefits() {
               <path d={icon} />
             </svg>
           </span>
-          <div><strong>{title}</strong><p>{description}</p></div>
+          <div>
+            <strong>{title}</strong>
+            <p>{description[0]}<br />{description[1]}</p>
+          </div>
         </li>
       ))}
     </ul>
@@ -275,7 +278,7 @@ function Features() {
   return (
     <section className="hd-container hd-features" id="ozellikler" tabIndex={-1} aria-labelledby="hd-feature-title">
       <div className="hd-features-heading">
-        <h2 id="hd-feature-title">Mağaza içi halı sunumu</h2>
+        <h2 id="hd-feature-title">Mağazalar için halı deneme uygulaması</h2>
         <p>Müşteriniz halının kendi odasında nasıl durduğunu mağazada görsün.</p>
       </div>
       <ul className="hd-feature-grid">
