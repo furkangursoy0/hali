@@ -30,12 +30,10 @@ const TESTIMONIAL = {
 };
 
 const STORE_FEATURES = [
-  ['▤', 'Mağazanıza özel halı kataloğu', 'Farklı markaların halılarını ve kendi ürünlerinizi mağazanıza özel bir katalogda bir araya getirin.'],
-  ['▧', 'Kendi ürün fotoğraflarınızı yükleyin', 'Halı fotoğraflarınızı yükleyip kendi modellerinizi oda önizlemelerinde kullanın.'],
-  ['▦', '500–2.000 ürünlük katalog desteği', 'Halı Dene, 500 ila 2.000 modelden oluşan mağaza kataloglarını destekler.'],
-  ['✦', 'Salon fotoğrafında yapay zekâ ile halı deneme', 'Müşterinizin salon fotoğrafını yükleyin. Yapay zekâ, seçilen halıyı odanın perspektifine ve ışığına göre yerleştirir.'],
-  ['▣', 'Mağazada tablet ve kiosk kullanımı', 'Halı Dene’yi mağaza tabletinde veya kioskta kullanın. Web sitesi entegrasyonu gerekmez.'],
-  ['◫', 'Önce ve sonra karşılaştırması', 'Farkı mağazada gösterin ve sonucu müşterinizle paylaşın.'],
+  ['▤', 'Mağazanıza özel katalog', 'Farklı markaları ve kendi ürünlerinizi tek katalogda toplayın.'],
+  ['▧', 'Ürün fotoğrafı yükleme', 'Kendi halı fotoğraflarınızı oda önizlemelerinde kullanın.'],
+  ['✦', 'Yapay zekâyla halı deneme', 'Seçtiğiniz halıyı müşterinizin oda fotoğrafında gösterin.'],
+  ['▣', 'Tablet ve kiosk desteği', 'Mağazada web sitesi entegrasyonu gerektirmeden kullanın.'],
 ];
 
 export const landingFeatureList = STORE_FEATURES.map(([, title, description]) => `${title}. ${description}`);
@@ -43,8 +41,8 @@ export const landingFeatureList = STORE_FEATURES.map(([, title, description]) =>
 const QUESTIONS = [
   ['Halı Dene mağazamda nasıl çalışır?', 'Müşterinizin oda fotoğrafını ekleyin, katalogdan bir halı seçin ve yapay zekânın hazırladığı oda önizlemesini mağazada birlikte inceleyin.'],
   ['Farklı markaların halılarını ve kendi ürünlerimi ekleyebilir miyim?', 'Evet. Farklı markaların ürün fotoğraflarını ve kendi çektiğiniz halı fotoğraflarını mağazanıza özel bir kataloğa ekleyebilir, her ürünü oda önizlemesinde kullanabilirsiniz.'],
-  ['500–2.000 modelden oluşan bir katalog destekleniyor mu?', `Evet. 500 ila 2.000 halı modelinden oluşan mağaza katalogları desteklenir. Halı Dene’nin hazır kataloğunda ayrıca ${CATALOG.totalBrands} markadan ${CARPET_COUNT} model bulunur.`],
-  ['Müşterimin salon fotoğrafında kendi halımı deneyebilir miyim?', 'Evet. Müşterinizin salon fotoğrafını yükleyin ve kendi kataloğunuzdan bir halı seçin. Yapay zekâ, seçilen modeli fotoğraftaki zemine yerleştirerek bir önizleme hazırlar.'],
+  ['Geniş ürün katalogları destekleniyor mu?', 'Evet. Çok sayıda modeli mağazanıza özel tek bir katalogda, marka ve koleksiyona göre düzenleyebilirsiniz.'],
+  ['Müşterimin oda fotoğrafında kendi halımı deneyebilir miyim?', 'Evet. Oda fotoğrafını yükleyin ve kataloğunuzdan bir halı seçin. Yapay zekâ halıyı fotoğraftaki zemine yerleştirir.'],
   ['Mağaza tabletinde kullanmak için web sitesi entegrasyonu gerekiyor mu?', 'Halı Dene fiziksel mağazada tablet veya kiosk üzerinden kullanılabilir. Mağazanızın internet sitesine entegrasyon gerekmez.'],
   ['Oda fotoğrafı nasıl eklenir?', 'Odanın mevcut bir fotoğrafını galeriden seçebilir veya cihazınızın kamerasıyla yeni bir fotoğraf çekebilirsiniz.'],
   ['Katalogda hangi markalar var?', `Katalogda ${CATALOG.totalBrands} markadan ${CARPET_COUNT} halı modeli bulunur. Sayfadaki marka şeridinde katalogdaki markaları görebilirsiniz.`],
@@ -88,7 +86,7 @@ function HeroComparison() {
     <figure className="hd-hero-comparison" aria-label="Oda karşılaştırması">
       <div className="hd-comparison-images" style={{ '--hd-split': `${split}%` } as CSSProperties}
         onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag}>
-        <img src={ROOM_AFTER} alt="Örnek salonda yapay zekâyla yerleştirilmiş halı" width={852} height={1002} decoding="async" draggable={false} />
+        <img src={ROOM_AFTER} alt="Örnek odada yapay zekâyla yerleştirilmiş halı" width={852} height={1002} decoding="async" draggable={false} />
         <div className="hd-comparison-before" aria-hidden="true">
           <img src={ROOM_BEFORE} alt="" width={852} height={1002} decoding="async" draggable={false} />
         </div>
@@ -252,7 +250,7 @@ function HowItWorks() {
       title: 'Halıyı odada görün',
       text: 'Yapay zekânın seçilen halıyı odada nasıl gösterdiğini müşterinizle inceleyin.',
       image: 'room-result',
-      alt: 'Krem klasik halının örnek salona yerleştirildiği sonuç ekranı',
+      alt: 'Krem klasik halının odaya yerleştirildiği sonuç ekranı',
     },
   ];
 
@@ -286,7 +284,7 @@ function Features() {
     <section className="hd-container hd-features" id="ozellikler" tabIndex={-1} aria-labelledby="hd-feature-title">
       <div className="hd-features-heading">
         <h2 id="hd-feature-title">Mağazalar için halı deneme uygulaması</h2>
-        <p>Kendi ürün kataloğunuzu mağaza tabletine taşıyın. Müşteriniz seçtiği halıyı satın almadan önce kendi odasında görsün.</p>
+        <p>Koleksiyonunuzu mağazada dijital olarak sunun. Müşteriniz seçtiği halıyı kendi odasında görsün.</p>
       </div>
       <ul className="hd-feature-grid">
         {STORE_FEATURES.map(([icon, title, description]) => (
