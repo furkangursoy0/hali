@@ -6,6 +6,10 @@ function error(status, message) {
   return Response.json({ error: message }, { status });
 }
 
+function deliveryError(code) {
+  return Response.json({ error: DELIVERY_ERROR, code }, { status: 503 });
+}
+
 export default {
   async fetch(request) {
     if (request.method !== 'POST') {
@@ -56,6 +60,7 @@ export default {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
+          Origin: SITE_ORIGIN,
           Referer: `${SITE_ORIGIN}/contact`,
         },
         body: JSON.stringify({
@@ -69,13 +74,16 @@ export default {
         redirect: 'error',
         signal: AbortSignal.timeout(8000),
       });
-      const result = await relay.json();
-      if (!relay.ok || (result.success !== true && result.success !== 'true')) {
-        return error(503, DELIVERY_ERROR);
+      if (!relay.ok) return deliveryError(`relay_http_${relay.status}`);
+      const result = await relay.json().catch(() => null);
+      if (!result) return deliveryError('relay_invalid_response');
+      if (result.success !== true && result.success !== 'true') {
+        return deliveryError(/activation/i.test(String(result.message)) ? 'relay_needs_activation' : 'relay_rejected');
       }
       return Response.json({ ok: true });
-    } catch {
-      return error(503, DELIVERY_ERROR);
+    } catch (cause) {
+      if (cause?.name === 'TimeoutError') return deliveryError('relay_timeout');
+      return deliveryError('relay_unavailable');
     }
   },
 };
