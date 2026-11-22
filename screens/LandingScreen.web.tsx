@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type PointerEvent } from 'react';
+import BrandMark from '../components/landing/BrandMark.web';
 import ContactForm, { DEMO_WHATSAPP_URL, DemoFormHeading, demoEmailError } from '../components/landing/ContactForm.web';
 import CATALOG from '../data/catalog-stats.json';
 
@@ -47,10 +48,6 @@ const QUESTIONS = [
   ['Önizleme ne kadar gerçeğe yakın?', 'Halı, oda fotoğrafının perspektifine ve ışığına göre yerleştirilir. Odanın açısı ve fotoğrafın kalitesi sonucu etkileyebilir. Kesin renk ve ölçüyü ürün bilgileriyle birlikte değerlendirin.'],
   ['Demo ve kurulum için kiminle görüşebilirim?', 'Demo formunu doldurun. Mağazanızda Halı Dene’yi nasıl kullanabileceğinizi, kurulum ve fiyatlandırmayı birlikte konuşalım.'],
 ];
-
-function BrandMark() {
-  return <span className="hd-wordmark"><span className="hd-brand-mark" aria-hidden="true">H</span>Halı Dene</span>;
-}
 
 function HeroComparison() {
   const [split, setSplit] = useState(50);

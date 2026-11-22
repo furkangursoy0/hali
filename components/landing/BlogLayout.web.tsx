@@ -1,5 +1,6 @@
 import React, { useEffect, type ReactNode } from 'react';
 import type { BlogPost } from '../../data/blog-posts';
+import BrandMark from './BrandMark.web';
 
 const SITE_URL = 'https://halidene.com';
 const dateFormat = new Intl.DateTimeFormat('tr-TR', {
@@ -83,7 +84,7 @@ export function BlogLayout({ children, isIndex }: { children: ReactNode; isIndex
     <div className="hd-landing hd-blog">
       <header className="hd-navbar">
         <div className="hd-container hd-navbar-inner">
-          <a href="/" className="hd-wordmark"><span aria-hidden="true" className="hd-brand-mark">H</span>Halı Dene</a>
+          <a href="/" aria-label="Halı Dene ana sayfa"><BrandMark /></a>
           <nav aria-label="Ana menü">
             <a href="/">Ana Sayfa</a>
             <a href="/blog" className="hd-nav-blog" aria-current={isIndex ? 'page' : undefined}>Blog</a>
@@ -95,7 +96,7 @@ export function BlogLayout({ children, isIndex }: { children: ReactNode; isIndex
       <footer className="hd-footer">
         <div className="hd-container hd-footer-inner">
           <div>
-            <a href="/" className="hd-wordmark"><span aria-hidden="true" className="hd-brand-mark">H</span>Halı Dene</a>
+            <a href="/" aria-label="Halı Dene ana sayfa"><BrandMark /></a>
             <p>Yapay zekâ destekli halı deneme platformu</p>
           </div>
           <p>halidene.com · {new Date().getFullYear()}</p>
