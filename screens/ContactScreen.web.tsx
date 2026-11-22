@@ -1,5 +1,5 @@
 import React from 'react';
-import ContactForm from '../components/landing/ContactForm.web';
+import ContactForm, { DemoFormHeading } from '../components/landing/ContactForm.web';
 
 export const contactMetadata = {
   title: 'İletişim | Halı Dene',
@@ -9,12 +9,13 @@ export const contactMetadata = {
 export default function ContactScreen() {
   return (
     <main className="hd-landing hd-contact-page">
-      <a className="hd-wordmark" href="/" aria-label="Halı Dene ana sayfa">
-        <span className="hd-brand-mark" aria-hidden="true">H</span>Halı Dene
-      </a>
+      <header className="hd-container">
+        <a className="hd-wordmark" href="/" aria-label="Halı Dene ana sayfa">
+          <span className="hd-brand-mark" aria-hidden="true">H</span>Halı Dene
+        </a>
+      </header>
       <section className="hd-contact-panel" aria-labelledby="contact-title">
-        <h1 id="contact-title">Demo Talep Et</h1>
-        <p>Bilgilerinizi paylaşın, mağazanız için bir demo görüşmesi planlayalım.</p>
+        <DemoFormHeading id="contact-title" as="h1" />
         <ContactForm />
       </section>
     </main>

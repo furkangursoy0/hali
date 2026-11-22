@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type PointerEvent } from 'react';
-import ContactForm, { DEMO_WHATSAPP_URL, demoEmailError } from '../components/landing/ContactForm.web';
+import ContactForm, { DEMO_WHATSAPP_URL, DemoFormHeading, demoEmailError } from '../components/landing/ContactForm.web';
 import CATALOG from '../data/catalog-stats.json';
 
 const CARPET_COUNT = `${Math.floor(CATALOG.totalCarpets / 100) * 100}+`;
@@ -230,13 +230,13 @@ function HowItWorks() {
       title: 'QR kodu okutun',
       text: 'Müşteriniz, mağazadaki QR kodu telefonuyla okutarak halı deneme akışını başlatır.',
       image: 'qr',
-      alt: 'Halı denemeyi başlatan QR kod ekranı',
+      alt: 'Mağazada QR kod okutma adımının temsili görseli',
     },
     {
       title: 'Oda fotoğrafını yükleyin',
       text: 'Halının deneneceği odanın fotoğrafını ekleyin.',
       image: 'room-upload',
-      alt: 'Oda fotoğrafı yüklemek için dosya seçme ekranı',
+      alt: 'Yükleme simgesiyle halısız bir oda fotoğrafı',
     },
     {
       title: 'Halıyı seçin',
@@ -263,7 +263,7 @@ function HowItWorks() {
           {steps.map(({ title, text, image, alt }, index) => (
             <li key={title}>
               <div className="hd-step-visual">
-                <img src={`/landing/steps/${image}.webp`} alt={alt} width={660} height={880} loading="lazy" decoding="async" />
+                <img src={`/landing/steps/${image}.webp`} alt={alt} width={720} height={720} loading="lazy" decoding="async" />
               </div>
               <div className="hd-step-copy">
                 <span className="hd-step-number" aria-hidden="true">{index + 1}</span>
@@ -415,10 +415,8 @@ export default function LandingScreen() {
       </footer>
 
       <dialog className="hd-demo-dialog" ref={dialog} aria-labelledby="hd-demo-title" onClose={() => setRequestEmail(null)}>
-        <div className="hd-dialog-heading">
-          <div><h2 id="hd-demo-title">Demo Talep Et</h2><p>Bilgilerinizi paylaşın, mağazanız için bir görüşme planlayalım.</p></div>
-          <button className="hd-dialog-close" type="button" aria-label="Formu kapat" onClick={() => dialog.current?.close()}>×</button>
-        </div>
+        <DemoFormHeading id="hd-demo-title" />
+        <button className="hd-dialog-close" type="button" aria-label="Formu kapat" onClick={() => dialog.current?.close()}>×</button>
         {requestEmail !== null && <ContactForm initialEmail={requestEmail} />}
       </dialog>
     </div>
