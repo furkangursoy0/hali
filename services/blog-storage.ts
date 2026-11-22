@@ -1,8 +1,7 @@
-import { Platform } from 'react-native';
 import { staticBlogPosts, BlogPost } from '../data/blog-posts';
 
 const STORAGE_KEY = 'halidene_blog_posts';
-const isWeb = Platform.OS === 'web';
+const isWeb = typeof document !== 'undefined';
 
 function loadFromStorage(): BlogPost[] {
   if (!isWeb) return [];

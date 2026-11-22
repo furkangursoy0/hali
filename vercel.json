@@ -2,6 +2,7 @@
   "installCommand": "npm install",
   "buildCommand": "npx expo export --platform web && node scripts/postbuild-web.js",
   "outputDirectory": "dist",
+  "cleanUrls": true,
   "headers": [
     {
       "source": "/_expo/static/(.*)",
@@ -42,16 +43,8 @@
   ],
   "rewrites": [
     {
-      "source": "/blog",
-      "destination": "/site-shell.html"
-    },
-    {
       "source": "/blog/:slug",
-      "destination": "/site-shell.html"
-    },
-    {
-      "source": "/contact",
-      "destination": "/site-shell.html"
+      "destination": "/site-shell"
     }
   ]
 }

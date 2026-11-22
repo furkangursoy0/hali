@@ -1,13 +1,14 @@
 import React from 'react';
-import { BlogCards, BlogContact, BlogLayout, useBlogHead } from '../components/landing/BlogLayout.web';
+import { BlogCards, BlogContact, BlogLayout, useBlogHead, type BlogNavigation } from '../components/landing/BlogLayout.web';
 import { getAllPosts } from '../services/blog-storage';
 
-export default function BlogListScreen() {
-  useBlogHead(
-    'Blog | Halı Dene - Halı Ölçüleri ve Seçim Rehberleri',
-    'Halı ölçüleri, boyutları ve seçim rehberleri. Odasına uygun halıyı seçmek isteyenler için faydalı bilgiler.',
-    '/blog',
-  );
+export const blogMetadata = {
+  title: 'Blog | Halı Dene - Halı Ölçüleri ve Seçim Rehberleri',
+  description: 'Halı ölçüleri, boyutları ve seçim rehberleri. Odasına uygun halıyı seçmek isteyenler için faydalı bilgiler.',
+};
+
+export default function BlogListScreen({ navigation }: { navigation?: BlogNavigation }) {
+  useBlogHead(blogMetadata.title, blogMetadata.description, '/blog', undefined, navigation);
 
   return (
     <BlogLayout isIndex>

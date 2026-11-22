@@ -1,6 +1,10 @@
 import React from 'react';
 import ContactForm from '../components/landing/ContactForm.web';
-import '../components/landing/web-landing.css';
+
+export const contactMetadata = {
+  title: 'İletişim | Halı Dene',
+  description: 'Halı Dene’yi fiziksel mağazanızda görmek için demo talep edin.',
+};
 
 export default function ContactScreen() {
   return (

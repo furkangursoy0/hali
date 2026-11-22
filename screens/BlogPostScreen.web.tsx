@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BlogByline, BlogCards, BlogContact, BlogLayout, blogTitle, useBlogHead } from '../components/landing/BlogLayout.web';
+import { BlogByline, BlogCards, BlogContact, BlogLayout, blogTitle, useBlogHead, type BlogNavigation } from '../components/landing/BlogLayout.web';
 import type { BlogPost, BlogSection } from '../data/blog-posts';
 import { getAllPosts, getBlogPostBySlug } from '../services/blog-storage';
 import { parseMarkdownToSections } from '../services/markdown-parser';
@@ -56,8 +56,8 @@ function ArticleSection({ section, id }: { section: BlogSection; id: string }) {
   }
 }
 
-function BlogArticle({ post }: { post: BlogPost }) {
-  useBlogHead(post.title, post.metaDescription, `/blog/${post.slug}`, post);
+function BlogArticle({ post, navigation }: { post: BlogPost; navigation?: BlogNavigation }) {
+  useBlogHead(post.title, post.metaDescription, `/blog/${post.slug}`, post, navigation);
 
   const sections = useMemo(() => {
     const content = post.content?.trim();
@@ -132,7 +132,10 @@ function BlogArticle({ post }: { post: BlogPost }) {
   );
 }
 
-export default function BlogPostScreen({ route }: { route: { params?: { slug?: string } } }) {
+export default function BlogPostScreen({ route, navigation }: {
+  route: { params?: { slug?: string } };
+  navigation?: BlogNavigation;
+}) {
   const slug = route.params?.slug;
   const post = useMemo(() => slug ? getBlogPostBySlug(slug) : undefined, [slug]);
 
@@ -149,5 +152,5 @@ export default function BlogPostScreen({ route }: { route: { params?: { slug?: s
     );
   }
 
-  return <BlogArticle key={post.slug} post={post} />;
+  return <BlogArticle key={post.slug} post={post} navigation={navigation} />;
 }

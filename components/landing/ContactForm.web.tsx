@@ -73,7 +73,7 @@ export default function ContactForm({ initialEmail = '' }: ContactFormProps) {
   }
 
   return (
-    <form className="hd-contact-form" onSubmit={submit} noValidate aria-busy={status === 'sending'}>
+    <form className="hd-contact-form" method="post" onSubmit={submit} noValidate aria-busy={status === 'sending'}>
       <input type="text" name="website" hidden tabIndex={-1} autoComplete="off" />
       <div className="hd-contact-fields">
         <label htmlFor={`${fieldId}-name`}>Ad

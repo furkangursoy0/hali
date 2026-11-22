@@ -1,8 +1,5 @@
-import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, type ReactNode } from 'react';
 import type { BlogPost } from '../../data/blog-posts';
-import './web-landing.css';
-import './web-blog.css';
 
 const SITE_URL = 'https://halidene.com';
 const dateFormat = new Intl.DateTimeFormat('tr-TR', {
@@ -13,10 +10,26 @@ export function blogTitle(post: BlogPost) {
   return post.title.split('|')[0].trim();
 }
 
-export function useBlogHead(title: string, description: string, path: string, post?: BlogPost) {
-  const navigation = useNavigation();
+export type BlogNavigation = { setOptions(options: { title: string }): void };
+
+export function articleSchema(post: BlogPost) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.metaDescription,
+    url: `${SITE_URL}/blog/${post.slug}`,
+    datePublished: post.date,
+    dateModified: post.updatedDate,
+    image: post.featuredImage,
+    author: { '@type': 'Person', name: post.author.name, image: post.author.avatar },
+    publisher: { '@type': 'Organization', name: 'Halı Dene', url: SITE_URL },
+  };
+}
+
+export function useBlogHead(title: string, description: string, path: string, post?: BlogPost, navigation?: BlogNavigation) {
   useEffect(() => {
-    navigation.setOptions({ title });
+    navigation?.setOptions({ title });
     const canonical = SITE_URL + path;
     document.title = title;
 
@@ -39,36 +52,28 @@ export function useBlogHead(title: string, description: string, path: string, po
     }
 
     setMeta('name', 'description', description);
-    if (!post) return;
-
     setMeta('property', 'og:title', title);
     setMeta('property', 'og:description', description);
     setMeta('property', 'og:url', canonical);
-    setMeta('property', 'og:type', 'article');
-    setMeta('name', 'twitter:card', post.featuredImage ? 'summary_large_image' : 'summary');
+    setMeta('property', 'og:type', post ? 'article' : 'website');
+    setMeta('name', 'twitter:card', post ? (post.featuredImage ? 'summary_large_image' : 'summary') : 'summary_large_image');
     setMeta('name', 'twitter:title', title);
     setMeta('name', 'twitter:description', description);
+    if (!post) return;
+
     if (post.featuredImage) {
       setMeta('property', 'og:image', post.featuredImage);
       setMeta('name', 'twitter:image', post.featuredImage);
     }
 
-    const schema = document.createElement('script');
-    schema.type = 'application/ld+json';
-    schema.dataset.blog = 'true';
-    schema.textContent = JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'Article',
-      headline: title,
-      description,
-      url: canonical,
-      datePublished: post.date,
-      dateModified: post.updatedDate,
-      image: post.featuredImage,
-      author: { '@type': 'Person', name: post.author.name, image: post.author.avatar },
-      publisher: { '@type': 'Organization', name: 'Halı Dene', url: SITE_URL },
-    });
-    document.head.append(schema);
+    let schema = document.head.querySelector<HTMLScriptElement>('script[data-blog]');
+    if (!schema) {
+      schema = document.createElement('script');
+      schema.type = 'application/ld+json';
+      schema.dataset.blog = 'true';
+      document.head.append(schema);
+    }
+    schema.textContent = JSON.stringify(articleSchema(post));
     return () => schema.remove();
   }, [navigation, title, description, path, post]);
 }
