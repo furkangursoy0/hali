@@ -8,7 +8,6 @@ const WHATSAPP_URL = 'https://wa.me/905300947756?text='
 const CARPET_COUNT = `${Math.floor(CATALOG.totalCarpets / 100) * 100}+`;
 const ROOM_BEFORE = '/landing/room-before.webp';
 const ROOM_AFTER = '/landing/room-after.webp';
-const RUG = '/landing/rug.webp';
 
 const BRANDS = [
   ['Artemis', 'artemis'], ['Atlas', 'atlas'], ['Bahariye', 'bahariye'],
@@ -173,27 +172,28 @@ function FaqSection() {
 function HowItWorks() {
   const steps = [
     {
-      title: 'Oda fotoğrafını ekleyin',
-      text: 'Müşterinizin oda fotoğrafını galeriden seçin veya kamerayla çekin.',
-      visual: <div className="hd-upload-mock"><span aria-hidden="true">⇧</span>Oda fotoğrafı</div>,
+      title: 'QR kodu okutun',
+      text: 'Müşteriniz, mağazadaki QR kodu telefonuyla okutarak halı deneme akışını başlatır.',
+      image: 'qr',
+      alt: 'Halı denemeyi başlatan QR kod ekranı',
+    },
+    {
+      title: 'Oda fotoğrafını yükleyin',
+      text: 'Halının deneneceği odanın fotoğrafını ekleyin.',
+      image: 'room-upload',
+      alt: 'Oda fotoğrafı yüklemek için dosya seçme ekranı',
     },
     {
       title: 'Halıyı seçin',
-      text: 'Marka ve koleksiyondan müşterinizin beğendiği halıyı bulun.',
-      visual: <div className="hd-catalog-mock"><img src={RUG} alt="" loading="lazy" /><span>Klasik desenli halı<small>Katalog</small></span></div>,
+      text: 'Katalogdan müşterinizin odasında görmek istediği halıyı seçin.',
+      image: 'rug-selection',
+      alt: 'Krem klasik halının seçili olduğu halı kataloğu',
     },
     {
       title: 'Halıyı odada görün',
-      text: 'Yapay zekâ seçtiğiniz halıyı oda fotoğrafına yerleştirir.',
-      visual: <img className="hd-step-photo" src={ROOM_AFTER} alt="Örnek salonda halı önizlemesi" loading="lazy" />,
-    },
-    {
-      title: 'Sonucu paylaşın',
-      text: 'Önce ve sonrayı müşterinize gösterin, sonucu kaydedin veya paylaşın.',
-      visual: <div className="hd-compare-mock">
-        <div><img src={ROOM_BEFORE} alt="" loading="lazy" /><small>Önce</small></div>
-        <div><img src={ROOM_AFTER} alt="" loading="lazy" /><small>Sonra</small></div>
-      </div>,
+      text: 'Yapay zekânın seçilen halıyı odada nasıl gösterdiğini müşterinizle inceleyin.',
+      image: 'room-result',
+      alt: 'Krem klasik halının örnek salona yerleştirildiği sonuç ekranı',
     },
   ];
 
@@ -205,9 +205,11 @@ function HowItWorks() {
           <p>Oda fotoğrafından mağaza içi sunuma, dört adımda.</p>
         </div>
         <ol className="hd-step-grid">
-          {steps.map(({ title, text, visual }, index) => (
+          {steps.map(({ title, text, image, alt }, index) => (
             <li key={title}>
-              <div className="hd-step-visual">{visual}</div>
+              <div className="hd-step-visual">
+                <img src={`/landing/steps/${image}.webp`} alt={alt} width={660} height={880} loading="lazy" decoding="async" />
+              </div>
               <div className="hd-step-copy">
                 <span className="hd-step-number" aria-hidden="true">{index + 1}</span>
                 <div><h3>{title}</h3><p>{text}</p></div>
