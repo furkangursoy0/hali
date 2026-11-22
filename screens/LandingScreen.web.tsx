@@ -101,7 +101,7 @@ function HeroVisual() {
     <div className="hd-hero-media">
       <figure className="hd-hero-visual">
         <img src="/landing/store-kiosk-selection.webp" alt="Halı Dene halı seçimi ekranını gösteren kiosk"
-          width={1024} height={1536} fetchPriority="high" decoding="async" />
+          width={1086} height={1448} fetchPriority="high" decoding="async" />
       </figure>
       <HeroComparison />
     </div>
@@ -112,17 +112,17 @@ function HeroBenefits() {
   const items = [
     {
       title: 'QR ile fotoğraf aktarımı',
-      description: ['Oda fotoğrafını QR ile', 'telefondan yükleyin.'],
+      description: 'Müşteriniz QR kodu okutup oda fotoğrafını telefonundan yükler.',
       icon: 'M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3M7 7h3v3H7zm7 0h3v3h-3zm-7 7h3v3H7zm7 0h3v3h-3z',
     },
     {
       title: 'Yapay Zeka Destekli',
-      description: ['Seçilen halıyı odada', 'gerçekçi biçimde görün.'],
+      description: 'Halıyı odanın ışığına ve açısına göre gerçekçi biçimde gösterir.',
       icon: 'M10 3c.8 4.4 2.6 6.2 7 7-4.4.8-6.2 2.6-7 7-.8-4.4-2.6-6.2-7-7 4.4-.8 6.2-2.6 7-7Zm9 11v6m-3-3h6M19 3v4m-2-2h4',
     },
     {
       title: `${CARPET_COUNT} halı modeli`,
-      description: ['Marka ve koleksiyonları', 'tek katalogda keşfedin.'],
+      description: 'Farklı marka ve koleksiyonları tek katalogda inceleyin.',
       icon: 'm12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5',
     },
   ];
@@ -138,7 +138,7 @@ function HeroBenefits() {
           </span>
           <div>
             <strong>{title}</strong>
-            <p>{description[0]}<br />{description[1]}</p>
+            <p>{description}</p>
           </div>
         </li>
       ))}

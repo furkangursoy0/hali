@@ -82,7 +82,7 @@
 .hd-hero-copy .hd-hero-description { max-width: 32rem; margin-top: 20px; color: var(--hd-muted); font-size: 1rem; font-weight: 500; line-height: 1.55; }
 .hd-hero-media { display: grid; width: min(100%, 480px); min-width: 0; justify-self: center; isolation: isolate; }
 .hd-hero-visual { overflow: hidden; aspect-ratio: .89; border: 1px solid var(--hd-line); border-radius: 18px; background: #e9e1d7; box-shadow: var(--hd-card-shadow); }
-.hd-hero-visual img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 68%; }
+.hd-hero-visual img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 44%; }
 .hd-landing .hd-hero-comparison {
   position: relative;
   z-index: 1;
@@ -140,8 +140,8 @@
 .hd-hero-benefits li + li { border-inline-start: 1px solid var(--hd-line); }
 .hd-benefit-icon { display: grid; width: 40px; height: 40px; flex: 0 0 40px; place-items: center; border-radius: 50%; background: var(--hd-tint); }
 .hd-hero-benefits strong { display: block; font-size: .9375rem; line-height: 1.26; }
-.hd-hero-benefits li:nth-child(2) :is(strong, .hd-benefit-icon) { color: #162b5c; }
-.hd-hero-benefits p { margin-top: 4px; color: var(--hd-muted); font-size: .875rem; line-height: 1.4; }
+.hd-hero-benefits li:nth-child(2) :is(strong, .hd-benefit-icon) { color: var(--hd-blue); }
+.hd-hero-benefits p { margin-top: 4px; color: var(--hd-muted); font-size: .875rem; line-height: 1.4; text-wrap: pretty; }
 
 .hd-flow { padding-block: clamp(45px, 6vw, 76px); background: var(--hd-surface); }
 .hd-section-heading { text-align: center; }
@@ -224,7 +224,7 @@
   .hd-hero { gap: 24px; }
   .hd-step-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 820px) {
+@media (max-width: 1020px) {
   .hd-hero-benefits { grid-template-columns: minmax(0, 1fr); }
   .hd-hero-benefits li { align-items: center; }
   .hd-hero-benefits li + li { border-inline-start: 0; border-block-start: 1px solid var(--hd-line); }
@@ -251,6 +251,8 @@
   .hd-logo-set img { width: 101px; height: 48px; }
 }
 @media (max-width: 420px) {
+  .hd-hero-benefits li { gap: 8px; padding: 11px; }
+  .hd-benefit-icon { width: 32px; height: 32px; flex-basis: 32px; }
   .hd-hero h1 { font-size: clamp(2.12rem, 9vw, 2.55rem); }
   .hd-interest { flex-direction: column; gap: 8px; }
   .hd-interest .hd-button { align-self: stretch; }
