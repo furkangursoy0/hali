@@ -16,7 +16,7 @@ import {
   PanResponder,
   useWindowDimensions,
 } from 'react-native';
-import { COLORS, SPACING, RADIUS } from '../constants/theme';
+import { SPACING, RADIUS } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
 import { getCarpetThumbnailUrl } from '../services/carpet-image';
 import BRAND_CATALOG from '../data/landing-catalog.json';
@@ -25,6 +25,7 @@ import LandingNavbar from '../components/landing/LandingNavbar';
 import HeroSection from '../components/landing/HeroSection';
 import StatsStrip from '../components/landing/StatsStrip';
 import HowItWorks from '../components/landing/HowItWorks';
+import { LANDING_COLORS as COLORS, LANDING_LAYOUT, LANDING_SHADOW } from '../components/landing/theme';
 
 const isWeb = Platform.OS === 'web';
 
@@ -194,47 +195,57 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             <Text style={s.sectionSubtitle}>Kaydırarak öncesi ve sonrasını karşılaştırın</Text>
           </>
         )}
-        <View
-          ref={sliderContainerRef}
-          style={[
-            s.sliderContainer,
-            !isWide && s.sliderContainerMobile,
-            isWeb && ({ cursor: 'ew-resize', userSelect: 'none', touchAction: 'pan-y', boxShadow: '0 0 60px rgba(200, 134, 10, 0.08)' } as any),
-          ]}
-          onLayout={(e) => { const w = e.nativeEvent.layout.width; sliderWidth.current = w; setContainerWidth(w); }}
-          {...(!isWeb ? panResponder.panHandlers : {})}
-        >
-          {afterImageUri && (
-            <Image source={{ uri: afterImageUri }} style={s.sliderImage} resizeMode="cover" />
-          )}
-          {beforeImageUri && (
-            <Animated.View style={[s.sliderBeforeClip, { width: clipWidth }]}>
-              <Image source={{ uri: beforeImageUri }} style={[s.sliderImageAbsolute, containerWidth > 0 && { width: containerWidth }]} resizeMode="cover" />
-            </Animated.View>
-          )}
-          <Animated.View style={[s.sliderDivider, { left: handleLeft }]}>
-            <View style={s.sliderLine} />
-            <View style={s.sliderHandle}>
-              <Text style={s.sliderHandleArrows}>{'◂ ▸'}</Text>
-            </View>
-          </Animated.View>
-          <View style={s.sliderLabelLeft}>
-            <Text style={s.sliderLabelText}>Önce</Text>
-          </View>
-          <View style={s.sliderLabelRight}>
-            <Text style={s.sliderLabelText}>{'✦ '}Sonra</Text>
-          </View>
+        <View style={isWeb && s.previewFrame}>
           {isWeb && (
-            <View style={[s.sliderBottomGrad, { backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.35))', pointerEvents: 'none' } as any]} />
-          )}
-          <View style={s.sliderCarpetBadge}>
-            <View style={[s.baCarpetWrap, !isWide && s.baCarpetWrapMobile]}>
-              <Image source={{ uri: demoCarpetUrl }} style={s.baCarpetThumb} resizeMode="cover" />
-              <View style={s.baCarpetCheck}>
-                <View style={s.baCarpetCheckInner} />
-              </View>
+            <View style={s.previewTopBar} aria-hidden>
+              <View style={[s.previewDot, { backgroundColor: '#FCA5A5' }]} />
+              <View style={[s.previewDot, { backgroundColor: '#FCD34D' }]} />
+              <View style={[s.previewDot, { backgroundColor: '#86EFAC' }]} />
+              <View style={s.previewRail} />
             </View>
-            <Text style={s.sliderCarpetLabel}>{DEMO_CARPET.brand} · {DEMO_CARPET.collection}</Text>
+          )}
+          <View
+            ref={sliderContainerRef}
+            style={[
+              s.sliderContainer,
+              !isWide && s.sliderContainerMobile,
+              isWeb && s.sliderContainerWeb,
+            ]}
+            onLayout={(e) => { const w = e.nativeEvent.layout.width; sliderWidth.current = w; setContainerWidth(w); }}
+            {...(!isWeb ? panResponder.panHandlers : {})}
+          >
+            {afterImageUri && (
+              <Image source={{ uri: afterImageUri }} style={s.sliderImage} resizeMode="cover" />
+            )}
+            {beforeImageUri && (
+              <Animated.View style={[s.sliderBeforeClip, { width: clipWidth }]}>
+                <Image source={{ uri: beforeImageUri }} style={[s.sliderImageAbsolute, containerWidth > 0 && { width: containerWidth }]} resizeMode="cover" />
+              </Animated.View>
+            )}
+            <Animated.View style={[s.sliderDivider, { left: handleLeft }]}>
+              <View style={s.sliderLine} />
+              <View style={s.sliderHandle}>
+                <Text style={s.sliderHandleArrows}>{'◂ ▸'}</Text>
+              </View>
+            </Animated.View>
+            <View style={s.sliderLabelLeft}>
+              <Text style={s.sliderLabelText}>Önce</Text>
+            </View>
+            <View style={s.sliderLabelRight}>
+              <Text style={s.sliderLabelText}>{'✦ '}Sonra</Text>
+            </View>
+            {isWeb && (
+              <View style={[s.sliderBottomGrad, { backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.35))', pointerEvents: 'none' } as any]} />
+            )}
+            <View style={s.sliderCarpetBadge}>
+              <View style={[s.baCarpetWrap, !isWide && s.baCarpetWrapMobile]}>
+                <Image source={{ uri: demoCarpetUrl }} style={s.baCarpetThumb} resizeMode="cover" />
+                <View style={s.baCarpetCheck}>
+                  <View style={s.baCarpetCheckInner} />
+                </View>
+              </View>
+              <Text style={s.sliderCarpetLabel}>{DEMO_CARPET.brand} · {DEMO_CARPET.collection}</Text>
+            </View>
           </View>
         </View>
       </View>
@@ -307,12 +318,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
   /* ────────────────── İLETİŞİM CTA ────────────────── */
   const renderContactCTA = () => (
-    <View style={[
-      s.contactSection,
-      isWeb && ({
-        backgroundImage: 'linear-gradient(135deg, rgba(200,134,10,0.06), rgba(200,134,10,0.02))',
-      } as any),
-    ]}>
+    <View style={[s.contactSection, isWide && s.contactSectionWide]}>
       <Text style={[s.sectionTitle, isWide && s.sectionTitleWide]}>Bilgi Almak İster Misiniz?</Text>
       <Text style={s.contactDesc}>
         Halı Dene'yi mağazanızda kullanmak, demo almak veya fiyat bilgisi için bize ulaşın.
@@ -372,10 +378,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         <View style={s.loginFormCol}>
           <Text style={[s.loginFormTitle, !isWide && { textAlign: 'center' as const }]}>Giriş Yap</Text>
           <Text style={[s.loginFormSubtitle, !isWide && { textAlign: 'center' as const }]}>Hesabınız varsa giriş yapın</Text>
-          <View style={[
-            s.formCard,
-            isWeb && ({ boxShadow: '0 4px 32px rgba(0,0,0,0.3)' } as any),
-          ]}>
+          <View style={s.formCard}>
             <View style={[s.inputWrap, focused === 'email' && s.inputWrapFocused]}>
               <TextInput
                 style={[s.input, isWeb && s.inputWeb]}
@@ -473,10 +476,21 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     </View>
   );
 
+  if (isWeb) {
+    return (
+      <ScrollView style={s.container} contentContainerStyle={s.merchantLogin}>
+        <Pressable onPress={() => navigation.navigate('Login')} style={s.merchantBack}>
+          <Text style={s.loginDemoLink}>Ana Sayfa</Text>
+        </Pressable>
+        {renderLoginForm()}
+      </ScrollView>
+    );
+  }
+
   /* ────────────────── MAIN RENDER ────────────────── */
   return (
     <View style={[s.container, isWeb && ({ height: '100dvh', maxHeight: '100dvh' } as any)]}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle={isWeb ? 'dark-content' : 'light-content'} backgroundColor={COLORS.background} />
 
       <LandingNavbar isWide={isWide} onLoginPress={scrollToLogin} onWhatsAppPress={openWhatsApp} onBlogPress={() => navigation.navigate('Blog')} />
 
@@ -487,7 +501,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[s.content, isWide && s.contentWide]}>
+        <View style={s.content}>
           {/* ── Hero + Before/After combined (desktop: side by side) ── */}
           {isWide ? (
             <View style={s.heroSplit}>
@@ -559,41 +573,52 @@ const s = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.xxl,
+    paddingHorizontal: isWeb ? LANDING_LAYOUT.mobileGutter : SPACING.md,
+    paddingBottom: isWeb ? SPACING.lg : SPACING.xxl,
   },
   scrollContentWide: {
-    paddingHorizontal: SPACING.xxl,
+    paddingTop: SPACING.xl,
+    paddingHorizontal: LANDING_LAYOUT.desktopGutter,
   },
   scrollContentMobile: {
     paddingTop: SPACING.sm,
   },
   content: {
     width: '100%',
-    maxWidth: 1280,
+    maxWidth: LANDING_LAYOUT.maxWidth,
     alignSelf: 'center',
   },
-  contentWide: {
-    maxWidth: 1280,
+  merchantLogin: {
+    width: '100%',
+    maxWidth: 880,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xxl,
+    alignSelf: 'center',
+  },
+  merchantBack: {
+    alignSelf: 'flex-start',
+    marginBottom: SPACING.lg,
   },
 
   /* ─── Hero Split Layout ─── */
   heroSplit: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xl,
-    marginBottom: SPACING.xl,
+    gap: SPACING.xxl,
+    marginBottom: SPACING.xxl,
   },
   heroSplitLeft: {
     flex: 1,
+    minWidth: 0,
   },
   heroSplitRight: {
-    flex: 1.1,
+    flex: 1.05,
+    minWidth: 0,
   },
 
   /* ─── Section ─── */
   section: {
-    marginBottom: SPACING.xl,
+    marginBottom: isWeb ? SPACING.xxl : SPACING.xl,
     width: '100%',
   },
   sectionTitle: {
@@ -604,16 +629,46 @@ const s = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   sectionTitleWide: {
-    fontSize: 28,
+    fontSize: 36,
+    letterSpacing: -0.8,
   },
   sectionSubtitle: {
     color: COLORS.textSecondary,
-    fontSize: 14,
+    fontSize: isWeb ? 16 : 14,
     textAlign: 'center',
     marginBottom: SPACING.md,
   },
 
   /* ─── Before/After Slider ─── */
+  previewFrame: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+    boxShadow: LANDING_SHADOW.preview,
+  },
+  previewTopBar: {
+    height: 31,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  previewDot: {
+    width: 7,
+    height: 7,
+    borderRadius: RADIUS.full,
+  },
+  previewRail: {
+    marginLeft: 6,
+    width: '46%',
+    height: 9,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surfaceElevated,
+  },
   sliderContainer: {
     width: '100%',
     aspectRatio: 4 / 3,
@@ -625,9 +680,17 @@ const s = StyleSheet.create({
     borderColor: COLORS.border,
   },
   sliderContainerMobile: {
-    aspectRatio: 3 / 4,
+    aspectRatio: isWeb ? 4 / 3 : 3 / 4,
     borderRadius: RADIUS.xl,
   },
+  sliderContainerWeb: {
+    cursor: 'ew-resize',
+    userSelect: 'none',
+    touchAction: 'pan-y',
+    borderWidth: 0,
+    borderRadius: 0,
+    backgroundColor: COLORS.surfaceElevated,
+  } as any,
   sliderImage: {
     width: '100%',
     height: '100%',
@@ -800,20 +863,20 @@ const s = StyleSheet.create({
   },
   brandTabsRow: {
     flexDirection: 'row',
-    gap: SPACING.xs,
+    gap: isWeb ? SPACING.sm : SPACING.xs,
     paddingHorizontal: 2,
   },
   brandTab: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: RADIUS.lg,
+    paddingVertical: isWeb ? 10 : 8,
+    borderRadius: isWeb ? RADIUS.full : RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
     backgroundColor: 'transparent',
   },
   brandTabActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    backgroundColor: isWeb ? COLORS.primaryGlow : COLORS.primary,
+    borderColor: isWeb ? COLORS.primaryGlowStrong : COLORS.primary,
   },
   brandTabHover: {
     borderColor: COLORS.primaryGlowStrong,
@@ -821,11 +884,11 @@ const s = StyleSheet.create({
   },
   brandTabText: {
     color: COLORS.textSecondary,
-    fontSize: 13,
+    fontSize: isWeb ? 14 : 13,
     fontWeight: '600',
   },
   brandTabTextActive: {
-    color: COLORS.white,
+    color: isWeb ? COLORS.primaryDark : COLORS.white,
   },
   brandTabCount: {
     color: COLORS.textMuted,
@@ -835,18 +898,21 @@ const s = StyleSheet.create({
 
   /* ─── Contact CTA (enhanced) ─── */
   contactSection: {
-    marginBottom: SPACING.xl,
+    marginBottom: isWeb ? SPACING.xxl : SPACING.xl,
     width: '100%',
-    backgroundColor: COLORS.surfaceElevated,
+    backgroundColor: isWeb ? COLORS.primaryGlow : COLORS.surfaceElevated,
     borderRadius: RADIUS.xxl,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: isWeb ? COLORS.primaryGlowStrong : COLORS.border,
     padding: SPACING.xl,
     alignItems: 'center',
   },
+  contactSectionWide: {
+    paddingVertical: SPACING.xxl,
+  },
   contactDesc: {
     color: COLORS.textSecondary,
-    fontSize: 15,
+    fontSize: isWeb ? 16 : 15,
     textAlign: 'center',
     lineHeight: 22,
     marginTop: SPACING.sm,
@@ -868,26 +934,28 @@ const s = StyleSheet.create({
     fontWeight: '500',
   },
   whatsappBtn: {
-    backgroundColor: '#25D366',
+    backgroundColor: isWeb ? COLORS.primary : '#25D366',
     borderRadius: RADIUS.lg,
     paddingHorizontal: 28,
-    paddingVertical: 16,
+    paddingVertical: isWeb ? 14 : 16,
     alignItems: 'center',
+    ...(isWeb && { boxShadow: LANDING_SHADOW.primary }),
   },
   whatsappBtnHover: {
-    backgroundColor: '#22C55E',
+    backgroundColor: isWeb ? COLORS.primaryDark : '#22C55E',
   },
   whatsappBtnText: {
     color: COLORS.white,
     fontWeight: '700',
-    fontSize: 17,
+    fontSize: isWeb ? 15 : 17,
   },
   contactGhostBtn: {
     borderWidth: 1,
     borderColor: COLORS.border,
+    ...(isWeb && { backgroundColor: COLORS.surface }),
     borderRadius: RADIUS.lg,
     paddingHorizontal: 24,
-    paddingVertical: 14,
+    paddingVertical: isWeb ? 13 : 14,
     alignItems: 'center',
   },
   contactGhostBtnHover: {
@@ -910,7 +978,7 @@ const s = StyleSheet.create({
   loginSection: {
     marginBottom: SPACING.xl,
     width: '100%',
-    backgroundColor: COLORS.surface,
+    backgroundColor: isWeb ? COLORS.surfaceElevated : COLORS.surface,
     borderRadius: RADIUS.xxl,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -958,22 +1026,23 @@ const s = StyleSheet.create({
   },
   loginFormTitle: {
     color: COLORS.text,
-    fontSize: 22,
+    fontSize: isWeb ? 26 : 22,
     fontWeight: '800',
     marginBottom: SPACING.xs,
   },
   loginFormSubtitle: {
     color: COLORS.textSecondary,
-    fontSize: 14,
+    fontSize: isWeb ? 16 : 14,
     marginBottom: SPACING.md,
   },
   formCard: {
-    backgroundColor: COLORS.surfaceElevated,
+    backgroundColor: isWeb ? COLORS.surface : COLORS.surfaceElevated,
     borderRadius: RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: SPACING.md,
     gap: SPACING.sm,
+    ...(isWeb && { boxShadow: LANDING_SHADOW.card }),
   },
   inputWrap: {
     borderWidth: 1,
@@ -983,6 +1052,7 @@ const s = StyleSheet.create({
   },
   inputWrapFocused: {
     borderColor: COLORS.primary,
+    ...(isWeb && { boxShadow: '0 0 0 3px rgba(36, 88, 245, 0.15)' }),
   },
   input: {
     color: COLORS.text,
@@ -1004,7 +1074,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   loginBtnHover: {
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: isWeb ? COLORS.primaryDark : COLORS.primaryLight,
   },
   loginBtnDisabled: {
     opacity: 0.8,
@@ -1023,7 +1093,7 @@ const s = StyleSheet.create({
   },
   loginDemoLink: {
     color: COLORS.primaryLight,
-    fontSize: 13,
+    fontSize: isWeb ? 14 : 13,
     fontWeight: '600',
     textAlign: 'center',
     marginTop: SPACING.md,
@@ -1061,21 +1131,21 @@ const s = StyleSheet.create({
   },
   footerBadge: {
     marginLeft: 4,
-    backgroundColor: 'rgba(200, 134, 10, 0.1)',
+    backgroundColor: isWeb ? COLORS.primaryGlow : 'rgba(200, 134, 10, 0.1)',
     borderRadius: 4,
     paddingHorizontal: 5,
     paddingVertical: 2,
   },
   footerBadgeText: {
-    fontSize: 8,
+    fontSize: isWeb ? 11 : 8,
     fontWeight: '800',
-    color: COLORS.textMuted,
+    color: isWeb ? COLORS.primaryDark : COLORS.textMuted,
     letterSpacing: 0.3,
     textTransform: 'uppercase',
   },
   footerText: {
     color: COLORS.textMuted,
-    fontSize: 13,
+    fontSize: isWeb ? 14 : 13,
     lineHeight: 20,
   },
   footerCol: {

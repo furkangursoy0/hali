@@ -42,8 +42,16 @@
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/blog",
+      "destination": "/site-shell.html"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/site-shell.html"
+    },
+    {
+      "source": "/contact",
+      "destination": "/site-shell.html"
     }
   ]
 }

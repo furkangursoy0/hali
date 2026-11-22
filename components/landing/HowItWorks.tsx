@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
-import { COLORS, SPACING, RADIUS } from '../../constants/theme';
+import { SPACING, RADIUS } from '../../constants/theme';
+import { LANDING_COLORS as COLORS, LANDING_SHADOW } from './theme';
 
 const isWeb = Platform.OS === 'web';
 
@@ -15,9 +16,10 @@ const STEPS = [
 ];
 
 export default function HowItWorks({ isWide }: Props) {
-  const anims = useRef(STEPS.map(() => new Animated.Value(0))).current;
+  const anims = useRef(STEPS.map(() => new Animated.Value(isWeb ? 1 : 0))).current;
 
   useEffect(() => {
+    if (isWeb) return;
     const timeout = setTimeout(() => {
       Animated.stagger(
         200,
@@ -30,21 +32,17 @@ export default function HowItWorks({ isWide }: Props) {
   }, []);
 
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, isWeb && styles.sectionWeb, isWide && styles.sectionWide]}>
       <Text style={[styles.sectionTitle, isWide && styles.sectionTitleWide]}>Nasıl Çalışır?</Text>
       <Text style={styles.sectionSubtitle}>3 adımda müşterinize sunum yapın</Text>
 
-      <View style={[styles.stepsContainer, isWide && styles.stepsContainerWide]}>
-        {/* Desktop: horizontal connector line behind steps */}
-        {isWide && (
-          <View style={styles.connectorLineWide} />
-        )}
-
+      <View style={[styles.stepsContainer, isWeb && styles.stepsContainerWeb, isWide && styles.stepsContainerWide]}>
         {STEPS.map((step, i) => (
           <Animated.View
             key={step.num}
             style={[
               styles.stepItem,
+              isWeb && styles.stepCard,
               isWide && styles.stepItemWide,
               {
                 opacity: anims[i],
@@ -53,10 +51,7 @@ export default function HowItWorks({ isWide }: Props) {
             ]}
           >
             {/* Number badge */}
-            <View style={[
-              styles.numBadge,
-              isWeb && ({ boxShadow: '0 4px 20px rgba(200, 134, 10, 0.3)' } as any),
-            ]}>
+            <View style={[styles.numBadge, isWeb && styles.numBadgeWeb]}>
               <Text style={styles.emoji}>{step.emoji}</Text>
               <View style={styles.numCircle}>
                 <Text style={styles.numText}>{step.num}</Text>
@@ -67,7 +62,7 @@ export default function HowItWorks({ isWide }: Props) {
             <Text style={[styles.stepDesc, isWide && styles.stepDescWide]}>{step.desc}</Text>
 
             {/* Mobile: vertical connector AFTER text */}
-            {!isWide && i < STEPS.length - 1 && (
+            {!isWeb && i < STEPS.length - 1 && (
               <View style={styles.connectorVert}>
                 <View style={styles.connectorDot} />
                 <View style={styles.connectorDot} />
@@ -87,6 +82,17 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: SPACING.xl,
   },
+  sectionWeb: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.xxl,
+    paddingHorizontal: SPACING.md,
+  },
+  sectionWide: {
+    paddingVertical: SPACING.xxl,
+    paddingHorizontal: SPACING.xl,
+  },
   sectionTitle: {
     color: COLORS.text,
     fontSize: 24,
@@ -95,11 +101,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   sectionTitleWide: {
-    fontSize: 32,
+    fontSize: 36,
+    letterSpacing: -0.8,
   },
   sectionSubtitle: {
     color: COLORS.textSecondary,
-    fontSize: 15,
+    fontSize: isWeb ? 16 : 15,
     textAlign: 'center',
     marginBottom: SPACING.xl,
   },
@@ -108,22 +115,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 0,
   },
+  stepsContainerWeb: {
+    gap: SPACING.md,
+    alignItems: 'stretch',
+  },
   stepsContainerWide: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    position: 'relative',
-    gap: SPACING.xxl,
-    paddingHorizontal: SPACING.xl,
-  },
-  connectorLineWide: {
-    position: 'absolute',
-    top: 32,
-    left: '20%',
-    right: '20%',
-    height: 2,
-    backgroundColor: COLORS.border,
-    zIndex: 0,
+    gap: SPACING.lg,
   },
   stepItem: {
     alignItems: 'center',
@@ -132,8 +130,18 @@ const styles = StyleSheet.create({
   },
   stepItemWide: {
     flex: 1,
-    maxWidth: 280,
-    zIndex: 1,
+    width: 'auto',
+  },
+  stepCard: {
+    alignItems: 'flex-start',
+    maxWidth: '100%',
+    padding: SPACING.lg,
+    minHeight: 164,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    boxShadow: LANDING_SHADOW.card,
   },
   numBadge: {
     width: 64,
@@ -146,6 +154,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: SPACING.md,
     position: 'relative',
+  },
+  numBadgeWeb: {
+    width: 48,
+    height: 48,
+    borderWidth: 0,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primaryGlow,
   },
   emoji: {
     fontSize: 26,
@@ -181,7 +196,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 17,
     fontWeight: '700',
-    textAlign: 'center',
+    textAlign: isWeb ? 'left' : 'center',
     marginBottom: 6,
   },
   stepTitleWide: {
@@ -189,12 +204,12 @@ const styles = StyleSheet.create({
   },
   stepDesc: {
     color: COLORS.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
+    fontSize: isWeb ? 16 : 14,
+    lineHeight: isWeb ? 23 : 20,
+    textAlign: isWeb ? 'left' : 'center',
     maxWidth: 220,
   },
   stepDescWide: {
-    fontSize: 14,
+    maxWidth: '100%',
   },
 });

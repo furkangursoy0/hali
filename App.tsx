@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ActivityIndicator, Platform, View } from 'react-native';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginScreen from './screens/LoginScreen';
+import LandingScreen from './screens/LandingScreen';
 import HomeScreen from './screens/HomeScreen';
 import SelectScreen from './screens/SelectScreen';
 import ResultScreen from './screens/ResultScreen';
@@ -21,6 +22,7 @@ const linking = {
   config: {
     screens: {
       Login: '',
+      ...(Platform.OS === 'web' && { MerchantLogin: 'giris' }),
       Blog: 'blog',
       BlogPost: 'blog/:slug',
       Home: 'home',
@@ -54,7 +56,10 @@ function AppNavigator() {
           gestureEnabled: true,
         }}
       >
-        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Halı Dene | Yapay Zeka ile Halı Deneme' }} />
+        <Stack.Screen name="Login" component={LandingScreen} options={{ title: 'Halı Dene | Yapay Zeka ile Halı Deneme' }} />
+        {Platform.OS === 'web' && (
+          <Stack.Screen name="MerchantLogin" component={LoginScreen} options={{ title: 'Halı Dene | Mağaza Girişi' }} />
+        )}
         <Stack.Screen name="Blog" component={BlogListScreen} options={{ title: 'Blog | Halı Dene' }} />
         <Stack.Screen name="BlogPost" component={BlogPostScreen} options={{ title: 'Blog | Halı Dene' }} />
         <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Halı Dene' }} />

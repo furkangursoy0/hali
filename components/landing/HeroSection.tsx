@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform, Animated } from 'react-native';
-import { COLORS, SPACING, RADIUS } from '../../constants/theme';
+import { SPACING, RADIUS } from '../../constants/theme';
+import { LANDING_COLORS as COLORS, LANDING_SHADOW } from './theme';
 
 const isWeb = Platform.OS === 'web';
 
@@ -13,10 +14,11 @@ interface Props {
 }
 
 export default function HeroSection({ isWide, totalCarpets, totalBrands, onLoginPress, onWhatsAppPress }: Props) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const fadeAnim = useRef(new Animated.Value(isWeb ? 1 : 0)).current;
+  const slideAnim = useRef(new Animated.Value(isWeb ? 0 : 30)).current;
 
   useEffect(() => {
+    if (isWeb) return;
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 0, duration: 700, useNativeDriver: true }),
@@ -25,18 +27,10 @@ export default function HeroSection({ isWide, totalCarpets, totalBrands, onLogin
 
   return (
     <Animated.View style={[styles.hero, isWide && styles.heroWide, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      {/* Glow orbs — only on desktop */}
-      {isWide && <View style={[styles.glowOrb1, { pointerEvents: 'none' } as any]} />}
-      {isWide && <View style={[styles.glowOrb2, { pointerEvents: 'none' } as any]} />}
-
       <Text style={[styles.title, isWide && styles.titleWide]}>
         {'Müşterilerinize Halıları'}
         {'\n'}
-        {isWeb ? (
-          <Text style={isWide ? styles.titleAccentWide : styles.titleAccent}>Evlerinde Gösterin</Text>
-        ) : (
-          <Text style={styles.titleAccent}>Evlerinde Gösterin</Text>
-        )}
+        <Text style={styles.titleAccent}>Evlerinde Gösterin</Text>
       </Text>
 
       <Text style={[styles.subtitle, isWide && styles.subtitleWide]}>
@@ -66,58 +60,37 @@ export default function HeroSection({ isWide, totalCarpets, totalBrands, onLogin
 
 const styles = StyleSheet.create({
   hero: {
-    alignItems: 'center',
-    paddingTop: SPACING.xxxl,
+    alignItems: isWeb ? 'flex-start' : 'center',
+    paddingTop: isWeb ? SPACING.xl : SPACING.xxxl,
     paddingBottom: SPACING.xl,
     position: 'relative',
     overflow: 'hidden',
   },
   heroWide: {
     alignItems: 'flex-start',
-    paddingTop: SPACING.xxl,
-  },
-  glowOrb1: {
-    position: 'absolute',
-    top: -80,
-    right: -100,
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    backgroundColor: 'rgba(200, 134, 10, 0.06)',
-  },
-  glowOrb2: {
-    position: 'absolute',
-    bottom: -40,
-    left: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(200, 134, 10, 0.04)',
+    paddingTop: 0,
   },
   title: {
     color: COLORS.text,
-    fontSize: 30,
+    fontSize: isWeb ? 38 : 30,
     fontWeight: '800',
-    textAlign: 'center',
-    lineHeight: 40,
-    letterSpacing: -0.5,
+    textAlign: isWeb ? 'left' : 'center',
+    lineHeight: isWeb ? 42 : 40,
+    letterSpacing: isWeb ? -1.4 : -0.5,
   },
   titleWide: {
-    fontSize: 46,
-    lineHeight: 56,
-    letterSpacing: -1,
+    fontSize: 54,
+    lineHeight: 57,
+    letterSpacing: -2.4,
     textAlign: 'left',
   },
   titleAccent: {
-    color: COLORS.primaryLight,
-  },
-  titleAccentWide: {
-    color: COLORS.primaryLight,
+    color: isWeb ? COLORS.text : COLORS.primaryLight,
   },
   subtitle: {
     color: COLORS.textSecondary,
-    fontSize: 15,
-    textAlign: 'center',
+    fontSize: isWeb ? 16 : 15,
+    textAlign: isWeb ? 'left' : 'center',
     marginTop: SPACING.md,
     lineHeight: 24,
     maxWidth: 500,
@@ -134,43 +107,46 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl,
   },
   ctaRowMobile: {
-    flexDirection: 'column',
+    flexDirection: isWeb ? 'row' : 'column',
+    flexWrap: 'wrap',
     width: '100%',
-    paddingHorizontal: SPACING.xl,
+    paddingHorizontal: isWeb ? 0 : SPACING.xl,
   },
   primaryBtn: {
     backgroundColor: COLORS.primary,
     borderRadius: RADIUS.lg,
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    paddingHorizontal: isWeb ? 22 : 32,
+    paddingVertical: isWeb ? 14 : 16,
+    ...(isWeb ? { boxShadow: LANDING_SHADOW.primary } : {
+      shadowColor: COLORS.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 12,
+      elevation: 6,
+    }),
   },
   primaryBtnHover: {
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: isWeb ? COLORS.primaryDark : COLORS.primaryLight,
   },
   primaryBtnText: {
     color: COLORS.white,
     fontWeight: '700',
-    fontSize: 17,
+    fontSize: isWeb ? 15 : 17,
     textAlign: 'center',
   },
   ghostBtn: {
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: RADIUS.lg,
-    paddingHorizontal: 28,
-    paddingVertical: 15,
+    paddingHorizontal: isWeb ? 20 : 28,
+    paddingVertical: isWeb ? 13 : 15,
   },
   ghostBtnHover: {
     borderColor: COLORS.primaryGlowStrong,
     backgroundColor: COLORS.surfaceElevated,
   },
   ghostBtnText: {
-    color: COLORS.textSecondary,
+    color: isWeb ? COLORS.text : COLORS.textSecondary,
     fontWeight: '600',
     fontSize: 16,
     textAlign: 'center',

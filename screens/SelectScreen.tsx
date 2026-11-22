@@ -308,7 +308,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
         isPlacingRef.current = true;
         if (!isLoggedIn) {
             isPlacingRef.current = false;
-            navigation.navigate('Login');
+            navigation.navigate(isWeb ? 'MerchantLogin' : 'Login');
             return;
         }
         const count = selectedCarpets.length;
