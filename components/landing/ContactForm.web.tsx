@@ -1,6 +1,5 @@
 import React, { useId, useRef, useState, type FormEvent } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../../constants/env';
 
 export const DEMO_WHATSAPP_URL = 'https://wa.me/905300947756?text='
   + encodeURIComponent('Merhaba, fiziksel halı mağazam için Halı Dene hakkında bilgi almak istiyorum.');
@@ -45,7 +44,15 @@ export default function ContactForm({ initialEmail = '' }: ContactFormProps) {
     submitting.current = true;
     setStatus('sending');
     try {
-      await axios.post(`${API_BASE_URL}/contact`, payload, { timeout: 8000 });
+      const response = await axios.post('/api/demo-request', {
+        ...payload,
+        website: field('website'),
+      }, { timeout: 11000 });
+      if (response.data?.ok !== true) {
+        setError('Talebiniz formdan iletilemedi. WhatsApp üzerinden demo talep edebilirsiniz.');
+        setStatus('idle');
+        return;
+      }
       setStatus('sent');
     } catch (failure) {
       const message = axios.isAxiosError(failure) ? failure.response?.data?.error : undefined;
@@ -67,6 +74,7 @@ export default function ContactForm({ initialEmail = '' }: ContactFormProps) {
 
   return (
     <form className="hd-contact-form" onSubmit={submit} noValidate aria-busy={status === 'sending'}>
+      <input type="text" name="website" hidden tabIndex={-1} autoComplete="off" />
       <div className="hd-contact-fields">
         <label htmlFor={`${fieldId}-name`}>Ad
           <input className="hd-input" id={`${fieldId}-name`} name="name" autoComplete="given-name" required />
