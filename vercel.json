@@ -3,7 +3,6 @@
   "buildCommand": "npx expo export --platform web && node scripts/postbuild-web.js",
   "outputDirectory": "dist",
   "cleanUrls": true,
-  "regions": ["fra1"],
   "headers": [
     {
       "source": "/_expo/static/(.*)",
