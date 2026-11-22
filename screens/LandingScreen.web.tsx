@@ -391,7 +391,10 @@ export default function LandingScreen() {
         <FaqSection />
 
         <section className="hd-contact hd-container" id="iletisim" aria-labelledby="hd-contact-title">
-          <div className="hd-contact-picture"><img src={ROOM_AFTER} alt="" width={852} height={1002} loading="lazy" /></div>
+          <div className="hd-contact-picture">
+            <img src="/landing/store-tablet-demo.webp" alt="Tablette Halı Dene kataloğu ve odada halı önizlemesi"
+              width={1152} height={768} loading="lazy" decoding="async" />
+          </div>
           <div className="hd-contact-copy">
             <h2 id="hd-contact-title">Halı Dene’yi mağazanızda görün.</h2>
             <p>Mağazanızda nasıl kullanabileceğinizi, kurulum ve fiyat seçeneklerini birlikte konuşalım.</p>
