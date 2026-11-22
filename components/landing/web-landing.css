@@ -73,22 +73,22 @@
 .hd-landing .hd-button-primary:hover { background: var(--hd-blue-dark); }
 .hd-landing .hd-button:disabled { cursor: wait; opacity: .68; }
 
-.hd-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: center; gap: clamp(32px, 3.4vw, 48px); padding-block: 39px 64px; }
+.hd-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: center; gap: clamp(32px, 3.4vw, 48px); padding-block: 39px 42px; }
 .hd-hero-copy { max-width: 540px; }
 .hd-hero-copy .hd-eyebrow { display: inline-flex; margin-bottom: 13px; color: var(--hd-blue-dark); font-size: .875rem; font-weight: 700; }
 .hd-hero h1 { font-size: clamp(2.625rem, 4.6vw, 4rem); font-weight: 700; line-height: 1.02; letter-spacing: -.025em; }
 .hd-hero h1 span { text-transform: lowercase; }
 .hd-hero h1 span::after { content: "." / ""; }
 .hd-hero-copy .hd-hero-description { max-width: 32rem; margin-top: 20px; color: var(--hd-muted); font-size: 1rem; font-weight: 500; line-height: 1.55; }
-.hd-hero-media { display: grid; min-width: 0; isolation: isolate; }
+.hd-hero-media { display: grid; width: min(100%, 480px); min-width: 0; justify-self: center; isolation: isolate; }
 .hd-hero-visual { overflow: hidden; aspect-ratio: .89; border: 1px solid var(--hd-line); border-radius: 18px; background: #e9e1d7; box-shadow: var(--hd-card-shadow); }
 .hd-hero-visual img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 68%; }
 .hd-landing .hd-hero-comparison {
   position: relative;
   z-index: 1;
   justify-self: start;
-  width: min(60%, 350px);
-  margin: clamp(-158px, -11vw, -110px) 0 0 -22px;
+  width: min(62%, 276px);
+  margin: clamp(-114px, -8vw, -80px) 0 0 -16px;
   padding: 7px;
   border: 1px solid var(--hd-line);
   border-radius: 14px;
@@ -123,6 +123,24 @@
 .hd-interest-field input:focus-visible { outline: none; }
 .hd-interest .hd-form-error { flex-basis: 100%; }
 .hd-interest .hd-button { flex-shrink: 0; min-height: 48px; padding-inline: clamp(16px, 1.7vw, 24px); border-radius: 8px; font-size: .875rem; font-weight: 800; box-shadow: 0 2px 5px rgb(15 23 42 / 9%); }
+
+.hd-hero-benefits {
+  display: grid;
+  max-width: 1152px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 auto clamp(30px, 4.2vw, 56px);
+  padding: 0;
+  border: 1px solid var(--hd-line);
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: var(--hd-card-shadow);
+  list-style: none;
+}
+.hd-hero-benefits li { display: flex; align-items: flex-start; gap: 14px; padding: clamp(14px, 1.8vw, 23px); }
+.hd-hero-benefits li + li { border-inline-start: 1px solid var(--hd-line); }
+.hd-benefit-icon { display: grid; width: 40px; height: 40px; flex: 0 0 40px; place-items: center; border-radius: 50%; background: var(--hd-tint); }
+.hd-hero-benefits strong { display: block; font-size: .9375rem; line-height: 1.26; }
+.hd-hero-benefits p { margin-top: 4px; color: var(--hd-muted); font-size: .875rem; line-height: 1.4; }
 
 .hd-flow { padding-block: clamp(45px, 6vw, 76px); background: var(--hd-surface); }
 .hd-section-heading { text-align: center; }
@@ -215,11 +233,14 @@
   .hd-home .hd-navbar nav a { padding-block: 10px; white-space: nowrap; }
   .hd-home .hd-navbar nav a:focus-visible { outline-offset: -2px; }
   .hd-hero, .hd-features, .hd-testimonial-inner { grid-template-columns: 1fr; }
-  .hd-hero { gap: 23px; padding-block: 29px 38px; }
+  .hd-hero { gap: 23px; padding-block: 29px 29px; }
   .hd-hero h1 { text-wrap: initial; }
-  .hd-hero-media { width: min(100%, 550px); }
+  .hd-hero-media { width: min(94%, 420px); }
   .hd-hero-visual { border-radius: 14px; }
-  .hd-landing .hd-hero-comparison { width: min(82%, 326px); margin: -62px 0 0 8px; }
+  .hd-hero-benefits { grid-template-columns: minmax(0, 1fr); }
+  .hd-hero-benefits li { align-items: center; }
+  .hd-hero-benefits li + li { border-inline-start: 0; border-block-start: 1px solid var(--hd-line); }
+  .hd-landing .hd-hero-comparison { width: min(76%, 250px); margin: -54px 0 0 0; }
   .hd-contact { grid-template-columns: 1fr; }
   .hd-contact-picture img { height: 175px; object-position: center 67%; }
   .hd-logo-set { gap: 23px; padding-right: 23px; }

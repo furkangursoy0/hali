@@ -108,6 +108,41 @@ function HeroVisual() {
   );
 }
 
+function HeroBenefits() {
+  const items = [
+    {
+      title: 'QR ile fotoğraf aktarımı',
+      description: 'Müşteriniz oda fotoğrafını telefonundan yükler.',
+      icon: 'M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3M7 7h3v3H7zm7 0h3v3h-3zm-7 7h3v3H7zm7 0h3v3h-3z',
+    },
+    {
+      title: 'Önce–sonra karşılaştırması',
+      description: 'Halının odayı nasıl değiştirdiğini gösterin.',
+      icon: 'M12 3v18M8 8l-4 4 4 4m8-8 4 4-4 4',
+    },
+    {
+      title: `${CARPET_COUNT} halı modeli`,
+      description: 'Farklı markaları tek katalogda sunun.',
+      icon: 'm12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5',
+    },
+  ];
+
+  return (
+    <ul className="hd-container hd-hero-benefits" aria-label="Mağazalar için Halı Dene özellikleri">
+      {items.map(({ title, description, icon }) => (
+        <li key={title}>
+          <span className="hd-benefit-icon" aria-hidden="true">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+              <path d={icon} />
+            </svg>
+          </span>
+          <div><strong>{title}</strong><p>{description}</p></div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function CatalogMarquee() {
   return (
     <section id="markalar" className="hd-catalog" aria-labelledby="hd-catalog-title">
@@ -344,6 +379,7 @@ export default function LandingScreen() {
           </div>
           <HeroVisual />
         </section>
+        <HeroBenefits />
 
         <HowItWorks />
         <Features />
