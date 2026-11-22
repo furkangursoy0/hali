@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import './components/landing/web-landing.css';
 import LandingScreen from './screens/LandingScreen.web';
 import BlogListScreen from './screens/BlogListScreen';
 import BlogPostScreen from './screens/BlogPostScreen';

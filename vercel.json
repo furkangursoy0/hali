@@ -43,15 +43,15 @@
   "rewrites": [
     {
       "source": "/blog",
-      "destination": "/index.html"
+      "destination": "/site-shell.html"
     },
     {
       "source": "/blog/:slug",
-      "destination": "/index.html"
+      "destination": "/site-shell.html"
     },
     {
       "source": "/contact",
-      "destination": "/index.html"
+      "destination": "/site-shell.html"
     }
   ]
 }

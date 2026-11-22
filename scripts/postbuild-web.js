@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 /**
- * Post-build script: injects SEO meta tags into dist/index.html
+ * Post-build script: adds metadata and pre-renders the public landing page
  * Expo SDK 54 (Metro) auto-generates HTML, so we patch it after build.
  */
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
+const { createElement } = require('react');
+const { renderToStaticMarkup } = require('react-dom/server');
 
-const htmlPath = path.join(__dirname, '..', 'dist', 'index.html');
+const project = path.join(__dirname, '..');
+
+const htmlPath = path.join(project, 'dist', 'index.html');
 let html = fs.readFileSync(htmlPath, 'utf8');
 
 // Replace lang
@@ -85,5 +90,38 @@ html = html.replace(
   'Bu uygulamayı kullanmak için JavaScript gereklidir.'
 );
 
-fs.writeFileSync(htmlPath, html, 'utf8');
-console.log('✅ dist/index.html SEO meta tags injected');
+const emptyRoot = '<div id="root"></div>';
+if (!html.includes(emptyRoot)) {
+  throw new Error('Expected the empty Expo web root. Run expo export before the post-build script.');
+}
+
+// Use the same React screen for the initial HTML and the interactive web bundle.
+const output = fs.mkdtempSync(path.join(project, 'node_modules', '.landing-html-'));
+try {
+  execFileSync(process.execPath, [
+    require.resolve('typescript/bin/tsc'),
+    '--outDir', output,
+    '--target', 'es2022',
+    '--module', 'commonjs',
+    '--jsx', 'react-jsx',
+    '--esModuleInterop',
+    '--resolveJsonModule',
+    '--skipLibCheck',
+    'screens/LandingScreen.web.tsx',
+  ], { cwd: project, stdio: 'inherit' });
+
+  const { default: LandingScreen, landingFeatureList } = require(path.join(output, 'screens', 'LandingScreen.web.js'));
+  const landing = renderToStaticMarkup(createElement(LandingScreen));
+  const featureList = JSON.stringify(landingFeatureList).replace(/</g, '\\u003c');
+  const landingHtml = html
+    .replace('    "offers": {', `    "featureList": ${featureList},
+    "offers": {`)
+    .replace(emptyRoot, () => `<div id="root">${landing}</div>`);
+
+  // Blog and contact routes use their existing client-side screens.
+  fs.writeFileSync(path.join(project, 'dist', 'site-shell.html'), html, 'utf8');
+  fs.writeFileSync(htmlPath, landingHtml, 'utf8');
+  console.log('Pre-rendered the landing page and prepared the web route shell.');
+} finally {
+  fs.rmSync(output, { recursive: true, force: true });
+}
