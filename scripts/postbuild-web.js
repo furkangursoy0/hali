@@ -16,6 +16,21 @@ const htmlPath = path.join(dist, 'index.html');
 const siteUrl = 'https://halidene.com';
 let html = fs.readFileSync(htmlPath, 'utf8');
 
+function addGoogleTag(page) {
+  const { VERCEL_ENV, VERCEL_PROJECT_PRODUCTION_URL } = process.env;
+  if (VERCEL_ENV !== 'production' || VERCEL_PROJECT_PRODUCTION_URL !== new URL(siteUrl).hostname) {
+    return page;
+  }
+
+  return page.replace('<head>', `<head>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { window.dataLayer.push(arguments); }
+    gtag('js', new Date());
+  </script>
+  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-NJR7W57P"></script>`);
+}
+
 function addWebAnalytics(page) {
   if (process.env.VERCEL_ENV !== 'production') return page;
 
@@ -105,7 +120,7 @@ const metaTags = `
 `;
 
 // Inject meta tags before </head>
-html = addWebAnalytics(html.replace('</head>', metaTags + '\n</head>'));
+html = addGoogleTag(addWebAnalytics(html.replace('</head>', metaTags + '\n</head>')));
 
 // These pages already contain readable HTML before the Expo bundle runs.
 html = html.replace(/<noscript>[\s\S]*?<\/noscript>\s*/, '');
@@ -205,7 +220,7 @@ try {
 
   const promoPath = path.join(dist, 'promo.html');
   const promo = fs.readFileSync(promoPath, 'utf8');
-  const promoWithAnalytics = addWebAnalytics(promo);
+  const promoWithAnalytics = addGoogleTag(addWebAnalytics(promo));
   if (promoWithAnalytics !== promo) fs.writeFileSync(promoPath, promoWithAnalytics, 'utf8');
 
   const routes = [
