@@ -6,7 +6,7 @@ const FORM_URL = 'https://formsubmit.co';
 const FORM_DETAILS = {
   _subject: 'Halı Dene demo talebi',
   _template: 'table',
-  _url: 'https://halidene.com/contact',
+  _url: 'https://halidene.com/iletisim',
 };
 const SUBMISSION_ERROR = 'Talebiniz formdan iletilemedi. WhatsApp üzerinden demo talep edebilirsiniz.';
 

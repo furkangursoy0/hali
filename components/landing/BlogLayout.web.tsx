@@ -88,7 +88,7 @@ export function BlogLayout({ children, isIndex }: { children: ReactNode; isIndex
           <nav aria-label="Ana menü">
             <a href="/">Ana Sayfa</a>
             <a href="/blog" className="hd-nav-blog" aria-current={isIndex ? 'page' : undefined}>Blog</a>
-            <a href="/contact">İletişim</a>
+            <a href="/iletisim">İletişim</a>
           </nav>
         </div>
       </header>
@@ -156,7 +156,7 @@ export function BlogContact() {
         <h2>Halı Dene’yi mağazanızda keşfedin</h2>
         <p>3700+ halıyı müşterilerinizin odasında gösterin.</p>
       </div>
-      <a className="hd-button hd-button-primary" href="/contact">Bilgi Alın <span aria-hidden="true"> →</span></a>
+      <a className="hd-button hd-button-primary" href="/iletisim">Bilgi Alın <span aria-hidden="true"> →</span></a>
     </section>
   );
 }

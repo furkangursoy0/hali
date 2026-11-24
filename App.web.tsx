@@ -9,7 +9,7 @@ import ContactScreen from './screens/ContactScreen.web';
 export default function PublicWebsite() {
   const pathname = window.location.pathname.replace(/\/$/, '');
   if (pathname === '/blog') return <BlogListScreen />;
-  if (pathname === '/contact') return <ContactScreen />;
+  if (pathname === '/iletisim') return <ContactScreen />;
 
   const article = /^\/blog\/([^/]+)$/.exec(pathname);
   if (article) {

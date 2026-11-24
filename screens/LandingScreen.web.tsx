@@ -429,7 +429,7 @@ export default function LandingScreen() {
       <footer className="hd-footer">
         <div className="hd-container hd-footer-inner">
           <div><a href="/" aria-label="Halı Dene ana sayfa"><BrandMark /></a><p>Fiziksel halı mağazaları için görselleştirme.</p></div>
-          <nav aria-label="Alt menü"><a href="/blog">Blog</a><a href="/contact">İletişim</a><a href={DEMO_WHATSAPP_URL}>WhatsApp</a></nav>
+          <nav aria-label="Alt menü"><a href="/blog">Blog</a><a href="/iletisim">İletişim</a><a href={DEMO_WHATSAPP_URL}>WhatsApp</a></nav>
         </div>
         <div className="hd-container hd-copyright">© {new Date().getFullYear()} halidene.com · Tüm hakları saklıdır.</div>
       </footer>

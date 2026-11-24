@@ -231,15 +231,15 @@ async function buildWebsite() {
 
     await writePage('index.html', { route: '/', ...homeMetadata, schema: homeSchema(landingFeatureList) }, Landing);
     await writePage('blog.html', { route: '/blog', ...blogMetadata }, Blog);
-    await writePage('contact.html', {
-      route: '/contact',
+    await writePage('iletisim.html', {
+      route: '/iletisim',
       ...contactMetadata,
       schema: {
         '@context': 'https://schema.org',
         '@type': 'ContactPage',
         name: contactMetadata.title,
         description: contactMetadata.description,
-        url: siteUrl + '/contact',
+        url: siteUrl + '/iletisim',
         inLanguage: 'tr',
         about: { '@id': organizationId },
       },
@@ -267,16 +267,32 @@ async function buildWebsite() {
       .replace('</head>', () => webAnalytics() + '</head>');
     await writeHtml(promoPath, promo);
 
+    const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
+    // Content and link changes determine the date, independently of deployments.
+    const siteLastModified = '2026-11-25';
+    const articleRoutes = posts.map(post => ({
+      route: `/blog/${post.slug}`,
+      lastModified: [post.updatedDate, post.date].find(date => dateFormat.test(date)),
+      priority: '0.7',
+    }));
+    const blogLastModified = [siteLastModified, ...articleRoutes.map(article => article.lastModified)]
+      .filter(date => dateFormat.test(date))
+      .sort()
+      .at(-1);
     const routes = [
-      '/', '/blog', '/contact',
-      ...posts.map(post => `/blog/${post.slug}`),
+      { route: '/', lastModified: siteLastModified, priority: '1.0' },
+      { route: '/blog', lastModified: blogLastModified, priority: '0.8' },
+      { route: '/iletisim', lastModified: siteLastModified, priority: '0.8' },
+      ...articleRoutes,
     ];
     fs.writeFileSync(path.join(dist, 'sitemap.xml'), [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-      ...routes.flatMap(route => [
+      ...routes.flatMap(({ route, lastModified, priority }) => [
         '  <url>',
         `    <loc>${escapeHtml(siteUrl + route)}</loc>`,
+        ...(lastModified ? [`    <lastmod>${lastModified}</lastmod>`] : []),
+        `    <priority>${priority}</priority>`,
         '  </url>',
       ]),
       '</urlset>',
@@ -294,7 +310,7 @@ async function buildWebsite() {
       '',
       `- [Halı Dene](${homeUrl}): Mağaza içi halı deneme, katalog ve kullanım adımları.`,
       `- [Sık sorulan sorular](${homeUrl}#sss): Ürün fotoğrafı yükleme, özel katalog, oda önizlemesi ve tablet kullanımı.`,
-      `- [Demo talebi](${siteUrl}/contact): Mağazanız için görüşme talep edin.`,
+      `- [Demo talebi](${siteUrl}/iletisim): Mağazanız için görüşme talep edin.`,
       '',
       '## Halı seçim rehberleri',
       '',

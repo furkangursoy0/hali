@@ -32,6 +32,13 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/contact",
+      "destination": "/iletisim",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/blog/:slug",
