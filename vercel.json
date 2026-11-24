@@ -37,6 +37,16 @@
       "source": "/contact",
       "destination": "/iletisim",
       "permanent": true
+    },
+    {
+      "source": "/contact/",
+      "destination": "/iletisim",
+      "permanent": true
+    },
+    {
+      "source": "/iletisim/",
+      "destination": "/iletisim",
+      "permanent": true
     }
   ],
   "rewrites": [
