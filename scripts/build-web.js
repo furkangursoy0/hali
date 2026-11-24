@@ -268,17 +268,17 @@ async function buildWebsite() {
     await writeHtml(promoPath, promo);
 
     const routes = [
-      { route: '/' }, { route: '/blog' }, { route: '/contact' },
-      ...posts.map(post => ({ route: `/blog/${post.slug}`, date: post.updatedDate || post.date })),
+      '/', '/blog', '/contact',
+      ...posts.map(post => `/blog/${post.slug}`),
     ];
-    const urls = routes.map(({ route, date }) => {
-      const lastModified = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? `<lastmod>${date}</lastmod>` : '';
-      return `  <url><loc>${escapeHtml(siteUrl + route)}</loc>${lastModified}</url>`;
-    });
     fs.writeFileSync(path.join(dist, 'sitemap.xml'), [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-      ...urls,
+      ...routes.flatMap(route => [
+        '  <url>',
+        `    <loc>${escapeHtml(siteUrl + route)}</loc>`,
+        '  </url>',
+      ]),
       '</urlset>',
       '',
     ].join('\n'), 'utf8');
