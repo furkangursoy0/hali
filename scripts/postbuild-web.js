@@ -14,6 +14,7 @@ const project = path.join(__dirname, '..');
 const dist = path.join(project, 'dist');
 const htmlPath = path.join(dist, 'index.html');
 const siteUrl = 'https://halidene.com';
+const brandLogo = '/icon-192.png';
 let html = fs.readFileSync(htmlPath, 'utf8');
 
 function addGoogleTag(page) {
@@ -68,6 +69,15 @@ html = html.replace(/<meta name="description"[^>]*>\n?/g, '');
 // Remove Expo-generated favicon link (we'll add our own)
 html = html.replace(/<link rel="icon" href="\/favicon\.ico"\s*\/?\s*>/g, '');
 
+const faviconLinks = `
+  <link rel="icon" type="image/png" sizes="192x192" href="${brandLogo}" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=rolled-rug" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=rolled-rug" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=rolled-rug" />
+  <link rel="icon" href="/favicon.ico?v=rolled-rug" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=rolled-rug" />
+`;
+
 // Meta tags to inject before </head>
 const metaTags = `
   <meta name="description" content="Müşterilerinize halıları evlerinde gösterin. Yapay zeka destekli halı deneme platformu. 3600+ halı, 16 marka, 20 saniyede sonuç." />
@@ -91,32 +101,12 @@ const metaTags = `
   <meta name="theme-color" content="#0F0F0F" />
   <meta name="msapplication-TileColor" content="#0F0F0F" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=rolled-rug" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=rolled-rug" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=rolled-rug" />
-  <link rel="icon" href="/favicon.ico?v=rolled-rug" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=rolled-rug" />
+  ${faviconLinks}
 
   <!-- Canonical -->
-  <link rel="canonical" href="https://halidene.com" />
+  <link rel="canonical" href="${siteUrl}/" />
 
-  <!-- Structured Data -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Halı Dene",
-    "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Web, iOS, Android",
-    "description": "Yapay zeka destekli halı deneme platformu. Müşterilerinize halıları evlerinde gösterin.",
-    "url": "https://halidene.com",
-    "offers": {
-      "@type": "Offer",
-      "category": "SaaS"
-    }
-  }
-  </script>
+  <script type="application/ld+json"></script>
 `;
 
 // Inject meta tags before </head>
@@ -171,7 +161,7 @@ function pageHead(route, { title, description, post, schema }) {
   return page
     .replace(/<link rel="canonical"[^>]*>/, () => `<link rel="canonical" href="${escapeHtml(url)}" />`)
     .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, () =>
-      schema ? `<script type="application/ld+json" data-blog="true">${jsonLd(schema)}</script>` : '');
+      schema ? `<script type="application/ld+json"${post ? ' data-blog="true"' : ''}>${jsonLd(schema)}</script>` : '');
 }
 
 // Use the same React screens for the initial HTML and the interactive web bundle.
@@ -198,11 +188,56 @@ try {
   const { getAllPosts } = require(path.join(output, 'services', 'blog-storage.js'));
   const posts = getAllPosts();
 
-  const landingHtml = html.replace('    "offers": {', () =>
-    `    "featureList": ${jsonLd(landingFeatureList)},\n    "offers": {`);
+  const homeUrl = siteUrl + '/';
+  const organizationId = homeUrl + '#organization';
+  const landingSchema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': homeUrl + '#website',
+        name: 'Halı Dene',
+        url: homeUrl,
+        inLanguage: 'tr',
+        publisher: { '@id': organizationId },
+      },
+      {
+        '@type': 'Organization',
+        '@id': organizationId,
+        name: 'Halı Dene',
+        url: homeUrl,
+        logo: siteUrl + brandLogo,
+      },
+      {
+        '@type': 'SoftwareApplication',
+        '@id': homeUrl + '#application',
+        name: 'Halı Dene',
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web, iOS, Android',
+        description: 'Fiziksel halı mağazaları için yapay zekâ destekli halı deneme uygulaması.',
+        url: homeUrl,
+        publisher: { '@id': organizationId },
+        featureList: landingFeatureList,
+        offers: { '@type': 'Offer', category: 'SaaS' },
+      },
+    ],
+  };
+  const landingHtml = html.replace('<script type="application/ld+json"></script>',
+    () => `<script type="application/ld+json">${jsonLd(landingSchema)}</script>`);
   writePage('index.html', landingHtml, Landing);
   writePage('blog.html', pageHead('/blog', blogMetadata), Blog);
-  writePage('contact.html', pageHead('/contact', contactMetadata), Contact);
+  writePage('contact.html', pageHead('/contact', {
+    ...contactMetadata,
+    schema: {
+      '@context': 'https://schema.org',
+      '@type': 'ContactPage',
+      name: contactMetadata.title,
+      description: contactMetadata.description,
+      url: siteUrl + '/contact',
+      inLanguage: 'tr',
+      about: { '@id': organizationId },
+    },
+  }), Contact);
   for (const post of posts) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(post.slug)) {
       throw new Error(`Invalid public blog slug: ${post.slug}`);
@@ -215,13 +250,14 @@ try {
   }
 
   // Keep the client route available for posts created in browser storage.
-  const shell = pageHead('/blog', blogMetadata).replace(/<link rel="canonical"[^>]*>/, '');
+  const shell = pageHead('/blog', blogMetadata)
+    .replace(/<link rel="canonical"[^>]*>/, '<meta name="robots" content="noindex" />');
   fs.writeFileSync(path.join(dist, 'site-shell.html'), shell, 'utf8');
 
   const promoPath = path.join(dist, 'promo.html');
   const promo = fs.readFileSync(promoPath, 'utf8');
-  const promoWithAnalytics = addGoogleTag(addWebAnalytics(promo));
-  if (promoWithAnalytics !== promo) fs.writeFileSync(promoPath, promoWithAnalytics, 'utf8');
+  const promoWithFavicon = promo.replace(/<link rel="icon"[^>]*>/, () => faviconLinks.trim());
+  fs.writeFileSync(promoPath, addGoogleTag(addWebAnalytics(promoWithFavicon)), 'utf8');
 
   const routes = [
     { route: '/' }, { route: '/blog' }, { route: '/contact' },
