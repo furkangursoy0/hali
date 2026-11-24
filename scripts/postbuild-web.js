@@ -22,6 +22,9 @@ function addWebAnalytics(page) {
   const { analytics } = JSON.parse(process.env.VERCEL_OBSERVABILITY_CLIENT_CONFIG || '{}');
   if (!analytics?.scriptSrc || !analytics.viewEndpoint) return page;
 
+  const scriptSrc = new URL(analytics.scriptSrc, siteUrl).href;
+  const viewEndpoint = new URL(analytics.viewEndpoint, siteUrl).href;
+
   return page.replace('</head>', () => `  <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     window.va('beforeSend', function (event) {
@@ -30,7 +33,7 @@ function addWebAnalytics(page) {
       return { ...event, url: url.origin + url.pathname };
     });
   </script>
-  <script defer src="${escapeHtml(analytics.scriptSrc)}" data-view-endpoint="${escapeHtml(analytics.viewEndpoint)}"></script>
+  <script defer src="${escapeHtml(scriptSrc)}" data-view-endpoint="${escapeHtml(viewEndpoint)}"></script>
 </head>`);
 }
 
