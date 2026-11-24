@@ -23,8 +23,14 @@ const BRANDS = [
   ['Sanat', 'sanat'], ['Seyran', 'seyran'],
 ];
 
-const YENISAFAK_MAP_URL = 'https://www.google.com/maps/search/?api=1&query=' +
-  encodeURIComponent('Yenişafak Mahallesi, Alpaslan Türkeş Bulvarı 62/A, Merkezefendi, Denizli');
+const YENISAFAK_MAP_URL = 'https://maps.app.goo.gl/TAiRTq7im5kGhh7c9';
+
+export const storeTestimonial = {
+  id: 'magaza-yorumu',
+  author: 'Engin Gürsoy',
+  store: 'Halıcı Gürsoylar',
+  quote: 'Müşterilerimizin en çok zorlandığı konu, beğendikleri halının kendi evlerinde nasıl duracağını hayal etmekti. Halı Dene ile artık bunu mağazamızda birkaç saniye içinde gösterebiliyoruz.',
+};
 
 const STORE_FEATURES = [
   ['▤', 'Mağazanıza özel katalog', 'Farklı markaları ve kendi ürünlerinizi tek katalogda toplayın.'],
@@ -117,17 +123,17 @@ function HeroBenefits() {
   const items = [
     {
       title: 'QR ile fotoğraf aktarımı',
-      description: 'Müşteriniz QR kodu okutup oda fotoğrafını telefonundan yükler.',
+      description: 'Müşteriniz QR kodu okutsun, oda fotoğrafı doğrudan tabletinize gelsin.',
       icon: 'M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3M7 7h3v3H7zm7 0h3v3h-3zm-7 7h3v3H7zm7 0h3v3h-3z',
     },
     {
-      title: 'Yapay Zeka Destekli',
-      description: 'Halıyı odanın ışığına ve açısına göre gerçekçi biçimde gösterir.',
+      title: 'Yapay zeka destekli',
+      description: 'Halıyı odanın ışığına ve ortama göre gerçekçi şekilde yerleştirir.',
       icon: 'M10 3c.8 4.4 2.6 6.2 7 7-4.4.8-6.2 2.6-7 7-.8-4.4-2.6-6.2-7-7 4.4-.8 6.2-2.6 7-7Zm9 11v6m-3-3h6M19 3v4m-2-2h4',
     },
     {
       title: `${CARPET_COUNT} halı modeli`,
-      description: 'Farklı marka ve koleksiyonları tek katalogda inceleyin.',
+      description: 'Mağazanızdaki tüm marka ve modelleri sizin için dijital kataloğunuza ekliyoruz.',
       icon: 'm12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5',
     },
   ];
@@ -153,7 +159,7 @@ function HeroBenefits() {
 
 function CatalogMarquee() {
   return (
-    <section id="markalar" className="hd-catalog" aria-labelledby="hd-catalog-title">
+    <section id="markalar" className="hd-catalog" tabIndex={-1} aria-labelledby="hd-catalog-title">
       <div className="hd-container hd-section-heading">
         <h2 id="hd-catalog-title">{CARPET_COUNT} Halı Kataloğu</h2>
         <p>Mağazada müşterinize gösterebileceğiniz koleksiyonlar.</p>
@@ -177,7 +183,7 @@ function CatalogMarquee() {
 
 function StoreTestimonial() {
   return (
-    <section className="hd-container hd-testimonial" aria-labelledby="hd-testimonial-title">
+    <section id={storeTestimonial.id} className="hd-container hd-testimonial" aria-labelledby="hd-testimonial-title">
       <div className="hd-testimonial-photo">
         <img
           src="/landing/halici-gursoylar-storefront.webp"
@@ -191,19 +197,17 @@ function StoreTestimonial() {
       <div className="hd-testimonial-copy">
         <p className="hd-testimonial-kicker">MAĞAZADAN GERÇEK BİR DENEYİM</p>
         <h2 id="hd-testimonial-title">Halı mağazalarının ihtiyaçlarından doğdu.</h2>
-        <figure>
+        <figure aria-label="Müşteri yorumu">
           <div className="hd-testimonial-quote">
             <span className="hd-testimonial-quote-mark" aria-hidden="true">“</span>
-            <blockquote>
-              Müşterilerimizin en çok zorlandığı konu, beğendikleri halının kendi evlerinde nasıl duracağını hayal etmekti. Halı Dene ile artık bunu mağazamızda birkaç saniye içinde gösterebiliyoruz.
-            </blockquote>
+            <blockquote>{storeTestimonial.quote}</blockquote>
           </div>
           <figcaption>
             <div className="hd-testimonial-author">
               <span className="hd-testimonial-initials" aria-hidden="true">EG</span>
               <div>
-                <strong>Engin Gürsoy</strong>
-                <p>Halıcı Gürsoylar · Denizli</p>
+                <strong>{storeTestimonial.author}</strong>
+                <p>{storeTestimonial.store} · Denizli</p>
               </div>
             </div>
             <a className="hd-testimonial-link" href={YENISAFAK_MAP_URL} target="_blank" rel="noopener noreferrer"
@@ -249,25 +253,25 @@ function HowItWorks() {
   const steps = [
     {
       title: 'QR kodu okutun',
-      text: 'Müşteriniz, mağazadaki QR kodu telefonuyla okutarak halı deneme akışını başlatır.',
+      text: 'Müşteriniz tabletinizdeki QR kodu kendi telefonuyla okutsun.',
       image: 'qr',
       alt: 'Mağazada QR kod okutma adımının temsili görseli',
     },
     {
-      title: 'Oda fotoğrafını yükleyin',
-      text: 'Halının deneneceği odanın fotoğrafını ekleyin.',
+      title: 'Oda fotoğrafı yükleme',
+      text: 'Müşteriniz telefonundan fotoğrafını seçsin, tabletinize otomatik olarak aktarılsın.',
       image: 'room-upload',
       alt: 'Yükleme simgesiyle halısız bir oda fotoğrafı',
     },
     {
       title: 'Halıyı seçin',
-      text: 'Katalogdan müşterinizin odasında görmek istediği halıyı seçin.',
+      text: 'Beğenilen halıyı tabletinizdeki dijital katalogdan seçin.',
       image: 'rug-selection',
       alt: 'Krem klasik halının seçili olduğu halı kataloğu',
     },
     {
-      title: 'Halıyı odada görün',
-      text: 'Yapay zekânın seçilen halıyı odada nasıl gösterdiğini müşterinizle inceleyin.',
+      title: 'Halıyı odasında gösterin',
+      text: 'Yapay zekâ ile halının müşterinizin evinde nasıl duracağını saniyeler içinde gösterin.',
       image: 'room-result',
       alt: 'Krem klasik halının odaya yerleştirildiği sonuç ekranı',
     },
@@ -278,7 +282,6 @@ function HowItWorks() {
       <div className="hd-container">
         <div className="hd-section-heading">
           <h2 id="hd-flow-title">Nasıl Çalışır?</h2>
-          <p>Oda fotoğrafından mağaza içi sunuma, dört adımda.</p>
         </div>
         <ol className="hd-step-grid">
           {steps.map(({ title, text, image, alt }, index) => (
@@ -327,7 +330,7 @@ export default function LandingScreen() {
   useEffect(() => {
     const scrollToHash = () => {
       const id = window.location.hash.slice(1);
-      if (SECTION_LINKS.some(([section]) => section === id)) {
+      if (id === storeTestimonial.id || SECTION_LINKS.some(([section]) => section === id)) {
         document.getElementById(id)?.scrollIntoView({ block: 'start' });
       }
     };
@@ -389,8 +392,8 @@ export default function LandingScreen() {
         <section className="hd-container hd-hero" aria-labelledby="hd-hero-title">
           <div className="hd-hero-copy">
             <p className="hd-eyebrow">Fiziksel halı mağazaları için</p>
-            <h1 id="hd-hero-title">Müşterilerinize <span>Halıları Evlerinde Gösterin</span></h1>
-            <p className="hd-hero-description">Müşteriniz mağazanızdayken seçtiği halıyı yapay zekâyla kendi odasında görsün.</p>
+            <h1 id="hd-hero-title">Müşterilerinize halıları evlerinde gösterin.</h1>
+            <p className="hd-hero-description">Müşterinize mağazanızda beğendiği halıyı anında yapay zekayla odasına yerleştirerek gösterin.</p>
             <form className="hd-interest" onSubmit={handleInterest} noValidate>
               <label className="hd-interest-field">
                 <span className="hd-mail-icon" aria-hidden="true" />

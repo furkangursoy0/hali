@@ -48,6 +48,7 @@ body {
 .hd-landing button { cursor: pointer; }
 .hd-landing img { display: block; }
 .hd-landing :focus-visible { outline: 3px solid var(--hd-blue); outline-offset: 4px; }
+.hd-home main > section[tabindex="-1"]:focus-visible { outline: none; }
 .hd-container { width: min(1280px, calc(100% - 2 * clamp(20px, 4.2vw, 64px))); margin-inline: auto; }
 
 .hd-navbar { position: sticky; top: 0; z-index: 4; background: rgb(255 255 255 / 97%); }
@@ -81,8 +82,6 @@ body {
 .hd-hero-copy { max-width: 540px; }
 .hd-hero-copy .hd-eyebrow { display: inline-flex; margin-bottom: 13px; color: var(--hd-blue-dark); font-size: .875rem; font-weight: 700; }
 .hd-hero h1 { font-size: clamp(2.625rem, 4.6vw, 4rem); font-weight: 700; line-height: 1.02; letter-spacing: -.025em; }
-.hd-hero h1 span { text-transform: lowercase; }
-.hd-hero h1 span::after { content: "." / ""; }
 .hd-hero-copy .hd-hero-description { max-width: 32rem; margin-top: 20px; color: var(--hd-muted); font-size: 1rem; font-weight: 500; line-height: 1.55; }
 .hd-hero-media { display: grid; width: min(100%, 480px); min-width: 0; justify-self: center; isolation: isolate; }
 .hd-hero-visual { overflow: hidden; aspect-ratio: .89; border: 1px solid var(--hd-line); border-radius: 18px; background: #e9e1d7; box-shadow: var(--hd-card-shadow); }

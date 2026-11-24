@@ -173,7 +173,7 @@ function compileScreens(output) {
   ], { cwd: project, stdio: 'inherit' });
 }
 
-function homeSchema(featureList) {
+function homeSchema(featureList, testimonial) {
   return {
     '@context': 'https://schema.org',
     '@graph': [
@@ -204,6 +204,20 @@ function homeSchema(featureList) {
         featureList,
         offers: { '@type': 'Offer', category: 'SaaS' },
       },
+      {
+        '@type': 'Quotation',
+        '@id': homeUrl + '#' + testimonial.id,
+        name: 'Halı Dene müşteri yorumu',
+        genre: 'Müşteri yorumu',
+        text: testimonial.quote,
+        inLanguage: 'tr',
+        about: { '@id': homeUrl + '#application' },
+        creator: {
+          '@type': 'Person',
+          name: testimonial.author,
+          affiliation: { '@type': 'Organization', name: testimonial.store },
+        },
+      },
     ],
   };
 }
@@ -216,7 +230,7 @@ async function buildWebsite() {
     const assets = await buildAssets(dist);
     compileScreens(output);
 
-    const { default: Landing, landingFeatureList } = require(path.join(output, 'screens', 'LandingScreen.web.js'));
+    const { default: Landing, landingFeatureList, storeTestimonial } = require(path.join(output, 'screens', 'LandingScreen.web.js'));
     const { default: Blog, blogMetadata } = require(path.join(output, 'screens', 'BlogListScreen.web.js'));
     const { default: BlogPost } = require(path.join(output, 'screens', 'BlogPostScreen.web.js'));
     const { default: Contact, contactMetadata } = require(path.join(output, 'screens', 'ContactScreen.web.js'));
@@ -229,7 +243,11 @@ async function buildWebsite() {
       return writeHtml(path.join(dist, file), documentHtml(assets, metadata, markup));
     }
 
-    await writePage('index.html', { route: '/', ...homeMetadata, schema: homeSchema(landingFeatureList) }, Landing);
+    await writePage('index.html', {
+      route: '/',
+      ...homeMetadata,
+      schema: homeSchema(landingFeatureList, storeTestimonial),
+    }, Landing);
     await writePage('blog.html', { route: '/blog', ...blogMetadata }, Blog);
     await writePage('iletisim.html', {
       route: '/iletisim',
@@ -311,6 +329,7 @@ async function buildWebsite() {
       `- [Halı Dene](${homeUrl}): Mağaza içi halı deneme, katalog ve kullanım adımları.`,
       `- [Sık sorulan sorular](${homeUrl}#sss): Ürün fotoğrafı yükleme, özel katalog, oda önizlemesi ve tablet kullanımı.`,
       `- [Demo talebi](${siteUrl}/iletisim): Mağazanız için görüşme talep edin.`,
+      `- [${storeTestimonial.author} müşteri yorumu](${homeUrl}#${storeTestimonial.id})`,
       '',
       '## Halı seçim rehberleri',
       '',
