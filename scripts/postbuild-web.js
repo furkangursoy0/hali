@@ -16,6 +16,24 @@ const htmlPath = path.join(dist, 'index.html');
 const siteUrl = 'https://halidene.com';
 let html = fs.readFileSync(htmlPath, 'utf8');
 
+function addWebAnalytics(page) {
+  if (process.env.VERCEL_ENV !== 'production') return page;
+
+  const { analytics } = JSON.parse(process.env.VERCEL_OBSERVABILITY_CLIENT_CONFIG || '{}');
+  if (!analytics?.scriptSrc || !analytics.viewEndpoint) return page;
+
+  return page.replace('</head>', () => `  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    window.va('beforeSend', function (event) {
+      if (window.location.origin !== '${siteUrl}') return null;
+      const url = new URL(event.url, window.location.origin);
+      return { ...event, url: url.origin + url.pathname };
+    });
+  </script>
+  <script defer src="${escapeHtml(analytics.scriptSrc)}" data-view-endpoint="${escapeHtml(analytics.viewEndpoint)}"></script>
+</head>`);
+}
+
 // Replace lang
 html = html.replace('<html lang="en">', '<html lang="tr">');
 
@@ -84,7 +102,7 @@ const metaTags = `
 `;
 
 // Inject meta tags before </head>
-html = html.replace('</head>', metaTags + '\n</head>');
+html = addWebAnalytics(html.replace('</head>', metaTags + '\n</head>'));
 
 // These pages already contain readable HTML before the Expo bundle runs.
 html = html.replace(/<noscript>[\s\S]*?<\/noscript>\s*/, '');
@@ -181,6 +199,11 @@ try {
   // Keep the client route available for posts created in browser storage.
   const shell = pageHead('/blog', blogMetadata).replace(/<link rel="canonical"[^>]*>/, '');
   fs.writeFileSync(path.join(dist, 'site-shell.html'), shell, 'utf8');
+
+  const promoPath = path.join(dist, 'promo.html');
+  const promo = fs.readFileSync(promoPath, 'utf8');
+  const promoWithAnalytics = addWebAnalytics(promo);
+  if (promoWithAnalytics !== promo) fs.writeFileSync(promoPath, promoWithAnalytics, 'utf8');
 
   const routes = [
     { route: '/' }, { route: '/blog' }, { route: '/contact' },
