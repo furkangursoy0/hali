@@ -180,10 +180,10 @@ function StoreTestimonial() {
     <section className="hd-container hd-testimonial" aria-labelledby="hd-testimonial-title">
       <div className="hd-testimonial-photo">
         <img
-          src="/landing/testimonial-showroom.webp"
-          alt="Temsili halı mağazası iç mekânı"
-          width={1200}
-          height={600}
+          src="/landing/halici-gursoylar-storefront.webp"
+          alt="Halıcı Gürsoylar mağazasının dış cephesi"
+          width={1280}
+          height={655}
           loading="lazy"
           decoding="async"
         />
