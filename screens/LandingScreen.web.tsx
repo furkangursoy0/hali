@@ -23,10 +23,8 @@ const BRANDS = [
   ['Sanat', 'sanat'], ['Seyran', 'seyran'],
 ];
 
-const TESTIMONIAL = {
-  author: 'Halıcı Gürsoylar',
-  quote: '',
-};
+const YENISAFAK_MAP_URL = 'https://www.google.com/maps/search/?api=1&query=' +
+  encodeURIComponent('Yenişafak Mahallesi, Alpaslan Türkeş Bulvarı 62/A, Merkezefendi, Denizli');
 
 const STORE_FEATURES = [
   ['▤', 'Mağazanıza özel katalog', 'Farklı markaları ve kendi ürünlerinizi tek katalogda toplayın.'],
@@ -178,15 +176,41 @@ function CatalogMarquee() {
 }
 
 function StoreTestimonial() {
-  if (!TESTIMONIAL.quote) return null;
-
   return (
-    <section className="hd-testimonial" aria-labelledby="hd-testimonial-title">
-      <div className="hd-container hd-testimonial-inner">
-        <h2 id="hd-testimonial-title">Mağazalardan görüşler</h2>
+    <section className="hd-container hd-testimonial" aria-labelledby="hd-testimonial-title">
+      <div className="hd-testimonial-photo">
+        <img
+          src="/landing/testimonial-showroom.webp"
+          alt="Temsili halı mağazası iç mekânı"
+          width={1200}
+          height={600}
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <div className="hd-testimonial-copy">
+        <p className="hd-testimonial-kicker">MAĞAZADAN GERÇEK BİR DENEYİM</p>
+        <h2 id="hd-testimonial-title">Halı mağazalarının ihtiyaçlarından doğdu.</h2>
         <figure>
-          <blockquote>{TESTIMONIAL.quote}</blockquote>
-          <figcaption>{TESTIMONIAL.author}</figcaption>
+          <div className="hd-testimonial-quote">
+            <span className="hd-testimonial-quote-mark" aria-hidden="true">“</span>
+            <blockquote>
+              Müşterilerimizin en çok zorlandığı konu, beğendikleri halının kendi evlerinde nasıl duracağını hayal etmekti. Halı Dene ile artık bunu mağazamızda birkaç saniye içinde gösterebiliyoruz.
+            </blockquote>
+          </div>
+          <figcaption>
+            <div className="hd-testimonial-author">
+              <span className="hd-testimonial-initials" aria-hidden="true">EG</span>
+              <div>
+                <strong>Engin Gürsoy</strong>
+                <p>Halıcı Gürsoylar · Denizli</p>
+              </div>
+            </div>
+            <a className="hd-testimonial-link" href={YENISAFAK_MAP_URL} target="_blank" rel="noopener noreferrer"
+              aria-label="Mağazayı İncele – Halıcı Gürsoylar Yenişafak Şubesi">
+              Mağazayı İncele <span aria-hidden="true">↗</span>
+            </a>
+          </figcaption>
         </figure>
       </div>
     </section>
@@ -383,11 +407,10 @@ export default function LandingScreen() {
           <HeroVisual />
         </section>
         <HeroBenefits />
-
+        <StoreTestimonial />
         <HowItWorks />
         <Features />
         <CatalogMarquee />
-        <StoreTestimonial />
         <FaqSection />
 
         <section className="hd-contact hd-container" id="iletisim" aria-labelledby="hd-contact-title">
