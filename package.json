@@ -7,6 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build:web": "node scripts/build-web.js",
     "backend": "npm --prefix backend run dev",
     "carpets:thumbs": "node scripts/generate-carpet-thumbs.js",
     "carpets:catalog": "node scripts/generate-catalog.js && node scripts/generate-landing-catalog.js",
@@ -38,6 +39,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "esbuild": "^0.28.2",
+    "prettier": "^3.10.1",
     "sharp": "^0.34.4",
     "typescript": "~5.9.2"
   },

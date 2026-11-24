@@ -1,18 +1,9 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "npx expo export --platform web && node scripts/postbuild-web.js",
+  "buildCommand": "npm run build:web",
   "outputDirectory": "dist",
   "cleanUrls": true,
   "headers": [
-    {
-      "source": "/_expo/static/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
     {
       "source": "/assets/(.*)",
       "headers": [
