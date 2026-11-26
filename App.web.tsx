@@ -1,4 +1,4 @@
-import React, { useRef, useState, type FormEvent } from 'react';
+import React, { useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,6 +11,8 @@ import ResultScreen from './screens/ResultScreen';
 import './components/merchant-web.css';
 
 const Stack = createStackNavigator();
+const merchantUnavailable =
+  process.env.EXPO_PUBLIC_MERCHANT_UNAVAILABLE === '1';
 const navigationTheme = {
   ...DefaultTheme,
   colors: {
@@ -22,6 +24,26 @@ const navigationTheme = {
     border: COLORS.border,
   },
 };
+
+function MerchantPage({ children }: { children: ReactNode }) {
+  return (
+    <main className="merchant-page">
+      <section className="merchant-login" aria-labelledby="merchant-heading">
+        <div className="merchant-brand">
+          <img
+            src="/landing/halidene-mark.webp"
+            alt=""
+            width="40"
+            height="29"
+          />
+          Halı Dene
+        </div>
+        <h1 id="merchant-heading">Mağaza girişi</h1>
+        {children}
+      </section>
+    </main>
+  );
+}
 
 function MerchantLogin() {
   const { signIn } = useAuth();
@@ -55,38 +77,43 @@ function MerchantLogin() {
   }
 
   return (
-    <main className="merchant-page">
-      <section className="merchant-login" aria-labelledby="merchant-heading">
-        <div className="merchant-brand">
-          <img src="/landing/halidene-mark.webp" alt="" width="40" height="29" />
-          Halı Dene
-        </div>
-        <h1 id="merchant-heading">Mağaza girişi</h1>
-        <p className="merchant-intro">Mağaza hesabınızla halı deneme ekranına erişin.</p>
-        <form noValidate onSubmit={handleSubmit} aria-busy={pending}>
-          <label>
-            Kullanıcı adı veya e-posta
-            <input name="username" autoComplete="username" autoCapitalize="none" required />
-          </label>
-          <label>
-            Şifre
-            <input name="password" type={passwordVisible ? 'text' : 'password'} autoComplete="current-password" required />
-          </label>
-          <button
-            className="merchant-password-toggle"
-            type="button"
-            aria-pressed={passwordVisible}
-            onClick={() => setPasswordVisible(visible => !visible)}
-          >
-            {passwordVisible ? 'Şifreyi gizle' : 'Şifreyi göster'}
-          </button>
-          {error && <p role="alert">{error}</p>}
-          <button type="submit" disabled={pending}>
-            {pending ? 'Giriş yapılıyor…' : 'Giriş yap'}
-          </button>
-        </form>
-      </section>
-    </main>
+    <MerchantPage>
+      <p className="merchant-intro">
+        Mağaza hesabınızla halı deneme ekranına erişin.
+      </p>
+      <form noValidate onSubmit={handleSubmit} aria-busy={pending}>
+        <label>
+          Kullanıcı adı veya e-posta
+          <input
+            name="username"
+            autoComplete="username"
+            autoCapitalize="none"
+            required
+          />
+        </label>
+        <label>
+          Şifre
+          <input
+            name="password"
+            type={passwordVisible ? 'text' : 'password'}
+            autoComplete="current-password"
+            required
+          />
+        </label>
+        <button
+          className="merchant-password-toggle"
+          type="button"
+          aria-pressed={passwordVisible}
+          onClick={() => setPasswordVisible((visible) => !visible)}
+        >
+          {passwordVisible ? 'Şifreyi gizle' : 'Şifreyi göster'}
+        </button>
+        {error && <p role="alert">{error}</p>}
+        <button type="submit" disabled={pending}>
+          {pending ? 'Giriş yapılıyor…' : 'Giriş yap'}
+        </button>
+      </form>
+    </MerchantPage>
   );
 }
 
@@ -94,7 +121,11 @@ function MerchantNavigator() {
   const { isHydrated, isLoggedIn, isAdmin } = useAuth();
 
   if (!isHydrated) {
-    return <main className="merchant-page"><p role="status">Oturum kontrol ediliyor…</p></main>;
+    return (
+      <main className="merchant-page">
+        <p role="status">Oturum kontrol ediliyor…</p>
+      </main>
+    );
   }
 
   if (!isLoggedIn) return <MerchantLogin />;
@@ -103,7 +134,10 @@ function MerchantNavigator() {
     <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator
         initialRouteName="Home"
-        screenOptions={{ headerShown: false, cardStyle: { backgroundColor: COLORS.background } }}
+        screenOptions={{
+          headerShown: false,
+          cardStyle: { backgroundColor: COLORS.background },
+        }}
       >
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Select" component={SelectScreen} />
@@ -115,6 +149,17 @@ function MerchantNavigator() {
 }
 
 export default function MerchantApplication() {
+  if (merchantUnavailable) {
+    return (
+      <MerchantPage>
+        <p className="merchant-intro">Mağaza girişi şu anda kullanılamıyor.</p>
+        <a className="merchant-return" href="/">
+          Ana sayfaya dön
+        </a>
+      </MerchantPage>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>

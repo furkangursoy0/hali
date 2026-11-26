@@ -56,6 +56,16 @@
   font-size: 15px;
 }
 
+.merchant-return {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 16px;
+  color: #1c46ce;
+  font-size: 14px;
+  font-weight: 650;
+}
+
 .merchant-login input,
 .merchant-login button[type="submit"] {
   box-sizing: border-box;
@@ -101,7 +111,7 @@
   cursor: pointer;
 }
 
-#root :is(input, button, [role="button"]):focus-visible {
+#root :is(a, input, button, [role="button"]):focus-visible {
   outline: 3px solid #2458f5;
   outline-offset: 2px;
 }

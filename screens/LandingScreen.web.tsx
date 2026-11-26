@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type PointerEvent } from 'react';
 import BrandMark from '../components/landing/BrandMark.web';
+import PublicNavbar from '../components/landing/PublicNavbar.web';
 import ContactForm, { DEMO_WHATSAPP_URL, DemoFormHeading, demoEmailError } from '../components/landing/ContactForm.web';
 import CATALOG from '../data/catalog-stats.json';
 
@@ -374,19 +375,12 @@ export default function LandingScreen() {
 
   return (
     <div className="hd-landing hd-home">
-      <header className="hd-navbar">
-        <div className="hd-container hd-navbar-inner">
-          <a href="/" aria-label="Halı Dene ana sayfa"><BrandMark /></a>
-          <nav aria-label="Ana menü">
-            <div className="hd-navbar-links">
-              {SECTION_LINKS.map(([id, title]) => (
-                <a key={id} href={`#${id}`} onClick={handleSectionLink}>{title}</a>
-              ))}
-            </div>
-            <a className="hd-nav-blog" href="/blog">Blog</a>
-          </nav>
-        </div>
-      </header>
+      <PublicNavbar>
+        {SECTION_LINKS.map(([id, title]) => (
+          <a key={id} href={`#${id}`} onClick={handleSectionLink}>{title}</a>
+        ))}
+        <a href="/blog">Blog</a>
+      </PublicNavbar>
 
       <main>
         <section className="hd-container hd-hero" aria-labelledby="hd-hero-title">

@@ -1,6 +1,7 @@
 import React, { useEffect, type ReactNode } from 'react';
 import type { BlogPost } from '../../data/blog-posts';
 import BrandMark from './BrandMark.web';
+import PublicNavbar from './PublicNavbar.web';
 
 const SITE_URL = 'https://halidene.com';
 const dateFormat = new Intl.DateTimeFormat('tr-TR', {
@@ -82,16 +83,11 @@ export function useBlogHead(title: string, description: string, path: string, po
 export function BlogLayout({ children, isIndex }: { children: ReactNode; isIndex?: boolean }) {
   return (
     <div className="hd-landing hd-blog">
-      <header className="hd-navbar">
-        <div className="hd-container hd-navbar-inner">
-          <a href="/" aria-label="Halı Dene ana sayfa"><BrandMark /></a>
-          <nav aria-label="Ana menü">
-            <a href="/">Ana Sayfa</a>
-            <a href="/blog" className="hd-nav-blog" aria-current={isIndex ? 'page' : undefined}>Blog</a>
-            <a href="/iletisim">İletişim</a>
-          </nav>
-        </div>
-      </header>
+      <PublicNavbar>
+        <a href="/">Ana Sayfa</a>
+        <a href="/blog" aria-current={isIndex ? 'page' : undefined}>Blog</a>
+        <a href="/iletisim">İletişim</a>
+      </PublicNavbar>
       <main>{children}</main>
       <footer className="hd-footer">
         <div className="hd-container hd-footer-inner">
