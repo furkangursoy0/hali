@@ -14,7 +14,8 @@ import {
     Platform,
     useWindowDimensions,
 } from 'react-native';
-import { COLORS, SPACING, RADIUS } from '../constants/theme';
+import { SPACING, RADIUS } from '../constants/theme';
+import { COLORS } from '../constants/merchant-theme';
 import { USE_BACKEND_LIMIT } from '../constants/env';
 import carpetsData from '../data/carpets.json';
 import UsageLimitBadge from '../components/UsageLimitBadge';
@@ -718,7 +719,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
 
         return (
             <View style={webStyles.root}>
-                <StatusBar barStyle="light-content" />
+                <StatusBar barStyle={isWeb ? "dark-content" : "light-content"} />
 
                 {/* Top: header + filters (not scrollable) */}
                 <View style={webStyles.topSection}>
@@ -775,7 +776,7 @@ export default function SelectScreen({ navigation, route }: SelectScreenProps) {
     // ── MOBILE LAYOUT ─────────────────────────────────────────────────
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+            <StatusBar barStyle={isWeb ? "dark-content" : "light-content"} backgroundColor={COLORS.background} />
             <HeaderBar />
             {isSearchExpanded ? renderSearchBar() : <FilterBar />}
             <FlatList
@@ -938,7 +939,7 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
     },
     dropdownTriggerDisabled: { opacity: 0.5 },
-    dropdownTriggerHover: { borderColor: '#444444' },
+    dropdownTriggerHover: { borderColor: COLORS.textMuted },
     dropdownLabel: {
         color: COLORS.textMuted,
         fontSize: 10,
@@ -984,7 +985,7 @@ const styles = StyleSheet.create({
         paddingVertical: SPACING.sm,
     },
     loadMoreBtnHover: {
-        borderColor: '#4A4A4A',
+        borderColor: COLORS.textMuted,
     },
     loadMoreBtnText: {
         color: COLORS.textSecondary,
@@ -1075,7 +1076,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.md,
         paddingVertical: SPACING.sm,
     },
-    dropdownMenuItemHover: { backgroundColor: '#232323' },
+    dropdownMenuItemHover: { backgroundColor: COLORS.surfaceElevated },
     dropdownMenuItemActive: { backgroundColor: COLORS.surfaceElevated },
     dropdownMenuItemText: { color: COLORS.textSecondary, fontSize: 14, fontWeight: '600' },
     dropdownMenuItemTextActive: { color: COLORS.primary },
@@ -1140,7 +1141,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         flexShrink: 1,
     },
-    limitErrorText: { color: '#CC7B7B', fontSize: 11, marginTop: 2 },
+    limitErrorText: { color: COLORS.error, fontSize: 11, marginTop: 2 },
     btnGroup: { flexDirection: 'column', gap: 6 },
     btnGroupCompact: { marginLeft: 'auto' },
     btnGroupCompactFixed: {
@@ -1149,14 +1150,14 @@ const styles = StyleSheet.create({
     placeBtn: {
         backgroundColor: COLORS.primary,
         borderRadius: RADIUS.lg,
-        paddingHorizontal: SPACING.md, paddingVertical: 7,
+        paddingHorizontal: SPACING.md, paddingVertical: 9, minHeight: 44,
         alignItems: 'center', flexDirection: 'row', gap: 4,
         shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.4, shadowRadius: 6, elevation: 5,
+        shadowOpacity: isWeb ? 0.16 : 0.4, shadowRadius: 6, elevation: 5,
     },
     placeBtnCompact: {
-        minHeight: 40,
+        minHeight: 44,
         paddingHorizontal: SPACING.sm + 2,
     },
     placeBtnUltraCompact: {
@@ -1185,7 +1186,7 @@ const styles = StyleSheet.create({
     },
     filterBtnActive: {
         borderColor: COLORS.primary,
-        backgroundColor: 'rgba(200, 134, 10, 0.10)',
+        backgroundColor: COLORS.primaryGlow,
     },
     filterBtnIcon: {
         fontSize: 18,
@@ -1241,10 +1242,10 @@ const styles = StyleSheet.create({
     },
     cameraBtnActive: {
         borderColor: COLORS.primary,
-        backgroundColor: '#1A1208',
+        backgroundColor: COLORS.primaryGlow,
     },
     cameraBtnHover: {
-        borderColor: '#444444',
+        borderColor: COLORS.textMuted,
     },
     cameraBtnIcon: {
         fontSize: 18,
@@ -1291,17 +1292,17 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: RADIUS.lg,
-        backgroundColor: 'rgba(200, 134, 10, 0.15)',
+        backgroundColor: COLORS.primaryGlow,
         borderWidth: 1,
-        borderColor: 'rgba(200, 134, 10, 0.4)',
+        borderColor: COLORS.primaryGlowStrong,
         alignItems: 'center',
         justifyContent: 'center',
     },
     noteToggleBtnHover: {
-        backgroundColor: 'rgba(200, 134, 10, 0.25)',
+        backgroundColor: COLORS.primaryGlowStrong,
     },
     noteToggleBtnActive: {
-        backgroundColor: 'rgba(200, 134, 10, 0.3)',
+        backgroundColor: COLORS.primaryGlowStrong,
         borderColor: COLORS.primary,
     },
     noteToggleBtnText: {

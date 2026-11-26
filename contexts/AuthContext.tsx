@@ -133,12 +133,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const refreshCurrentUser = async () => {
+  const refreshCurrentUser = async (requireValidSession = false) => {
+    const authorization = axios.defaults.headers.common.Authorization;
+    if (!authorization) return;
     try {
-      if (!axios.defaults.headers.common.Authorization) return;
       const response = await axios.get(`${API_BASE_URL}/auth/me`);
+      if (axios.defaults.headers.common.Authorization !== authorization) return;
       const apiUser = response.data;
-      const token = String(axios.defaults.headers.common.Authorization).replace('Bearer ', '');
+      if (!apiUser?.id) throw new Error('Geçersiz oturum yanıtı');
+      const token = String(authorization).replace('Bearer ', '');
       const freshUser: AuthUser = {
         id: String(apiUser?.id || ''),
         fullName: String(apiUser?.fullName || ''),
@@ -150,9 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(freshUser);
       // localStorage'daki user datasını da tazele
       persistSession(token, freshUser);
+      if (requireValidSession && freshUser.role === 'ADMIN') void loadAdminUsers();
     } catch (err: any) {
       // Token expired or invalid → clear session so user sees login screen
-      if (err?.response?.status === 401) {
+      if (axios.defaults.headers.common.Authorization === authorization &&
+          (requireValidSession || err?.response?.status === 401 || err?.response?.status === 403)) {
         setUser(null);
         setUsers([]);
         delete axios.defaults.headers.common.Authorization;
@@ -190,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = String(response.data?.token || '');
       const apiUser = response.data?.user;
       if (!token || !apiUser?.id) {
-        return { ok: false as const, message: 'Sunucu yaniti gecersiz.' };
+        return { ok: false as const, message: 'Sunucu yanıtı geçersiz.' };
       }
 
       axios.defaults.headers.common.Authorization = `Bearer ${token}`;
@@ -215,7 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (apiMessage) {
         return { ok: false as const, message: String(apiMessage) };
       }
-      return { ok: false as const, message: 'Backend baglantisi kurulamadi.' };
+      return { ok: false as const, message: 'Mağaza sunucusuna bağlanılamadı. Lütfen tekrar deneyin.' };
     }
   };
 
@@ -331,26 +336,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!raw) return;
         const parsed = JSON.parse(raw);
         const token = String(parsed?.token || '');
-        const savedUser = parsed?.user;
-        if (!token || !savedUser?.id) return;
+        if (!token) return;
 
         axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-        setUser({
-          id: String(savedUser.id),
-          fullName: String(savedUser.fullName || ''),
-          email: String(savedUser.email || ''),
-          username: String(savedUser.username || ''),
-          role: savedUser.role === 'ADMIN' ? 'ADMIN' : 'STAFF',
-          credit: Number(savedUser.credit || 0),
-        });
-
-        // Token'ı sunucuya doğrulat — tamamlanmadan isHydrated=true yapma.
-        // Böylece süresi dolmuş token'da kullanıcı Home'u görmeden doğrudan Login'e gider.
-        await refreshCurrentUser();
-
-        if (savedUser.role === 'ADMIN') {
-          void loadAdminUsers();
-        }
+        await refreshCurrentUser(true);
       } catch {
         clearSession();
       } finally {

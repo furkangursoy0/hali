@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
-import { COLORS, SPACING, RADIUS } from '../constants/theme';
+import { SPACING, RADIUS } from '../constants/theme';
+import { COLORS } from '../constants/merchant-theme';
 import { placeCarperInRoom, PlacementMode, PlacementResult } from '../services/openai';
 import { getCarpetFullUrl, getCarpetThumbnailUrl } from '../services/carpet-image';
 
@@ -181,7 +182,7 @@ const RenderCard = React.memo(function RenderCard({
 
     // Success
     return (
-        <View style={[styles.renderCard, styles.renderCardSuccess, !isSingle && { width: cardWidth as any }, isWeb && ({ boxShadow: '0 0 30px rgba(200, 134, 10, 0.1)' } as any)]}>
+        <View style={[styles.renderCard, styles.renderCardSuccess, !isSingle && { width: cardWidth as any }, isWeb && ({ boxShadow: '0 4px 18px rgba(15, 23, 42, 0.06)' } as any)]}>
             <Pressable
                 onPress={() => onOpenFullscreen(index)}
                 style={({ hovered }: any) => [styles.cardImageWrap, hovered && { opacity: 0.9 }]}
@@ -336,7 +337,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
     // ── Layout ───────────────────────────────────────────────────────────
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+            <StatusBar barStyle={isWeb ? "dark-content" : "light-content"} backgroundColor={COLORS.background} />
 
             {/* Header */}
             <View style={styles.header}>
@@ -380,6 +381,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                 <View style={[
                     styles.resultGrid,
                     isSingle && styles.resultGridSingle,
+                        isSingle && isWeb && styles.resultGridSingleWeb,
                 ]}>
                     {renderSlots.map((slot, index) => (
                         <RenderCard
@@ -404,7 +406,7 @@ export default function ResultScreen({ navigation, route }: ResultScreenProps) {
                 </Pressable>
                 <Pressable
                     style={({ hovered }: any) => [styles.navBtnPrimary, hovered && styles.navBtnPrimaryHover]}
-                    onPress={() => navigation.navigate('Home')}
+                    onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
                 >
                     <Text style={styles.navBtnPrimaryText}>🏠 Yeni Müşteri</Text>
                 </Pressable>
@@ -495,9 +497,9 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     headerBadge: {
-        backgroundColor: 'rgba(200, 134, 10, 0.16)',
+        backgroundColor: COLORS.primaryGlow,
         borderWidth: 1,
-        borderColor: 'rgba(200, 134, 10, 0.45)',
+        borderColor: COLORS.primaryGlowStrong,
         borderRadius: 6,
         paddingHorizontal: 6,
         paddingVertical: 2,
@@ -578,6 +580,11 @@ const styles = StyleSheet.create({
     },
     resultGridSingle: {
         flexDirection: 'column',
+    },
+    resultGridSingleWeb: {
+        alignSelf: 'center',
+        width: '100%',
+        maxWidth: 760,
     },
 
     // Render card
@@ -691,7 +698,7 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.sm,
     },
     cardZoomText: {
-        color: COLORS.text,
+        color: COLORS.white,
         fontSize: 11,
         fontWeight: '700',
     },
@@ -733,8 +740,8 @@ const styles = StyleSheet.create({
         borderColor: COLORS.border,
     },
     cardActionBtnHover: {
-        borderColor: '#3F3F3F',
-        backgroundColor: '#2A2A2A',
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.surfaceElevated,
     },
     cardActionIcon: {
         fontSize: 16,
@@ -751,7 +758,7 @@ const styles = StyleSheet.create({
         borderColor: COLORS.border,
     },
     navBtnHover: {
-        backgroundColor: '#2D2D2D',
+        backgroundColor: COLORS.surfaceElevated,
     },
     navBtnText: {
         color: COLORS.textSecondary,
@@ -766,7 +773,7 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.xxl,
         shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
+        shadowOpacity: isWeb ? 0.16 : 0.4,
         shadowRadius: 12,
         elevation: 6,
     },

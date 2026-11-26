@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { COLORS, RADIUS, SPACING } from '../constants/theme';
+import { RADIUS, SPACING } from '../constants/theme';
+import { COLORS, merchantErrorSurface } from '../constants/merchant-theme';
 
 interface UsageLimitBadgeProps {
   remaining: number;
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
   },
   badgeCritical: {
     borderColor: COLORS.error,
-    backgroundColor: '#2B1717',
+    backgroundColor: merchantErrorSurface,
   },
   label: {
     color: COLORS.textSecondary,
@@ -60,6 +61,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   labelCritical: {
-    color: '#FFB3B3',
+    color: COLORS.error,
   },
 });

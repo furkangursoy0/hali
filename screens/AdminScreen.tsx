@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View, useWindowDimensions, Image } from 'react-native';
-import { COLORS, RADIUS, SPACING } from '../constants/theme';
+import { RADIUS, SPACING } from '../constants/theme';
+import { COLORS, merchantErrorBorder, merchantErrorSurface } from '../constants/merchant-theme';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { getAllPosts, savePost, deletePost as deleteStoredPost, generateSlug } from '../services/blog-storage';
 import { sectionsToMarkdown } from '../services/markdown-parser';
@@ -125,7 +126,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
   if (!isAdmin) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+        <StatusBar barStyle={Platform.OS === "web" ? "dark-content" : "light-content"} backgroundColor={COLORS.background} />
         <View style={styles.blockedWrap}>
           <Text style={styles.blockedTitle}>Bu sayfa sadece admin için</Text>
           <Pressable style={styles.primaryBtn} onPress={() => navigation.goBack()}>
@@ -138,7 +139,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle={Platform.OS === "web" ? "dark-content" : "light-content"} backgroundColor={COLORS.background} />
       <ScrollView
         style={[styles.scroll, isWeb && ({ overflowY: 'auto', maxHeight: '100dvh', WebkitOverflowScrolling: 'touch' } as any)]}
         contentContainerStyle={[styles.content, isWeb && styles.contentWeb, isCompactWeb && styles.contentCompactWeb]}
@@ -786,7 +787,7 @@ const styles = StyleSheet.create({
     flex: 1, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
     backgroundColor: COLORS.surfaceElevated, alignItems: 'center', paddingVertical: SPACING.sm + 2,
   },
-  tabBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.15)' },
+  tabBtnActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryGlow },
   tabBtnText: { color: COLORS.textSecondary, fontWeight: '700', fontSize: 14 },
   tabBtnTextActive: { color: COLORS.primaryLight },
   // Common
@@ -799,8 +800,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md, gap: SPACING.sm,
   },
   feedbackBox: {
-    borderWidth: 1, borderColor: 'rgba(200, 134, 10, 0.45)', borderRadius: RADIUS.md,
-    backgroundColor: 'rgba(200, 134, 10, 0.12)', paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, marginBottom: SPACING.sm,
+    borderWidth: 1, borderColor: COLORS.primaryGlowStrong, borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryGlow, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, marginBottom: SPACING.sm,
   },
   feedbackText: { color: COLORS.primaryLight, fontSize: 13, fontWeight: '600' },
   sectionTitle: { color: COLORS.text, fontSize: 17, fontWeight: '700', marginBottom: SPACING.xs },
@@ -816,7 +817,7 @@ const styles = StyleSheet.create({
     flex: 1, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
     backgroundColor: COLORS.surfaceElevated, alignItems: 'center', paddingVertical: SPACING.sm,
   },
-  roleBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.15)' },
+  roleBtnActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryGlow },
   roleBtnText: { color: COLORS.textSecondary, fontWeight: '700', fontSize: 12 },
   roleBtnTextActive: { color: COLORS.primaryLight },
   primaryBtn: {
@@ -841,7 +842,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, alignItems: 'center', paddingVertical: SPACING.sm,
   },
   inlineBtnText: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '700' },
-  deleteBtn: { borderColor: '#6A2A2A', backgroundColor: '#2A1717' },
+  deleteBtn: { borderColor: merchantErrorBorder, backgroundColor: merchantErrorSurface },
   blockedWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
   blockedTitle: { color: COLORS.text, fontSize: 20, fontWeight: '800', textAlign: 'center' },
   // Blog list
@@ -861,7 +862,7 @@ const styles = StyleSheet.create({
   blogPostMeta: { color: COLORS.textMuted, fontSize: 12, marginTop: 2 },
   statusBadge: { borderRadius: RADIUS.sm, paddingHorizontal: 8, paddingVertical: 2 },
   statusPublished: { backgroundColor: 'rgba(76, 175, 80, 0.15)' },
-  statusDraft: { backgroundColor: 'rgba(200, 134, 10, 0.12)' },
+  statusDraft: { backgroundColor: COLORS.primaryGlow },
   statusBadgeText: { fontSize: 11, fontWeight: '700' },
   statusPublishedText: { color: COLORS.success },
   statusDraftText: { color: COLORS.primaryLight },
@@ -883,7 +884,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md,
     paddingHorizontal: 14, paddingVertical: 7,
   },
-  edPreviewBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(200, 134, 10, 0.12)' },
+  edPreviewBtnActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryGlow },
   edPreviewBtnText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
   edPreviewBtnTextActive: { color: COLORS.primaryLight },
   edDraftBtn: {
@@ -1004,7 +1005,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   prevTableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  prevTableRowAlt: { backgroundColor: 'rgba(26, 26, 26, 0.5)' },
+  prevTableRowAlt: { backgroundColor: COLORS.surfaceElevated },
   prevTableCell: { flex: 1, paddingHorizontal: 12, paddingVertical: 10 },
   prevTableHeaderText: { fontSize: 13, fontWeight: '700', color: COLORS.text },
   prevTableCellText: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },

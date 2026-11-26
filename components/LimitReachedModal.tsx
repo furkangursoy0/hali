@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { COLORS, RADIUS, SPACING } from '../constants/theme';
+import { RADIUS, SPACING } from '../constants/theme';
+import { COLORS } from '../constants/merchant-theme';
 
 interface LimitReachedModalProps {
   visible: boolean;

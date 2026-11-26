@@ -8,6 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build:web": "node scripts/build-web.js",
+    "build:merchant-preview": "node scripts/build-merchant-preview.js",
     "backend": "npm --prefix backend run dev",
     "carpets:thumbs": "node scripts/generate-carpet-thumbs.js",
     "carpets:catalog": "node scripts/generate-catalog.js && node scripts/generate-landing-catalog.js",

@@ -13,7 +13,8 @@ import {
     useWindowDimensions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { COLORS, SPACING, RADIUS } from '../constants/theme';
+import { SPACING, RADIUS } from '../constants/theme';
+import { COLORS } from '../constants/merchant-theme';
 import { useAuth } from '../contexts/AuthContext';
 
 const isWeb = Platform.OS === 'web';
@@ -356,7 +357,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     if (isWeb) {
         return (
             <View style={styles.container}>
-                <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+                <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
                 <View pointerEvents="none" style={styles.bgGlowTop} />
                 <View pointerEvents="none" style={styles.bgGlowBottom} />
                 <View style={styles.webLayout}>
@@ -374,12 +375,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                     <View style={styles.webBottomBar}>
                         <View style={styles.webBottomInner}>
                             <Pressable
+                                accessibilityRole="button"
                                 style={({ hovered }: any) => [
                                     styles.nextBtn,
                                     !roomImage && styles.nextBtnDisabled,
                                     hovered && roomImage && styles.nextBtnHover,
                                 ]}
                                 onPress={handleNext}
+                                disabled={!roomImage}
                             >
                                 <Text style={styles.nextBtnText}>İlerle  →</Text>
                             </Pressable>
@@ -448,7 +451,7 @@ const styles = StyleSheet.create({
         width: 320,
         height: 320,
         borderRadius: 180,
-        backgroundColor: 'rgba(200, 134, 10, 0.08)',
+        backgroundColor: COLORS.primaryGlow,
     },
     bgGlowBottom: {
         position: 'absolute',
@@ -457,7 +460,7 @@ const styles = StyleSheet.create({
         width: 240,
         height: 340,
         borderRadius: 190,
-        backgroundColor: 'rgba(200, 134, 10, 0.06)',
+        backgroundColor: COLORS.primaryGlow,
     },
     scrollContent: {
         paddingHorizontal: SPACING.md,
@@ -523,9 +526,9 @@ const styles = StyleSheet.create({
     },
     logoAiBadge: {
         marginLeft: 8,
-        backgroundColor: 'rgba(200, 134, 10, 0.16)',
+        backgroundColor: COLORS.primaryGlow,
         borderWidth: 1,
-        borderColor: 'rgba(200, 134, 10, 0.45)',
+        borderColor: COLORS.primaryGlowStrong,
         borderRadius: 8,
         paddingHorizontal: 8,
         paddingVertical: 2,
@@ -553,8 +556,8 @@ const styles = StyleSheet.create({
     creditBadge: {
         marginTop: 0,
         borderWidth: 1,
-        borderColor: 'rgba(200, 134, 10, 0.45)',
-        backgroundColor: 'rgba(200, 134, 10, 0.15)',
+        borderColor: COLORS.primaryGlowStrong,
+        backgroundColor: COLORS.primaryGlow,
         borderRadius: RADIUS.sm,
         paddingHorizontal: 7,
         paddingVertical: 4,
@@ -591,11 +594,11 @@ const styles = StyleSheet.create({
         paddingVertical: 4.5,
         borderRadius: RADIUS.sm,
         borderWidth: 1,
-        borderColor: 'rgba(200, 134, 10, 0.35)',
-        backgroundColor: 'rgba(200, 134, 10, 0.12)',
+        borderColor: COLORS.primaryGlowStrong,
+        backgroundColor: COLORS.primaryGlow,
     },
     accountAdminBtnHover: {
-        backgroundColor: 'rgba(200, 134, 10, 0.2)',
+        backgroundColor: COLORS.primaryGlow,
     },
     accountAdminBtnText: {
         color: COLORS.primaryLight,
@@ -707,9 +710,9 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: 'rgba(200, 134, 10, 0.18)',
+        backgroundColor: COLORS.primaryGlow,
         borderWidth: 1,
-        borderColor: 'rgba(200, 134, 10, 0.35)',
+        borderColor: COLORS.primaryGlowStrong,
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
@@ -835,7 +838,7 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     photoAreaHover: {
-        borderColor: '#3E3E3E',
+        borderColor: COLORS.border,
     },
     roomImage: {
         width: '100%',
@@ -898,7 +901,7 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     actionBtnHover: {
-        backgroundColor: '#242424',
+        backgroundColor: COLORS.surfaceElevated,
     },
     actionDivider: {
         width: 1,
@@ -1104,7 +1107,7 @@ const styles = StyleSheet.create({
         marginBottom: 0,
         shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
+        shadowOpacity: isWeb ? 0.16 : 0.4,
         shadowRadius: 12,
         elevation: 8,
     },
@@ -1117,9 +1120,8 @@ const styles = StyleSheet.create({
     },
     nextBtnText: {
         color: COLORS.white,
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: '700',
-        letterSpacing: 0.3,
     },
     stickyBottom: {
         paddingHorizontal: SPACING.md,
@@ -1134,10 +1136,9 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(15,15,15,0.85)' as any,
-        backdropFilter: 'blur(18px)' as any,
+        backgroundColor: COLORS.surfaceGlass,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(46,46,46,0.5)',
+        borderTopColor: COLORS.border,
         paddingHorizontal: SPACING.xl,
         paddingTop: 10,
         paddingBottom: SPACING.md,
