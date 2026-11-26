@@ -582,6 +582,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
     },
     resultGridSingleWeb: {
+        alignItems: 'center',
         alignSelf: 'center',
         width: '100%',
         maxWidth: 760,
