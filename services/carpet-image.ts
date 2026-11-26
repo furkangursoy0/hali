@@ -11,7 +11,7 @@ function encodePath(path: string): string {
   return path
     .split('/')
     .filter(Boolean)
-    .map((segment) => encodeURIComponent(segment))
+    .map((segment) => encodeURIComponent(segment.normalize('NFC')))
     .join('/');
 }
 
